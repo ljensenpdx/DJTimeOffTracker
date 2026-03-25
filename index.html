@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fun Squad DJs | Master Planner</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f7f6; padding: 20px; }
+        .controls { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
+        .day { background: white; border: 1px solid #ddd; min-height: 120px; padding: 10px; border-radius: 4px; }
+        .day.conflict { background-color: #fff1f1; border: 2px solid #ff4d4d; }
+        .show-tag { background: #34495e; color: white; font-size: 10px; padding: 2px 5px; border-radius: 3px; margin-bottom: 5px; display: inline-block; }
+        .off-bar { color: white; font-size: 11px; padding: 3px; border-radius: 3px; margin-top: 2px; }
+        .needed { color: #ff4d4d; font-weight: bold; font-size: 10px; margin-top: 5px; display: block; }
+        input, select { padding: 8px; margin-right: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 8px 20px; background: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="controls">
+        <h3>Add DJ Time Off</h3>
+        <select id="djSelect">
+            <option value="Lane" data-color="#2ecc71">DJ Lane</option>
+            <option value="Jessica" data-color="#9b59b6">DJ Jessica</option>
+            <option value="NewHire" data-color="#e67e22">New DJ</option>
+        </select>
+        <input type="date" id="offDate">
+        <input type="text" id="reason" placeholder="Reason">
+        <button onclick="saveTimeOff()">Save to Local Storage</button>
+        <button onclick="clearData()" style="background:#c0392b">Clear All</button>
+    </div>
+
+    <div id="calendar" class="calendar"></div>
+
+    <script>
+        // 1. Initial Data Setup
+        let timeOffEntries = JSON.parse(localStorage.getItem('funsquad_off')) || [];
+
+        function saveTimeOff() {
+            const sel = document.getElementById('djSelect');
+            const entry = {
+                name: sel.value,
+                color: sel.options[sel.selectedIndex].dataset.color,
+                date: document.getElementById('offDate').value,
+                reason: document.getElementById('reason').value
+            };
+            if(!entry.date) return alert("Select a date!");
+            
+            timeOffEntries.push(entry);
+            localStorage.setItem('funsquad_off', JSON.stringify(timeOffEntries));
+            renderCalendar();
+        }
+
+        function clearData() {
+            if(confirm("Delete all saved time off?")) {
+                localStorage.removeItem('funsquad_off');
+                timeOffEntries = [];
+                renderCalendar();
+            }
+        }
+
+        function renderCalendar() {
+            const cal = document.getElementById('calendar');
+            cal.innerHTML = '';
+            
+            // Logic for March 2026 (Starting Wed Mar 25 as per current date context)
+            for (let i = 1; i <= 31; i++) {
+                const dateStr = `2026-03-${i.toString().padStart(2, '0')}`;
+                
+                // MOCK SHOW DATA (You would replace this with your iCal fetch logic)
+                const showsThisDay = (i === 27 || i === 28) ? 3 : 0; 
+                
+                const offToday = timeOffEntries.filter(e => e.date === dateStr);
+                const availableDJs = 3 - offToday.length; // Assuming 3 total DJs
+                const isConflict = showsThisDay > availableDJs;
+
+                let html = `<div class="day ${isConflict ? 'conflict' : ''}">
+                    <strong>${i}</strong><br>
+                    ${showsThisDay > 0 ? `<span class="show-tag">${showsThisDay} SHOWS BOOKED</span>` : ''}`;
+                
+                offToday.forEach(e => {
+                    html += `<div class="off-bar" style="background:${e.color}">${e.name}: ${e.reason}</div>`;
+                });
+
+                if(isConflict) html += `<span class="needed">⚠️ NEED ${showsThisDay - availableDJs} MORE DJ(S)</span>`;
+                
+                html += `</div>`;
+                cal.innerHTML += html;
+            }
+        }
+
+        renderCalendar();
+    </script>
+</body>
+</html>
