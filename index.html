@@ -1,95 +1,136 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Fun Squad DJs | Master Planner</title>
+    <meta charset="UTF-8">
+    <title>Fun Squad DJs | Master Live Planner</title>
     <style>
-        body { font-family: sans-serif; background: #f4f7f6; padding: 20px; }
-        .controls { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
-        .day { background: white; border: 1px solid #ddd; min-height: 120px; padding: 10px; border-radius: 4px; }
-        .day.conflict { background-color: #fff1f1; border: 2px solid #ff4d4d; }
-        .show-tag { background: #34495e; color: white; font-size: 10px; padding: 2px 5px; border-radius: 3px; margin-bottom: 5px; display: inline-block; }
-        .off-bar { color: white; font-size: 11px; padding: 3px; border-radius: 3px; margin-top: 2px; }
-        .needed { color: #ff4d4d; font-weight: bold; font-size: 10px; margin-top: 5px; display: block; }
-        input, select { padding: 8px; margin-right: 10px; border: 1px solid #ccc; border-radius: 4px; }
-        button { padding: 8px 20px; background: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        :root { --primary: #2c3e50; --accent: #27ae60; --conflict: #e74c3c; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; padding: 20px; }
+        
+        /* Header & Nav */
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .nav-btn { background: var(--primary); color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        
+        /* Controls Section */
+        .controls { background: #fff; padding: 20px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        input, select { padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        .save-btn { background: var(--accent); color: white; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer; }
+
+        /* Calendar Grid */
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: #ddd; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; }
+        .weekday-label { background: var(--primary); color: white; text-align: center; padding: 10px; font-weight: bold; font-size: 0.9rem; }
+        .day { background: white; min-height: 110px; padding: 8px; position: relative; }
+        .day.today { background: #fffde7; }
+        .day.conflict { background: #fff0f0; }
+        .date-num { font-weight: bold; color: #777; margin-bottom: 5px; display: block; }
+        
+        /* Entries */
+        .event-bar { font-size: 11px; padding: 3px 6px; border-radius: 3px; color: white; margin-bottom: 2px; }
+        .show-tag { background: #34495e; color: white; font-size: 10px; padding: 2px 4px; border-radius: 3px; display: block; margin-bottom: 5px; }
+        .alert { color: var(--conflict); font-size: 10px; font-weight: bold; margin-top: 5px; }
     </style>
 </head>
 <body>
 
-    <div class="controls">
-        <h3>Add DJ Time Off</h3>
-        <select id="djSelect">
-            <option value="Lane" data-color="#2ecc71">DJ Lane</option>
-            <option value="Jessica" data-color="#9b59b6">DJ Jessica</option>
-            <option value="NewHire" data-color="#e67e22">New DJ</option>
-        </select>
-        <input type="date" id="offDate">
-        <input type="text" id="reason" placeholder="Reason">
-        <button onclick="saveTimeOff()">Save to Local Storage</button>
-        <button onclick="clearData()" style="background:#c0392b">Clear All</button>
+<div class="calendar-header">
+    <button class="nav-btn" onclick="changeMonth(-1)">◀ Prev</button>
+    <h2 id="monthDisplay">Month Year</h2>
+    <button class="nav-btn" onclick="changeMonth(1)">Next ▶</button>
+</div>
+
+<div class="controls">
+    <strong>Add Time Off:</strong>
+    <select id="djSelect">
+        <option value="Lane" data-color="#2ecc71">DJ Lane</option>
+        <option value="Jessica" data-color="#9b59b6">DJ Jessica</option>
+        <option value="Staff" data-color="#3498db">Other Staff</option>
+    </select>
+    <input type="date" id="offDate">
+    <input type="text" id="reason" placeholder="Reason">
+    <button class="save-btn" onclick="saveEntry()">Save Request</button>
+</div>
+
+<div class="calendar-grid" id="grid">
     </div>
 
-    <div id="calendar" class="calendar"></div>
+<script>
+    let currentViewDate = new Date(); // Starts at today
+    let savedEntries = JSON.parse(localStorage.getItem('funsquad_v2')) || [];
 
-    <script>
-        // 1. Initial Data Setup
-        let timeOffEntries = JSON.parse(localStorage.getItem('funsquad_off')) || [];
+    function renderCalendar() {
+        const grid = document.getElementById('grid');
+        const monthDisplay = document.getElementById('monthDisplay');
+        grid.innerHTML = '';
 
-        function saveTimeOff() {
-            const sel = document.getElementById('djSelect');
-            const entry = {
-                name: sel.value,
-                color: sel.options[sel.selectedIndex].dataset.color,
-                date: document.getElementById('offDate').value,
-                reason: document.getElementById('reason').value
-            };
-            if(!entry.date) return alert("Select a date!");
+        // 1. Set Month/Year Title
+        const year = currentViewDate.getFullYear();
+        const month = currentViewDate.getMonth();
+        monthDisplay.innerText = currentViewDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+        // 2. Add Weekday Labels (Sun - Sat)
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        days.forEach(d => grid.innerHTML += `<div class="weekday-label">${d}</div>`);
+
+        // 3. Calculate Grid Spacing
+        const firstDayOfMonth = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        // Add blank squares for days of previous month
+        for (let i = 0; i < firstDayOfMonth; i++) {
+            grid.innerHTML += `<div class="day" style="background:#f9f9f9"></div>`;
+        }
+
+        // 4. Generate Days
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateStr = `${year}-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+            const isToday = new Date().toDateString() === new Date(year, month, day).toDateString();
             
-            timeOffEntries.push(entry);
-            localStorage.setItem('funsquad_off', JSON.stringify(timeOffEntries));
-            renderCalendar();
-        }
-
-        function clearData() {
-            if(confirm("Delete all saved time off?")) {
-                localStorage.removeItem('funsquad_off');
-                timeOffEntries = [];
-                renderCalendar();
-            }
-        }
-
-        function renderCalendar() {
-            const cal = document.getElementById('calendar');
-            cal.innerHTML = '';
+            // Filter your LocalStorage entries for this date
+            const entries = savedEntries.filter(e => e.date === dateStr);
             
-            // Logic for March 2026 (Starting Wed Mar 25 as per current date context)
-            for (let i = 1; i <= 31; i++) {
-                const dateStr = `2026-03-${i.toString().padStart(2, '0')}`;
-                
-                // MOCK SHOW DATA (You would replace this with your iCal fetch logic)
-                const showsThisDay = (i === 27 || i === 28) ? 3 : 0; 
-                
-                const offToday = timeOffEntries.filter(e => e.date === dateStr);
-                const availableDJs = 3 - offToday.length; // Assuming 3 total DJs
-                const isConflict = showsThisDay > availableDJs;
+            // Mock Show Data (You'll replace this with your iCal logic)
+            const showsCount = (day % 7 === 6 || day % 7 === 0) ? 2 : 0; // Just as an example for weekends
+            const isConflict = (showsCount + entries.length) > 3; // Example: if 3+ things happening
 
-                let html = `<div class="day ${isConflict ? 'conflict' : ''}">
-                    <strong>${i}</strong><br>
-                    ${showsThisDay > 0 ? `<span class="show-tag">${showsThisDay} SHOWS BOOKED</span>` : ''}`;
-                
-                offToday.forEach(e => {
-                    html += `<div class="off-bar" style="background:${e.color}">${e.name}: ${e.reason}</div>`;
-                });
+            let dayHtml = `<div class="day ${isToday ? 'today' : ''} ${isConflict ? 'conflict' : ''}">
+                <span class="date-num">${day}</span>`;
+            
+            if(showsCount > 0) dayHtml += `<span class="show-tag">🎤 ${showsCount} SHOWS</span>`;
+            
+            entries.forEach(e => {
+                dayHtml += `<div class="event-bar" style="background:${e.color}">${e.name}: ${e.reason}</div>`;
+            });
 
-                if(isConflict) html += `<span class="needed">⚠️ NEED ${showsThisDay - availableDJs} MORE DJ(S)</span>`;
-                
-                html += `</div>`;
-                cal.innerHTML += html;
-            }
+            if(isConflict) dayHtml += `<div class="alert">⚠️ TRIPLE BOOKED</div>`;
+            
+            dayHtml += `</div>`;
+            grid.innerHTML += dayHtml;
         }
+    }
 
+    function changeMonth(offset) {
+        currentViewDate.setMonth(currentViewDate.getMonth() + offset);
         renderCalendar();
-    </script>
+    }
+
+    function saveEntry() {
+        const sel = document.getElementById('djSelect');
+        const newEntry = {
+            name: sel.value,
+            color: sel.options[sel.selectedIndex].dataset.color,
+            date: document.getElementById('offDate').value,
+            reason: document.getElementById('reason').value
+        };
+        if(!newEntry.date) return alert("Select a date first!");
+        
+        savedEntries.push(newEntry);
+        localStorage.setItem('funsquad_v2', JSON.stringify(savedEntries));
+        renderCalendar();
+    }
+
+    // Initial Load
+    renderCalendar();
+</script>
+
 </body>
 </html>
