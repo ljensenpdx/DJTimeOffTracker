@@ -74,6 +74,7 @@
 <div id="calendar" class="calendar-grid"></div>
 
 <script>
+    // PASTE YOUR NEW DEPLOYMENT URL HERE
     const scriptURL = 'https://script.google.com/macros/s/AKfycbwf4WF-sQw0Khpyg37H9S0fN9o2Vxs5vrIMUwyWEbNcuWWCZ7djmqi3LV2imZH0x00w/exec'; 
     const GITHUB_REPO = 'ljensenpdx/DJTimeOffTracker'; 
 
@@ -146,7 +147,8 @@
             const todayShows = showData.filter(s => s.date === dateStr);
             let dayHtml = `<div class="day ${todayShows.length > (djSettings.length - todayOff.length) ? 'conflict' : ''} ${isToday ? 'today' : ''}"><span class="date-num">${d}</span>`;
             todayOff.forEach(row => {
-                const dj = djSettings.find(s => s.name === row[0]);
+                const djName = String(row[0]).trim().toLowerCase();
+                const dj = djSettings.find(s => s.name.trim().toLowerCase() === djName);
                 dayHtml += `<div class="name-tag" style="background:${dj ? dj.color : '#95a5a6'}">${row[0]}</div>`;
             });
             todayShows.forEach(s => {
