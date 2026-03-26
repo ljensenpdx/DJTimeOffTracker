@@ -63,7 +63,7 @@
 </div>
 
 <div class="controls">
-    <strong>TIME OFF REQUEST:</strong>
+    <strong>TIME OFF:</strong>
     <select id="djName">
         <option value="Lane">Lane</option>
         <option value="Jacob">Jacob</option>
@@ -71,7 +71,7 @@
         <option value="Dylan">Dylan</option>
     </select>
     <input type="date" id="offDate">
-    <button class="save-btn" onclick="saveToCloud()">SAVE TO CLOUD</button>
+    <button class="save-btn" onclick="saveToCloud()">SAVE REQUEST</button>
 </div>
 
 <div id="calendar" class="calendar-grid"></div>
@@ -128,7 +128,7 @@
         try {
             const res = await fetch(scriptURL);
             offData = await res.json();
-        } catch(e) { console.error("Cloud Error"); }
+        } catch(e) { console.error("Sync failed"); }
         document.getElementById('loading-overlay').style.display = 'none';
         render();
     }
@@ -136,14 +136,14 @@
     async function saveToCloud() {
         const name = document.getElementById('djName').value;
         const date = document.getElementById('offDate').value;
-        if(!date) return alert("Pick a date first!");
+        if(!date) return alert("Select a date!");
         const btn = document.querySelector('.save-btn');
         btn.innerText = "SAVING...";
         btn.disabled = true;
         try {
             await fetch(scriptURL, { method: 'POST', body: JSON.stringify({ name, date }) });
             location.reload(); 
-        } catch(e) { alert("Error saving."); btn.innerText = "SAVE TO CLOUD"; btn.disabled = false; }
+        } catch(e) { alert("Error saving."); btn.innerText = "SAVE REQUEST"; btn.disabled = false; }
     }
 
     function render() {
@@ -151,8 +151,6 @@
         grid.innerHTML = '';
         const month = viewDate.getMonth();
         const year = viewDate.getFullYear();
-        
-        // --- LOCAL TIME FIX ---
         const now = new Date(); 
 
         document.getElementById('monthLabel').innerText = viewDate.toLocaleString('default', { month: 'long', year: 'numeric' });
@@ -165,13 +163,11 @@
 
         for(let d=1; d<=daysInMonth; d++) {
             const dateStr = `${year}-${(month+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`;
-            
-            // Fix: Check system local date components
             const isRealToday = (d === now.getDate() && month === now.getMonth() && year === now.getFullYear());
             
             const todayShows = showData.filter(s => s.date === dateStr);
             const todayOff = offData.filter(row => {
-                if (!row[1]) return false;
+                if (!row[0] || !row[1]) return false;
                 let dObj = new Date(row[1]);
                 let fmt = dObj.getFullYear() + "-" + String(dObj.getMonth()+1).padStart(2,'0') + "-" + String(dObj.getDate()).padStart(2,'0');
                 return fmt === dateStr;
@@ -183,13 +179,13 @@
             let dayHtml = `<div class="day ${isConflict ? 'conflict' : ''} ${isRealToday ? 'today' : ''}">
                 <span class="date-num">${d}</span>`;
             
-            // --- 1. DJs OFF LISTED AT TOP ---
+            // 1. DJs OFF (TOP)
             todayOff.forEach(row => {
                 const name = String(row[0]).trim();
                 dayHtml += `<div class="name-tag ${name}">${name}</div>`;
             });
 
-            // --- 2. BOOKINGS LISTED BELOW ---
+            // 2. SHOWS (BELOW)
             todayShows.forEach(s => {
                 dayHtml += `<div class="show-box"><b>🎤 ${s.client}</b>${s.timeRange}<i>@ ${s.loc}</i></div>`;
             });
