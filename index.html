@@ -7,40 +7,26 @@
     <style>
         :root { --dark: #2c3e50; --light: #f0f2f5; --conflict: #e74c3c; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--light); padding: 15px; margin: 0; color: #333; }
-        
-        /* Layout */
         .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 10px 20px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        
-        /* Grid */
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; background: #dfe4ea; border: 2px solid #dfe4ea; border-radius: 12px; overflow: hidden; }
         .weekday { background: var(--dark); color: white; text-align: center; padding: 12px; font-weight: bold; font-size: 0.85rem; text-transform: uppercase; }
-        
-        /* Days */
         .day { background: white; min-height: 160px; padding: 10px; display: flex; flex-direction: column; gap: 5px; position: relative; }
         .day.today { background: #fff9db; border: 2px solid #f1c40f; }
         .day.conflict { background: #fff5f5; border: 2px solid var(--conflict); }
         .day.other-month { background: #f8f9fa; color: #ccc; }
         .date-num { font-weight: 900; color: #a4b0be; font-size: 1.1rem; }
-
-        /* DJ Name Tags (Top) */
         .name-tag { color: white; padding: 5px; border-radius: 6px; font-size: 10px; text-align: center; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
-        
-        /* Show Details (Bottom) */
         .show-box { background: #34495e; color: white; font-size: 10px; padding: 6px; border-radius: 6px; border-left: 4px solid #1abc9c; margin-top: 2px; }
         .show-box b { display: block; color: #1abc9c; font-size: 11px; margin-bottom: 3px; }
         .show-box i { display: block; font-style: normal; color: #bdc3c7; margin-top: 2px; }
-        
         .alert-text { color: var(--conflict); font-size: 10px; font-weight: bold; text-align: center; background: #ffebeb; padding: 4px; border-radius: 4px; margin-top: auto; }
-        
-        /* Modal & UI */
         #djModal { display:none; position:fixed; z-index:2000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.6); }
-        .modal-content { background:white; margin:10% auto; padding:25px; width:320px; border-radius:15px; text-align:center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-        .dj-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; background:#f9f9f9; padding:8px; border-radius:8px; }
-        
-        button { padding: 10px 18px; cursor: pointer; border: none; border-radius: 8px; background: var(--dark); color: white; font-weight: bold; transition: 0.2s; }
-        button:hover { opacity: 0.9; }
+        .modal-content { background:white; margin:5% auto; padding:25px; width:340px; border-radius:15px; text-align:center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 80vh; overflow-y: auto; }
+        .dj-edit-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; background:#f9f9f9; padding:10px; border-radius:8px; }
+        button { padding: 10px 18px; cursor: pointer; border: none; border-radius: 8px; background: var(--dark); color: white; font-weight: bold; }
         .manage-btn { background: #3498db; font-size: 0.7rem; margin-top: 5px; }
-        
+        .save-colors-btn { background: #3498db; width: 100%; margin-bottom: 20px; border: 2px solid #2980b9; }
+        .add-dj-btn { background: #27ae60; width: 100%; }
         #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; justify-content: center; align-items: center; z-index: 3000; font-weight: bold; }
     </style>
 </head>
@@ -50,13 +36,18 @@
 
 <div id="djModal">
     <div class="modal-content">
-        <h3>Manage Crew</h3>
+        <h2 style="margin-top:0">Manage Crew</h2>
+        <p style="font-size:0.8rem; color:#666">Change colors and click Save Colors</p>
+        
         <div id="djSettingsList"></div>
-        <hr>
-        <h4>Add New DJ</h4>
-        <input type="text" id="newDjName" placeholder="DJ Name" style="padding:10px; width:80%; margin-bottom:10px; border:1px solid #ddd; border-radius:8px;">
+        <button class="save-colors-btn" id="saveColorsBtn" onclick="saveAllColors()">SAVE ALL COLORS</button>
+        
+        <hr style="margin:20px 0; border:0; border-top:1px solid #eee">
+        
+        <h3>Add New DJ</h3>
+        <input type="text" id="newDjName" placeholder="Enter DJ Name" style="padding:10px; width:85%; margin-bottom:10px; border:1px solid #ddd; border-radius:8px;">
         <input type="color" id="newDjColor" value="#3498db" style="width:100%; height:40px; border:none; background:none; cursor:pointer;"><br><br>
-        <button onclick="addOrUpdateDj()" style="background:#27ae60; width:100%;">Save & Sync Form</button><br><br>
+        <button class="add-dj-btn" onclick="addNewDj()">ADD DJ & SYNC FORM</button><br><br>
         <button onclick="closeModal()" style="background:#95a5a6; width:100%;">Close</button>
     </div>
 </div>
@@ -74,8 +65,7 @@
 <div id="calendar" class="calendar-grid"></div>
 
 <script>
-    // UPDATED WEB APP URL
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbwf4WF-sQw0Khpyg37H9S0fN9o2Vxs5vrIMUwyWEbNcuWWCZ7djmqi3LV2imZH0x00w/exec'; 
+    const scriptURL = 'PASTE_YOUR_NEW_DEPLOY_URL_HERE'; 
     
     let viewDate = new Date();
     let offData = []; 
@@ -118,16 +108,12 @@
 
     async function init() {
         document.getElementById('loading-overlay').style.display = 'flex';
-        
         try {
             const res = await fetch(scriptURL);
             const data = await res.json();
             offData = data.offData || [];
             djSettings = data.djs || [];
-        } catch(e) { 
-            console.error("Google Sync Failed. Showing ICS data only.");
-        }
-
+        } catch(e) { console.error("Sync error"); }
         showData = await loadIcalData();
         document.getElementById('loading-overlay').style.display = 'none';
         render();
@@ -135,42 +121,29 @@
 
     function render() {
         const grid = document.getElementById('calendar');
-        if (!grid) return;
         grid.innerHTML = '';
-        
         const month = viewDate.getMonth(), year = viewDate.getFullYear(), now = new Date();
         document.getElementById('monthLabel').innerText = viewDate.toLocaleString('default', { month: 'long', year: 'numeric' });
-        
         ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => grid.innerHTML += `<div class="weekday">${d}</div>`);
-        
-        const firstDay = new Date(year, month, 1).getDay();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-        
+        const firstDay = new Date(year, month, 1).getDay(), daysInMonth = new Date(year, month + 1, 0).getDate();
         for(let i=0; i<firstDay; i++) grid.innerHTML += `<div class="day other-month"></div>`;
 
         for(let d=1; d<=daysInMonth; d++) {
             const dateStr = `${year}-${(month+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`;
             const isToday = (d === now.getDate() && month === now.getMonth() && year === now.getFullYear());
-            
-            const todayOff = (offData || []).filter(row => row[1] === dateStr);
-            const todayShows = (showData || []).filter(s => s.date === dateStr);
-            
-            const totalDJs = djSettings.length || 4;
-            const available = totalDJs - todayOff.length;
+            const todayOff = offData.filter(row => row[1] === dateStr);
+            const todayShows = showData.filter(s => s.date === dateStr);
+            const available = djSettings.length - todayOff.length;
             const isConflict = todayShows.length > available;
 
             let dayHtml = `<div class="day ${isConflict ? 'conflict' : ''} ${isToday ? 'today' : ''}"><span class="date-num">${d}</span>`;
-            
             todayOff.forEach(row => {
-                const dj = djSettings.find(s => s.name.toLowerCase() === row[0].toLowerCase());
-                const color = dj ? dj.color : "#95a5a6";
-                dayHtml += `<div class="name-tag" style="background:${color}">${row[0]}</div>`;
+                const dj = djSettings.find(s => s.name === row[0]);
+                dayHtml += `<div class="name-tag" style="background:${dj ? dj.color : '#95a5a6'}">${row[0]}</div>`;
             });
-
             todayShows.forEach(s => {
                 dayHtml += `<div class="show-box"><b>🎤 ${s.client}</b>${s.time}<i>@ ${s.loc}</i></div>`;
             });
-
             if(isConflict) dayHtml += `<span class="alert-text">⚠️ NEED ${todayShows.length - available} MORE</span>`;
             grid.innerHTML += dayHtml + `</div>`;
         }
@@ -178,28 +151,44 @@
 
     function openModal() {
         document.getElementById('djModal').style.display = 'block';
-        document.getElementById('djSettingsList').innerHTML = (djSettings || []).map(dj => `
-            <div class="dj-row">
+        document.getElementById('djSettingsList').innerHTML = djSettings.map(dj => `
+            <div class="dj-edit-row" data-name="${dj.name}">
                 <strong>${dj.name}</strong>
-                <input type="color" value="${dj.color}" onchange="updateDjColor('${dj.name}', this.value)">
+                <input type="color" value="${dj.color}">
             </div>
         `).join('');
     }
-    function closeModal() { document.getElementById('djModal').style.display = 'none'; }
-    function changeMonth(dir) { viewDate.setMonth(viewDate.getMonth() + dir); render(); }
-    function goToToday() { viewDate = new Date(); render(); }
 
-    async function addOrUpdateDj() {
+    async function saveAllColors() {
+        const btn = document.getElementById('saveColorsBtn');
+        btn.innerText = "SAVING...";
+        btn.disabled = true;
+
+        const rows = document.querySelectorAll('.dj-edit-row');
+        const updates = Array.from(rows).map(row => ({
+            name: row.dataset.name,
+            color: row.querySelector('input').value
+        }));
+
+        await fetch(scriptURL, {
+            method: 'POST',
+            body: JSON.stringify({ action: "saveColors", updates: updates })
+        });
+        
+        location.reload();
+    }
+
+    async function addNewDj() {
         const name = document.getElementById('newDjName').value;
         const color = document.getElementById('newDjColor').value;
         if(!name) return alert("Enter a name");
-        await fetch(scriptURL, { method: 'POST', body: JSON.stringify({ action: "updateDJ", name, color }) });
+        await fetch(scriptURL, { method: 'POST', body: JSON.stringify({ action: "addDJ", name, color }) });
         location.reload();
     }
-    async function updateDjColor(name, color) {
-        await fetch(scriptURL, { method: 'POST', body: JSON.stringify({ action: "updateDJ", name, color }) });
-    }
 
+    function closeModal() { document.getElementById('djModal').style.display = 'none'; }
+    function changeMonth(dir) { viewDate.setMonth(viewDate.getMonth() + dir); render(); }
+    function goToToday() { viewDate = new Date(); render(); }
     init();
 </script>
 </body>
