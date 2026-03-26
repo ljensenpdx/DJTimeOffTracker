@@ -22,17 +22,17 @@
         .day.other-month { background: #f8f9fa; color: #ccc; }
         .date-num { font-weight: 900; color: #a4b0be; font-size: 1.1rem; }
 
-        /* DJ Name Tags (Top Priority) */
+        /* DJ Name Tags (Top) */
         .name-tag { color: white; padding: 5px; border-radius: 6px; font-size: 10px; text-align: center; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
         
-        /* Show Details (Bottom Priority) */
+        /* Show Details (Bottom) */
         .show-box { background: #34495e; color: white; font-size: 10px; padding: 6px; border-radius: 6px; border-left: 4px solid #1abc9c; margin-top: 2px; }
         .show-box b { display: block; color: #1abc9c; font-size: 11px; margin-bottom: 3px; }
         .show-box i { display: block; font-style: normal; color: #bdc3c7; margin-top: 2px; }
         
         .alert-text { color: var(--conflict); font-size: 10px; font-weight: bold; text-align: center; background: #ffebeb; padding: 4px; border-radius: 4px; margin-top: auto; }
         
-        /* Modal / UI */
+        /* Modal & UI */
         #djModal { display:none; position:fixed; z-index:2000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.6); }
         .modal-content { background:white; margin:10% auto; padding:25px; width:320px; border-radius:15px; text-align:center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
         .dj-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; background:#f9f9f9; padding:8px; border-radius:8px; }
@@ -54,7 +54,7 @@
         <div id="djSettingsList"></div>
         <hr>
         <h4>Add New DJ</h4>
-        <input type="text" id="newDjName" placeholder="DJ Name" style="padding:10px; border:1px solid #ddd; border-radius:8px; width:80%; margin-bottom:10px;">
+        <input type="text" id="newDjName" placeholder="DJ Name" style="padding:10px; width:80%; margin-bottom:10px; border:1px solid #ddd; border-radius:8px;">
         <input type="color" id="newDjColor" value="#3498db" style="width:100%; height:40px; border:none; background:none; cursor:pointer;"><br><br>
         <button onclick="addOrUpdateDj()" style="background:#27ae60; width:100%;">Save & Sync Form</button><br><br>
         <button onclick="closeModal()" style="background:#95a5a6; width:100%;">Close</button>
@@ -66,7 +66,7 @@
     <div style="text-align: center;">
         <h2 id="monthLabel" style="margin: 0;">Month Year</h2>
         <button class="manage-btn" onclick="openModal()">MANAGE CREW</button>
-        <button onclick="goToToday()" style="font-size: 0.6rem; padding: 2px 8px; margin-left: 5px; background: #95a5a6;">TODAY</button>
+        <button onclick="goToToday()" style="font-size: 0.6rem; padding: 2px 8px; margin-left: 5px; background: #95a5a6; color:white; border-radius:4px; border:none; cursor:pointer;">TODAY</button>
     </div>
     <button onclick="changeMonth(1)">NEXT ▶</button>
 </div>
@@ -74,8 +74,8 @@
 <div id="calendar" class="calendar-grid"></div>
 
 <script>
-    // YOUR NEW GOOGLE APPS SCRIPT URL
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbzeNOknbVPmveeF8ccZjqBGXYWVnBlsY4FMVfl1mOL85ZWuMZINV_Ag3ksz27Z3fshN/exec'; 
+    // UPDATED WEB APP URL
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbwf4WF-sQw0Khpyg37H9S0fN9o2Vxs5vrIMUwyWEbNcuWWCZ7djmqi3LV2imZH0x00w/exec'; 
     
     let viewDate = new Date();
     let offData = []; 
@@ -83,7 +83,6 @@
     let djSettings = [];
 
     const clean = (str) => str ? str.replace(/\\,/g, ',').replace(/\\n/g, ' ').trim() : "";
-
     function formatTime(icalStr) {
         if(!icalStr) return "";
         let hh = parseInt(icalStr.substring(9, 11));
@@ -118,46 +117,56 @@
     }
 
     async function init() {
+        document.getElementById('loading-overlay').style.display = 'flex';
+        
         try {
             const res = await fetch(scriptURL);
             const data = await res.json();
-            offData = data.offData;
-            djSettings = data.djs;
-            showData = await loadIcalData();
-            document.getElementById('loading-overlay').style.display = 'none';
-            render();
-        } catch(e) { console.error("Sync failed"); }
+            offData = data.offData || [];
+            djSettings = data.djs || [];
+        } catch(e) { 
+            console.error("Google Sync Failed. Showing ICS data only.");
+        }
+
+        showData = await loadIcalData();
+        document.getElementById('loading-overlay').style.display = 'none';
+        render();
     }
 
     function render() {
         const grid = document.getElementById('calendar');
+        if (!grid) return;
         grid.innerHTML = '';
+        
         const month = viewDate.getMonth(), year = viewDate.getFullYear(), now = new Date();
         document.getElementById('monthLabel').innerText = viewDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+        
         ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => grid.innerHTML += `<div class="weekday">${d}</div>`);
-        const firstDay = new Date(year, month, 1).getDay(), daysInMonth = new Date(year, month + 1, 0).getDate();
+        
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        
         for(let i=0; i<firstDay; i++) grid.innerHTML += `<div class="day other-month"></div>`;
 
         for(let d=1; d<=daysInMonth; d++) {
             const dateStr = `${year}-${(month+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`;
             const isToday = (d === now.getDate() && month === now.getMonth() && year === now.getFullYear());
-            const todayOff = offData.filter(row => row[1] === dateStr);
-            const todayShows = showData.filter(s => s.date === dateStr);
             
-            // Availability is total crew minus those off
-            const available = djSettings.length - todayOff.length;
+            const todayOff = (offData || []).filter(row => row[1] === dateStr);
+            const todayShows = (showData || []).filter(s => s.date === dateStr);
+            
+            const totalDJs = djSettings.length || 4;
+            const available = totalDJs - todayOff.length;
             const isConflict = todayShows.length > available;
 
             let dayHtml = `<div class="day ${isConflict ? 'conflict' : ''} ${isToday ? 'today' : ''}"><span class="date-num">${d}</span>`;
             
-            // 1. DJs OFF (TOP)
             todayOff.forEach(row => {
                 const dj = djSettings.find(s => s.name.toLowerCase() === row[0].toLowerCase());
                 const color = dj ? dj.color : "#95a5a6";
                 dayHtml += `<div class="name-tag" style="background:${color}">${row[0]}</div>`;
             });
 
-            // 2. SHOWS (BELOW)
             todayShows.forEach(s => {
                 dayHtml += `<div class="show-box"><b>🎤 ${s.client}</b>${s.time}<i>@ ${s.loc}</i></div>`;
             });
@@ -167,10 +176,9 @@
         }
     }
 
-    // Modal Logic
     function openModal() {
         document.getElementById('djModal').style.display = 'block';
-        document.getElementById('djSettingsList').innerHTML = djSettings.map(dj => `
+        document.getElementById('djSettingsList').innerHTML = (djSettings || []).map(dj => `
             <div class="dj-row">
                 <strong>${dj.name}</strong>
                 <input type="color" value="${dj.color}" onchange="updateDjColor('${dj.name}', this.value)">
