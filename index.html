@@ -40,7 +40,7 @@
         
         .alert-text { color: var(--conflict); font-size: 10px; font-weight: bold; text-align: center; background: #ffebeb; padding: 4px; border-radius: 4px; margin-top: auto; }
         
-        /* Navigation Buttons */
+        /* UI Elements */
         button { padding: 10px 18px; cursor: pointer; border: none; border-radius: 8px; background: var(--dark); color: white; font-weight: bold; transition: 0.2s; }
         button:hover { opacity: 0.9; transform: translateY(-1px); }
         .save-btn { background: #27ae60; }
@@ -63,7 +63,7 @@
 </div>
 
 <div class="controls">
-    <strong>TIME OFF:</strong>
+    <strong>TIME OFF REQUEST:</strong>
     <select id="djName">
         <option value="Lane">Lane</option>
         <option value="Jacob">Jacob</option>
@@ -71,12 +71,13 @@
         <option value="Dylan">Dylan</option>
     </select>
     <input type="date" id="offDate">
-    <button class="save-btn" onclick="saveToCloud()">SAVE REQUEST</button>
+    <button class="save-btn" onclick="saveToCloud()">SAVE TO CLOUD</button>
 </div>
 
 <div id="calendar" class="calendar-grid"></div>
 
 <script>
+    // MAKE SURE THIS IS YOUR NEWEST DEPLOYMENT URL
     const scriptURL = 'https://script.google.com/macros/s/AKfycbwYgGRDSKn6UbesekzWOUcAKzf_HcNGzwDmIkLO4hc882FzibICvCtUNB7l7i4W_40G/exec'; 
     
     let viewDate = new Date();
@@ -97,7 +98,7 @@
     async function loadIcalData() {
         try {
             const res = await fetch('events.ics?t=' + new Date().getTime());
-            if (!res.ok) throw new Error("ICS not found");
+            if (!res.ok) throw new Error("ICS missing");
             let text = await res.text();
             text = text.replace(/\r?\n[ \t]/g, "");
             const events = [];
@@ -128,7 +129,7 @@
         try {
             const res = await fetch(scriptURL);
             offData = await res.json();
-        } catch(e) { console.error("Sync failed"); }
+        } catch(e) { console.error("Data Sync Error"); }
         document.getElementById('loading-overlay').style.display = 'none';
         render();
     }
@@ -136,14 +137,14 @@
     async function saveToCloud() {
         const name = document.getElementById('djName').value;
         const date = document.getElementById('offDate').value;
-        if(!date) return alert("Select a date!");
+        if(!date) return alert("Pick a date first!");
         const btn = document.querySelector('.save-btn');
         btn.innerText = "SAVING...";
         btn.disabled = true;
         try {
             await fetch(scriptURL, { method: 'POST', body: JSON.stringify({ name, date }) });
             location.reload(); 
-        } catch(e) { alert("Error saving."); btn.innerText = "SAVE REQUEST"; btn.disabled = false; }
+        } catch(e) { alert("Sync Error."); btn.innerText = "SAVE TO CLOUD"; btn.disabled = false; }
     }
 
     function render() {
@@ -166,12 +167,9 @@
             const isRealToday = (d === now.getDate() && month === now.getMonth() && year === now.getFullYear());
             
             const todayShows = showData.filter(s => s.date === dateStr);
-            const todayOff = offData.filter(row => {
-                if (!row[0] || !row[1]) return false;
-                let dObj = new Date(row[1]);
-                let fmt = dObj.getFullYear() + "-" + String(dObj.getMonth()+1).padStart(2,'0') + "-" + String(dObj.getDate()).padStart(2,'0');
-                return fmt === dateStr;
-            });
+            
+            // Matches standardized [Name, Date] array from the Apps Script
+            const todayOff = offData.filter(row => row[1] === dateStr);
 
             const available = 4 - todayOff.length;
             const isConflict = todayShows.length > available;
