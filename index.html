@@ -5,43 +5,37 @@
     <title>Fun Squad DJs | Master Cloud Planner</title>
     <style>
         :root {
-            --lane: #2ecc71;   /* Green */
-            --jacob: #3498db;  /* Blue */
-            --jon: #f1c40f;    /* Yellow */
-            --dylan: #e67e22;  /* Orange */
-            --conflict: #e74c3c;
+            --lane: #2ecc71; --jacob: #3498db; --jon: #f1c40f; --dylan: #e67e22; --conflict: #e74c3c;
         }
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; }
-        
-        /* Navigation & Controls */
-        .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .controls { background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 10px; align-items: center; }
-        
-        /* Calendar Styling */
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; margin: 0; }
+        .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 25px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .controls { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: #ccc; border: 1px solid #ccc; border-radius: 8px; overflow: hidden; }
-        .weekday { background: #2c3e50; color: white; text-align: center; padding: 10px; font-weight: bold; }
+        .weekday { background: #2c3e50; color: white; text-align: center; padding: 10px; font-weight: bold; font-size: 0.9rem; }
         .day { background: white; min-height: 120px; padding: 8px; position: relative; }
         .day.conflict { background: #fff0f0; border: 2px solid var(--conflict); }
+        .date-num { font-weight: bold; color: #777; margin-bottom: 5px; display: block; }
         
-        /* Tags */
-        .name-tag { color: white; padding: 3px; border-radius: 3px; font-size: 11px; margin-bottom: 2px; text-align: center; font-weight: bold; text-transform: uppercase; }
+        /* DJ Name Tags */
+        .name-tag { color: white; padding: 4px; border-radius: 4px; font-size: 11px; margin-bottom: 3px; text-align: center; font-weight: bold; text-transform: uppercase; }
         .Lane { background: var(--lane); }
         .Jacob { background: var(--jacob); }
         .Jon { background: var(--jon); color: #333; }
         .Dylan { background: var(--dylan); }
         
-        .show-count { background: #34495e; color: white; font-size: 10px; padding: 2px 5px; border-radius: 3px; display: block; margin-bottom: 5px; width: fit-content; }
+        .show-tag { background: #34495e; color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px; display: inline-block; margin-bottom: 5px; }
         .alert-text { color: var(--conflict); font-size: 10px; font-weight: bold; margin-top: 5px; display: block; }
         
-        button { padding: 10px 20px; cursor: pointer; border: none; border-radius: 4px; background: #2c3e50; color: white; font-weight: bold; }
+        button { padding: 10px 20px; cursor: pointer; border: none; border-radius: 5px; background: #2c3e50; color: white; font-weight: bold; }
         .save-btn { background: #27ae60; }
+        select, input { padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
     </style>
 </head>
 <body>
 
 <div class="header">
     <button onclick="changeMonth(-1)">◀ PREV</button>
-    <h2 id="monthLabel">Month Year</h2>
+    <h2 id="monthLabel">Loading...</h2>
     <button onclick="changeMonth(1)">NEXT ▶</button>
 </div>
 
@@ -57,31 +51,23 @@
     <button class="save-btn" onclick="saveToCloud()">SAVE TO CALENDAR</button>
 </div>
 
-<div class="calendar-grid" id="calendar">
-    </div>
+<div id="calendar" class="calendar-grid"></div>
 
 <script>
-    // 1. CONFIGURATION
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbwYgGRDSKn6UbesekzWOUcAKzf_HcNGzwDmIkLO4hc882FzibICvCtUNB7l7i4W_40G/exec'; // The one from your Google Apps Script deployment
-    const icalURL = 'https://www.djreservations.com/iCal.axd';     // Your live show calendar URL
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbwYgGRDSKn6UbesekzWOUcAKzf_HcNGzwDmIkLO4hc882FzibICvCtUNB7l7i4W_40G/exec'; 
     
     let viewDate = new Date();
-    let offData = []; // Data from Google Sheets
-    let showData = []; // Data from iCal
-
-    async function init() {
-        // In a real setup, you'd fetch both here:
-        // const [res1, res2] = await Promise.all([fetch(scriptURL), fetch(icalURL)]);
-        // For now, we'll use the cloud loader:
-        loadFromCloud();
-    }
+    let offData = []; 
 
     async function loadFromCloud() {
         try {
             const res = await fetch(scriptURL);
             offData = await res.json();
             render();
-        } catch(e) { console.log("Cloud load failed, using local view."); render(); }
+        } catch(e) {
+            console.error("Cloud Error:", e);
+            render(); 
+        }
     }
 
     async function saveToCloud() {
@@ -89,13 +75,24 @@
         const date = document.getElementById('offDate').value;
         if(!date) return alert("Select a date!");
 
-        await fetch(scriptURL, {
-            method: 'POST',
-            body: JSON.stringify({ name, date })
-        });
-        
-        alert("Saved! This will now show up on all devices.");
-        loadFromCloud();
+        const btn = document.querySelector('.save-btn');
+        btn.innerText = "SAVING...";
+        btn.disabled = true;
+
+        try {
+            await fetch(scriptURL, {
+                method: 'POST',
+                body: JSON.stringify({ name, date })
+            });
+            alert("Success! Request saved.");
+            loadFromCloud(); // Refresh the view
+            btn.innerText = "SAVE TO CALENDAR";
+            btn.disabled = false;
+        } catch(e) {
+            alert("Error saving.");
+            btn.innerText = "SAVE TO CALENDAR";
+            btn.disabled = false;
+        }
     }
 
     function render() {
@@ -106,47 +103,52 @@
         
         document.getElementById('monthLabel').innerText = viewDate.toLocaleString('default', { month: 'long', year: 'numeric' });
 
-        // Weekday Headers
-        ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => {
-            grid.innerHTML += `<div class="weekday">${d}</div>`;
-        });
+        ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => grid.innerHTML += `<div class="weekday">${d}</div>`);
 
         const firstDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-        for(let i=0; i<firstDay; i++) grid.innerHTML += `<div class="day" style="background:#f9f9f9"></div>`;
+        for(let i=0; i<firstDay; i++) grid.innerHTML += `<div class="day" style="background:#f0f0f0"></div>`;
 
         for(let d=1; d<=daysInMonth; d++) {
             const dateStr = `${year}-${(month+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`;
             
-            // 1. Get DJs off today from the Cloud data
-// Replace the old filtering line with this one:
-const djsOffToday = offData.filter(row => {
-    // row[0] is the Name (e.g., "Lane")
-    // row[1] is the Date (e.g., "2026-08-29")
-    // We trim them just in case there are hidden spaces
-    return String(row[1]).trim() === dateStr;
-});
-            
-            // 2. Mock Show Counter (Logic: Weekends have 3 shows, weekdays 0)
-            const showsToday = (new Date(year, month, d).getDay() % 6 === 0) ? 3 : 0;
+            const djsOffToday = offData.filter(row => {
+                if (!row[1]) return false;
+                
+                let rawDate = row[1];
+                let formattedDate = "";
 
-            // 3. Conflict Logic: 4 total DJs. If shows > (4 - off), then we have a problem.
+                // Fix for Google turning strings into Date objects
+                if (typeof rawDate === "string") {
+                    formattedDate = rawDate.split('T')[0].trim();
+                } else {
+                    // If it's a date object, convert to YYYY-MM-DD
+                    let dObj = new Date(rawDate);
+                    formattedDate = dObj.getFullYear() + "-" + 
+                                   String(dObj.getMonth()+1).padStart(2,'0') + "-" + 
+                                   String(dObj.getDate()).padStart(2,'0');
+                }
+                
+                return formattedDate === dateStr;
+            });
+            
+            const dayOfWeek = new Date(year, month, d).getDay();
+            const showsToday = (dayOfWeek === 6 || dayOfWeek === 0) ? 3 : 0;
             const availableCount = 4 - djsOffToday.length;
-            const isConflict = showsToday > availableCount;
+            const isConflict = (showsToday > 0 && showsToday > availableCount);
 
             let dayHtml = `<div class="day ${isConflict ? 'conflict' : ''}">
-                <strong>${d}</strong><br>`;
+                <span class="date-num">${d}</span>`;
             
-            if(showsToday > 0) dayHtml += `<span class="show-count">🎸 ${showsToday} SHOWS</span>`;
+            if(showsToday > 0) dayHtml += `<span class="show-tag">🎸 ${showsToday} SHOWS</span>`;
 
             djsOffToday.forEach(row => {
-                dayHtml += `<div class="name-tag ${row[0]}">${row[0]}</div>`;
+                const name = String(row[0]).trim();
+                dayHtml += `<div class="name-tag ${name}">${name}</div>`;
             });
 
-            if(isConflict) {
-                dayHtml += `<span class="alert-text">⚠️ NEED ${showsToday - availableCount} MORE DJ(S)</span>`;
-            }
+            if(isConflict) dayHtml += `<span class="alert-text">⚠️ NEED ${showsToday - availableCount} MORE</span>`;
 
             dayHtml += `</div>`;
             grid.innerHTML += dayHtml;
@@ -158,7 +160,7 @@ const djsOffToday = offData.filter(row => {
         render();
     }
 
-    init();
+    loadFromCloud();
 </script>
 </body>
 </html>
