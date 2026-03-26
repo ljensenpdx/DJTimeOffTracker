@@ -2,135 +2,157 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Fun Squad DJs | Master Live Planner</title>
+    <title>Fun Squad DJs | Master Cloud Planner</title>
     <style>
-        :root { --primary: #2c3e50; --accent: #27ae60; --conflict: #e74c3c; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; padding: 20px; }
+        :root {
+            --lane: #2ecc71;   /* Green */
+            --jacob: #3498db;  /* Blue */
+            --jon: #f1c40f;    /* Yellow */
+            --dylan: #e67e22;  /* Orange */
+            --conflict: #e74c3c;
+        }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; }
         
-        /* Header & Nav */
-        .calendar-header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .nav-btn { background: var(--primary); color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        /* Navigation & Controls */
+        .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .controls { background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 10px; align-items: center; }
         
-        /* Controls Section */
-        .controls { background: #fff; padding: 20px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-        input, select { padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
-        .save-btn { background: var(--accent); color: white; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer; }
-
-        /* Calendar Grid */
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: #ddd; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; }
-        .weekday-label { background: var(--primary); color: white; text-align: center; padding: 10px; font-weight: bold; font-size: 0.9rem; }
-        .day { background: white; min-height: 110px; padding: 8px; position: relative; }
-        .day.today { background: #fffde7; }
-        .day.conflict { background: #fff0f0; }
-        .date-num { font-weight: bold; color: #777; margin-bottom: 5px; display: block; }
+        /* Calendar Styling */
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: #ccc; border: 1px solid #ccc; border-radius: 8px; overflow: hidden; }
+        .weekday { background: #2c3e50; color: white; text-align: center; padding: 10px; font-weight: bold; }
+        .day { background: white; min-height: 120px; padding: 8px; position: relative; }
+        .day.conflict { background: #fff0f0; border: 2px solid var(--conflict); }
         
-        /* Entries */
-        .event-bar { font-size: 11px; padding: 3px 6px; border-radius: 3px; color: white; margin-bottom: 2px; }
-        .show-tag { background: #34495e; color: white; font-size: 10px; padding: 2px 4px; border-radius: 3px; display: block; margin-bottom: 5px; }
-        .alert { color: var(--conflict); font-size: 10px; font-weight: bold; margin-top: 5px; }
+        /* Tags */
+        .name-tag { color: white; padding: 3px; border-radius: 3px; font-size: 11px; margin-bottom: 2px; text-align: center; font-weight: bold; text-transform: uppercase; }
+        .Lane { background: var(--lane); }
+        .Jacob { background: var(--jacob); }
+        .Jon { background: var(--jon); color: #333; }
+        .Dylan { background: var(--dylan); }
+        
+        .show-count { background: #34495e; color: white; font-size: 10px; padding: 2px 5px; border-radius: 3px; display: block; margin-bottom: 5px; width: fit-content; }
+        .alert-text { color: var(--conflict); font-size: 10px; font-weight: bold; margin-top: 5px; display: block; }
+        
+        button { padding: 10px 20px; cursor: pointer; border: none; border-radius: 4px; background: #2c3e50; color: white; font-weight: bold; }
+        .save-btn { background: #27ae60; }
     </style>
 </head>
 <body>
 
-<div class="calendar-header">
-    <button class="nav-btn" onclick="changeMonth(-1)">◀ Prev</button>
-    <h2 id="monthDisplay">Month Year</h2>
-    <button class="nav-btn" onclick="changeMonth(1)">Next ▶</button>
+<div class="header">
+    <button onclick="changeMonth(-1)">◀ PREV</button>
+    <h2 id="monthLabel">Month Year</h2>
+    <button onclick="changeMonth(1)">NEXT ▶</button>
 </div>
 
 <div class="controls">
-    <strong>Add Time Off:</strong>
-    <select id="djSelect">
-        <option value="Lane" data-color="#2ecc71">DJ Lane</option>
-        <option value="Jessica" data-color="#9b59b6">DJ Jessica</option>
-        <option value="Staff" data-color="#3498db">Other Staff</option>
+    <strong>NEW REQUEST:</strong>
+    <select id="djName">
+        <option value="Lane">Lane</option>
+        <option value="Jacob">Jacob</option>
+        <option value="Jon">Jon</option>
+        <option value="Dylan">Dylan</option>
     </select>
     <input type="date" id="offDate">
-    <input type="text" id="reason" placeholder="Reason">
-    <button class="save-btn" onclick="saveEntry()">Save Request</button>
+    <button class="save-btn" onclick="saveToCloud()">SAVE TO CALENDAR</button>
 </div>
 
-<div class="calendar-grid" id="grid">
+<div class="calendar-grid" id="calendar">
     </div>
 
 <script>
-    let currentViewDate = new Date(); // Starts at today
-    let savedEntries = JSON.parse(localStorage.getItem('funsquad_v2')) || [];
+    // 1. CONFIGURATION
+    const scriptURL = 'Yhttps://script.google.com/macros/s/AKfycbwYgGRDSKn6UbesekzWOUcAKzf_HcNGzwDmIkLO4hc882FzibICvCtUNB7l7i4W_40G/exec'; // The one from your Google Apps Script deployment
+    const icalURL = 'https://www.djreservations.com/iCal.axd';     // Your live show calendar URL
+    
+    let viewDate = new Date();
+    let offData = []; // Data from Google Sheets
+    let showData = []; // Data from iCal
 
-    function renderCalendar() {
-        const grid = document.getElementById('grid');
-        const monthDisplay = document.getElementById('monthDisplay');
+    async function init() {
+        // In a real setup, you'd fetch both here:
+        // const [res1, res2] = await Promise.all([fetch(scriptURL), fetch(icalURL)]);
+        // For now, we'll use the cloud loader:
+        loadFromCloud();
+    }
+
+    async function loadFromCloud() {
+        try {
+            const res = await fetch(scriptURL);
+            offData = await res.json();
+            render();
+        } catch(e) { console.log("Cloud load failed, using local view."); render(); }
+    }
+
+    async function saveToCloud() {
+        const name = document.getElementById('djName').value;
+        const date = document.getElementById('offDate').value;
+        if(!date) return alert("Select a date!");
+
+        await fetch(scriptURL, {
+            method: 'POST',
+            body: JSON.stringify({ name, date })
+        });
+        
+        alert("Saved! This will now show up on all devices.");
+        loadFromCloud();
+    }
+
+    function render() {
+        const grid = document.getElementById('calendar');
         grid.innerHTML = '';
+        const month = viewDate.getMonth();
+        const year = viewDate.getFullYear();
+        
+        document.getElementById('monthLabel').innerText = viewDate.toLocaleString('default', { month: 'long', year: 'numeric' });
 
-        // 1. Set Month/Year Title
-        const year = currentViewDate.getFullYear();
-        const month = currentViewDate.getMonth();
-        monthDisplay.innerText = currentViewDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+        // Weekday Headers
+        ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => {
+            grid.innerHTML += `<div class="weekday">${d}</div>`;
+        });
 
-        // 2. Add Weekday Labels (Sun - Sat)
-        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        days.forEach(d => grid.innerHTML += `<div class="weekday-label">${d}</div>`);
-
-        // 3. Calculate Grid Spacing
-        const firstDayOfMonth = new Date(year, month, 1).getDay();
+        const firstDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-        // Add blank squares for days of previous month
-        for (let i = 0; i < firstDayOfMonth; i++) {
-            grid.innerHTML += `<div class="day" style="background:#f9f9f9"></div>`;
-        }
+        for(let i=0; i<firstDay; i++) grid.innerHTML += `<div class="day" style="background:#f9f9f9"></div>`;
 
-        // 4. Generate Days
-        for (let day = 1; day <= daysInMonth; day++) {
-            const dateStr = `${year}-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-            const isToday = new Date().toDateString() === new Date(year, month, day).toDateString();
+        for(let d=1; d<=daysInMonth; d++) {
+            const dateStr = `${year}-${(month+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`;
             
-            // Filter your LocalStorage entries for this date
-            const entries = savedEntries.filter(e => e.date === dateStr);
+            // 1. Get DJs off today from the Cloud data
+            const djsOffToday = offData.filter(row => row[1] === dateStr);
             
-            // Mock Show Data (You'll replace this with your iCal logic)
-            const showsCount = (day % 7 === 6 || day % 7 === 0) ? 2 : 0; // Just as an example for weekends
-            const isConflict = (showsCount + entries.length) > 3; // Example: if 3+ things happening
+            // 2. Mock Show Counter (Logic: Weekends have 3 shows, weekdays 0)
+            const showsToday = (new Date(year, month, d).getDay() % 6 === 0) ? 3 : 0;
 
-            let dayHtml = `<div class="day ${isToday ? 'today' : ''} ${isConflict ? 'conflict' : ''}">
-                <span class="date-num">${day}</span>`;
+            // 3. Conflict Logic: 4 total DJs. If shows > (4 - off), then we have a problem.
+            const availableCount = 4 - djsOffToday.length;
+            const isConflict = showsToday > availableCount;
+
+            let dayHtml = `<div class="day ${isConflict ? 'conflict' : ''}">
+                <strong>${d}</strong><br>`;
             
-            if(showsCount > 0) dayHtml += `<span class="show-tag">🎤 ${showsCount} SHOWS</span>`;
-            
-            entries.forEach(e => {
-                dayHtml += `<div class="event-bar" style="background:${e.color}">${e.name}: ${e.reason}</div>`;
+            if(showsToday > 0) dayHtml += `<span class="show-count">🎸 ${showsToday} SHOWS</span>`;
+
+            djsOffToday.forEach(row => {
+                dayHtml += `<div class="name-tag ${row[0]}">${row[0]}</div>`;
             });
 
-            if(isConflict) dayHtml += `<div class="alert">⚠️ TRIPLE BOOKED</div>`;
-            
+            if(isConflict) {
+                dayHtml += `<span class="alert-text">⚠️ NEED ${showsToday - availableCount} MORE DJ(S)</span>`;
+            }
+
             dayHtml += `</div>`;
             grid.innerHTML += dayHtml;
         }
     }
 
-    function changeMonth(offset) {
-        currentViewDate.setMonth(currentViewDate.getMonth() + offset);
-        renderCalendar();
+    function changeMonth(dir) {
+        viewDate.setMonth(viewDate.getMonth() + dir);
+        render();
     }
 
-    function saveEntry() {
-        const sel = document.getElementById('djSelect');
-        const newEntry = {
-            name: sel.value,
-            color: sel.options[sel.selectedIndex].dataset.color,
-            date: document.getElementById('offDate').value,
-            reason: document.getElementById('reason').value
-        };
-        if(!newEntry.date) return alert("Select a date first!");
-        
-        savedEntries.push(newEntry);
-        localStorage.setItem('funsquad_v2', JSON.stringify(savedEntries));
-        renderCalendar();
-    }
-
-    // Initial Load
-    renderCalendar();
+    init();
 </script>
-
 </body>
 </html>
