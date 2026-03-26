@@ -7,35 +7,43 @@
     <style>
         :root { --dark: #2c3e50; --light: #f0f2f5; --conflict: #e74c3c; --accent: #3498db; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--light); padding: 15px; margin: 0; color: #333; }
+        
+        /* Layout */
         .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 10px 20px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        
+        /* Calendar Grid */
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; background: #dfe4ea; border: 2px solid #dfe4ea; border-radius: 12px; overflow: hidden; }
         .weekday { background: var(--dark); color: white; text-align: center; padding: 12px; font-weight: bold; font-size: 0.85rem; text-transform: uppercase; }
         .day { background: white; min-height: 200px; padding: 10px; display: flex; flex-direction: column; gap: 5px; position: relative; }
         .day.today { background: #fff9db; border: 2px solid #f1c40f; }
+        .day.other-month { background: #f8f9fa; color: #ccc; }
         .date-num { font-weight: 900; color: #a4b0be; font-size: 1.1rem; }
         
-        /* Event Box Styling */
+        /* Show Box Styling */
         .show-box { color: white; font-size: 10px; padding: 8px; border-radius: 6px; margin-top: 2px; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.2); border: 1px solid rgba(0,0,0,0.1); }
         .show-box b { display: block; color: #fff; font-size: 11px; margin-bottom: 3px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
-        .dj-line { font-weight: 900; background: rgba(0,0,0,0.25); padding: 2px 5px; border-radius: 4px; display: inline-block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .dj-line { font-weight: 900; background: rgba(0,0,0,0.25); padding: 2px 5px; border-radius: 4px; display: inline-block; margin-bottom: 4px; text-transform: uppercase; }
         
-        /* Icon Tray */
+        /* Equipment Icons */
         .icon-tray { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; background: rgba(255,255,255,0.2); padding: 4px; border-radius: 4px; }
         .s-icon { font-size: 13px; filter: drop-shadow(1px 1px 0px rgba(0,0,0,0.3)); }
-        .up-count { font-size: 9px; font-weight: 900; margin-left: -2px; vertical-align: top; }
+        .up-count { font-size: 9px; font-weight: 900; margin-left: -1px; vertical-align: top; }
 
+        /* Modals */
         .modal { display:none; position:fixed; z-index:2000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.6); }
         .modal-content { background:white; margin:2% auto; padding:25px; width:360px; border-radius:15px; text-align: left; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
         .check-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-weight: bold; }
         input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
         select { width: 100%; padding: 8px; border-radius: 6px; margin-bottom: 10px; border: 1px solid #ddd; }
         button { padding: 10px 18px; cursor: pointer; border: none; border-radius: 8px; background: var(--dark); color: white; font-weight: bold; }
+        
         #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; justify-content: center; align-items: center; z-index: 3000; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div id="loading-overlay">Syncing Fun Squad Data...</div>
+
 <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
 <form id="cors_bypass_form" method="POST" target="hidden_iframe" style="display:none;"></form>
 
@@ -43,11 +51,12 @@
     <div class="modal-content">
         <h2 id="assignTitle" style="margin-top:0">Show Details</h2>
         <p id="assignDetails" style="color:#666; font-size:0.8rem;"></p>
+        <div id="offWarning" style="color:red; font-weight:bold; font-size:0.75rem; margin-bottom:10px; display:none;">⚠️ SELECTED DJ HAS THIS DAY OFF!</div>
         
         <label>Primary DJ:</label>
-        <select id="primarySelect"></select>
+        <select id="primarySelect" onchange="checkOffStatus()"></select>
         <label>Secondary DJ:</label>
-        <select id="secondarySelect"></select>
+        <select id="secondarySelect" onchange="checkOffStatus()"></select>
 
         <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
         <h3 style="margin-bottom:10px;">Equipment & Services</h3>
@@ -57,10 +66,27 @@
         <div class="check-row"><input type="checkbox" id="checkPrints"> On Site Prints (🖨️)</div>
         <div class="check-row"><input type="checkbox" id="checkGuestbook"> Audio Guestbook (☎️)</div>
         <div class="check-row"><input type="checkbox" id="checkKaraoke"> Karaoke (🎤) <small style="color:red">*Forces Lane</small></div>
-        <div class="check-row">Up Lights (💡): <select id="uplightSelect" style="width:70px; margin-left:10px;"><option value="0">0</option><option value="4">4</option><option value="8">8</option><option value="12">12</option><option value="16">16</option></select></div>
+        <div class="check-row">Up Lights (💡): 
+            <select id="uplightSelect" style="width:70px; margin-left:10px;">
+                <option value="0">0</option><option value="4">4</option><option value="8">8</option><option value="12">12</option><option value="16">16</option>
+            </select>
+        </div>
 
         <button style="background:#27ae60; width:100%; margin-top:10px;" id="saveAssignBtn" onclick="submitAssignment()">SAVE DETAILS</button><br><br>
         <button onclick="closeModal('assignModal')" style="background:#95a5a6; width:100%;">Cancel</button>
+    </div>
+</div>
+
+<div id="djModal" class="modal">
+    <div class="modal-content">
+        <h2>Manage Crew</h2>
+        <div id="djSettingsList"></div>
+        <button style="background:var(--accent); width:100%;" id="saveColorsBtn" onclick="saveAllColors()">SAVE COLORS</button>
+        <hr>
+        <input type="text" id="newDjName" placeholder="Name" style="padding:10px; width:80%; margin-bottom:5px; border-radius:8px; border:1px solid #ddd;">
+        <input type="color" id="newDjColor" value="#3498db" style="width:100%; height:30px;"><br><br>
+        <button style="background:#27ae60; width:100%;" id="addDjBtn" onclick="addNewDj()">ADD DJ</button><br><br>
+        <button onclick="closeModal('djModal')" style="background:#95a5a6; width:100%;">Close</button>
     </div>
 </div>
 
@@ -69,7 +95,7 @@
     <div style="text-align: center;">
         <h2 id="monthLabel" style="margin: 0;">Month Year</h2>
         <button style="background:var(--accent); font-size:0.7rem;" onclick="openModal('djModal')">CREW</button>
-        <button onclick="goToToday()" style="font-size:0.6rem; padding:2px 8px; background:#95a5a6; color:white;">TODAY</button>
+        <button onclick="goToToday()" style="font-size:0.6rem; padding:2px 8px; background:#95a5a6;">TODAY</button>
     </div>
     <button onclick="changeMonth(1)">NEXT ▶</button>
 </div>
@@ -82,7 +108,7 @@
 
     let viewDate = new Date();
     let offData = [], showData = [], djSettings = [], assignments = [];
-    let currentEventId = null;
+    let currentEventId = null, currentEventDate = null;
 
     const clean = (str) => str ? str.replace(/\\,/g, ',').replace(/\\n/g, ' ').trim() : "";
     function formatTime(icalStr) {
@@ -171,9 +197,8 @@
                         djText = assign.primary;
                     }
 
-                    // Build Icons
                     if(assign.ceremony) iconsHtml += `<span class="s-icon">🔈</span>`;
-                    if(assign.reception) iconsHtml += `<span class="s-icon" style="filter: hue-rotate(150deg);">🔊</span>`;
+                    if(assign.reception) iconsHtml += `<span class="s-icon" style="filter:hue-rotate(150deg);">🔊</span>`;
                     if(assign.booth) iconsHtml += `<span class="s-icon">📷</span>`;
                     if(assign.prints) iconsHtml += `<span class="s-icon">🖨️</span>`;
                     if(assign.guestbook) iconsHtml += `<span class="s-icon">☎️</span>`;
@@ -181,7 +206,7 @@
                     if(assign.karaoke) iconsHtml += `<span class="s-icon">🎤</span>`;
                 }
 
-                dayHtml += `<div class="show-box" style="background:${bgColor}" onclick="openAssign('${s.id}', '${s.client}')">
+                dayHtml += `<div class="show-box" style="background:${bgColor}" onclick="openAssign('${s.id}', '${s.client}', '${s.date}')">
                     <div class="dj-line">${djText}</div>
                     <b><span class="id-badge">#${s.id}</span>${s.client}</b>
                     ${iconsHtml ? `<div class="icon-tray">${iconsHtml}</div>` : ''}
@@ -192,20 +217,18 @@
         }
     }
 
-    function openAssign(id, client) {
-        currentEventId = id;
+    function openAssign(id, client, date) {
+        currentEventId = id; currentEventDate = date;
         document.getElementById('assignTitle').innerText = "Show Details #" + id;
         document.getElementById('assignDetails').innerText = client;
-        const pSel = document.getElementById('primarySelect');
-        const sSel = document.getElementById('secondarySelect');
+        const pSel = document.getElementById('primarySelect'), sSel = document.getElementById('secondarySelect');
         pSel.innerHTML = sSel.innerHTML = '<option value="">None</option>';
         djSettings.forEach(dj => {
             pSel.innerHTML += `<option value="${dj.name}">${dj.name}</option>`;
             sSel.innerHTML += `<option value="${dj.name}">${dj.name}</option>`;
         });
         const curr = assignments.find(a => a.id === id) || {};
-        pSel.value = curr.primary || "";
-        sSel.value = curr.secondary || "";
+        pSel.value = curr.primary || ""; sSel.value = curr.secondary || "";
         document.getElementById('checkCeremony').checked = curr.ceremony || false;
         document.getElementById('checkReception').checked = curr.reception || false;
         document.getElementById('checkBooth').checked = curr.booth || false;
@@ -213,21 +236,26 @@
         document.getElementById('checkGuestbook').checked = curr.guestbook || false;
         document.getElementById('checkKaraoke').checked = curr.karaoke || false;
         document.getElementById('uplightSelect').value = curr.uplights || "0";
+        checkOffStatus();
         openModal('assignModal');
+    }
+
+    function checkOffStatus() {
+        const p = document.getElementById('primarySelect').value, s = document.getElementById('secondarySelect').value;
+        const warning = document.getElementById('offWarning');
+        const pOff = offData.some(row => row[1] === currentEventDate && row[0].toLowerCase() === p.toLowerCase());
+        const sOff = offData.some(row => row[1] === currentEventDate && row[0].toLowerCase() === s.toLowerCase());
+        warning.style.display = (pOff || sOff) ? 'block' : 'none';
     }
 
     function submitAssignment() {
         document.getElementById('saveAssignBtn').innerText = "SAVING...";
         submitHiddenForm({ 
             action: 'assignDJ', id: currentEventId, 
-            primary: document.getElementById('primarySelect').value, 
-            secondary: document.getElementById('secondarySelect').value,
-            ceremony: document.getElementById('checkCeremony').checked,
-            reception: document.getElementById('checkReception').checked,
-            booth: document.getElementById('checkBooth').checked,
-            prints: document.getElementById('checkPrints').checked,
-            guestbook: document.getElementById('checkGuestbook').checked,
-            uplights: document.getElementById('uplightSelect').value,
+            primary: document.getElementById('primarySelect').value, secondary: document.getElementById('secondarySelect').value,
+            ceremony: document.getElementById('checkCeremony').checked, reception: document.getElementById('checkReception').checked,
+            booth: document.getElementById('checkBooth').checked, prints: document.getElementById('checkPrints').checked,
+            guestbook: document.getElementById('checkGuestbook').checked, uplights: document.getElementById('uplightSelect').value,
             karaoke: document.getElementById('checkKaraoke').checked
         });
         setTimeout(() => location.reload(), 2500);
@@ -244,8 +272,28 @@
         form.submit();
     }
 
+    function addNewDj() {
+        submitHiddenForm({ action: 'addDJ', name: document.getElementById('newDjName').value, color: document.getElementById('newDjColor').value });
+        setTimeout(() => location.reload(), 2500);
+    }
+
+    function saveAllColors() {
+        const updates = Array.from(document.querySelectorAll('.dj-edit-row')).map(row => ({ name: row.dataset.name, color: row.querySelector('input').value }));
+        submitHiddenForm({ action: 'saveColors', updates: updates });
+        setTimeout(() => location.reload(), 2000);
+    }
+
     function openModal(id) { document.getElementById(id).style.display = 'block'; if(id === 'djModal') loadDjList(); }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    function loadDjList() {
+        document.getElementById('djSettingsList').innerHTML = djSettings.map(dj => `<div class="dj-edit-row" data-name="${dj.name}"><strong>${dj.name}</strong><input type="color" value="${dj.color}" style="margin-left:auto;"></div>`).join('');
+    }
+    function changeMonth(dir) {
+        viewDate.setDate(1); // Reset to 1st to avoid 31st vs 30th date skip
+        viewDate.setMonth(viewDate.getMonth() + dir);
+        render();
+    }
+    function goToToday() { viewDate = new Date(); render(); }
     init();
 </script>
 </body>
