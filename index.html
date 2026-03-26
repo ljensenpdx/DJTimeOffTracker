@@ -45,10 +45,10 @@
         <h2 id="assignTitle" style="margin-top:0">Show Details</h2>
         <p id="assignDetails" style="color:#666; font-size:0.8rem;"></p>
         <div id="offWarning" style="color:red; font-weight:bold; font-size:0.75rem; margin-bottom:10px; display:none;">⚠️ SELECTED DJ HAS THIS DAY OFF!</div>
-        <label>Primary DJ:</label><select id="primarySelect" onchange="checkOffStatus()" style="width:100%; padding:8px; border-radius:6px; margin-bottom:10px;"></select>
-        <label>Secondary DJ:</label><select id="secondarySelect" onchange="checkOffStatus()" style="width:100%; padding:8px; border-radius:6px; margin-bottom:10px;"></select>
-        <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
-        <h3 style="margin-bottom:10px;">Equipment & Services</h3>
+        <label>Primary DJ:</label><select id="primarySelect" onchange="checkOffStatus()" style="width:100%; padding:8px; margin-bottom:10px;"></select>
+        <label>Secondary DJ:</label><select id="secondarySelect" onchange="checkOffStatus()" style="width:100%; padding:8px; margin-bottom:10px;"></select>
+        <hr>
+        <h3>Equipment & Services</h3>
         <div class="check-row"><input type="checkbox" id="checkCeremony"> Ceremony System (🔈)</div>
         <div class="check-row"><input type="checkbox" id="checkReception"> Reception System (🔊)</div>
         <div class="check-row"><input type="checkbox" id="checkBooth"> Photo Booth (📷)</div>
@@ -68,7 +68,7 @@
         <button style="background:var(--accent); width:100%;" onclick="saveAllColors()">SAVE ALL COLORS</button>
         <hr>
         <h3>Add New DJ</h3>
-        <input type="text" id="newDjName" placeholder="Name" style="padding:10px; width:80%; margin-bottom:5px; border-radius:8px; border:1px solid #ddd;">
+        <input type="text" id="newDjName" placeholder="Name" style="padding:10px; width:80%; border-radius:8px; border:1px solid #ddd;">
         <input type="color" id="newDjColor" value="#3498db" style="width:100%; height:30px;"><br><br>
         <button style="background:var(--success); width:100%;" onclick="addNewDj()">ADD DJ</button><br><br>
         <button onclick="closeModal('djModal')" style="background:#95a5a6; width:100%;">Close</button>
@@ -99,7 +99,7 @@
 <div id="calendar" class="calendar-grid"></div>
 
 <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbz0othSrXn9a3hXoGkgcSztEbF9hxaY-GRltnwQ6XwhrRfeAN4Ba-DpyMJ21TpyDJCb/exec'; 
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbyfxk-FlMqATfLE1Dq3-PORjwaJZK_RqPIXwM4ZrPlBWNrObyaL5M3isFjAC9_oYU5k/exec'; 
     const GITHUB_REPO = 'ljensenpdx/DJTimeOffTracker'; 
 
     let viewDate = new Date();
@@ -107,11 +107,9 @@
     let currentEventId = null, currentEventDate = null;
 
     const clean = (str) => str ? str.replace(/\\,/g, ',').replace(/\\n/g, ' ').trim() : "";
-    
     function formatTime(icalStr) {
         if(!icalStr) return "";
-        let hh = parseInt(icalStr.substring(9, 11));
-        let mm = icalStr.substring(11, 13);
+        let hh = parseInt(icalStr.substring(9, 11)), mm = icalStr.substring(11, 13);
         let ampm = hh >= 12 ? 'PM' : 'AM';
         hh = hh % 12 || 12;
         return `${hh}:${mm} ${ampm}`;
@@ -131,17 +129,14 @@
                 const summary = clean(block.match(/SUMMARY:(.*)/)?.[1]);
                 const desc = clean(block.match(/DESCRIPTION:(.*)/)?.[1]);
                 const idMatch = (summary + desc).match(/(?:ID:\s*|#)(\d{4,})|(\d{4,})/);
-                
-                // Street Address with City Logic
                 let fullLoc = clean(block.match(/LOCATION:(.*)/)?.[1]) || "No Location";
                 let shortLoc = fullLoc.split(',').slice(0, 2).join(', ');
 
                 if (startRaw) {
                     events.push({
-                        id: idMatch ? (idMatch[1] || idMatch[2]) : "??",
+                        id: idMatch ? String(idMatch[1] || idMatch[2]) : "??",
                         date: `${startRaw.substring(0, 4)}-${startRaw.substring(4, 6)}-${startRaw.substring(6, 8)}`,
-                        rawStart: startRaw,
-                        rawEnd: endRaw,
+                        rawStart: startRaw, rawEnd: endRaw,
                         client: summary.replace("DJ Event for ", ""),
                         time: `${formatTime(startRaw)} - ${formatTime(endRaw)}`,
                         loc: shortLoc
@@ -184,11 +179,11 @@
             
             todayOff.forEach(row => {
                 const dj = djSettings.find(s => s.name.toLowerCase() === row[0].toLowerCase());
-                dayHtml += `<div style="background:${dj ? dj.color : '#95a5a6'}; color:white; padding:3px; border-radius:4px; font-size:9px; font-weight:bold; text-align:center;">${row[0]}</div>`;
+                dayHtml += `<div style="background:${dj ? dj.color : '#95a5a6'}; color:white; padding:3px; border-radius:4px; font-size:9px; font-weight:bold; text-align:center; margin-bottom:2px;">${row[0]}</div>`;
             });
 
             todayShows.forEach(s => {
-                const assign = assignments.find(a => a.id === s.id);
+                const assign = assignments.find(a => String(a.id) === String(s.id));
                 let bgColor = '#34495e', djText = "Unassigned", iconsHtml = "";
                 if (assign) {
                     const dj1 = djSettings.find(d => d.name === assign.primary);
@@ -203,7 +198,6 @@
                     if(assign.uplights > 0) iconsHtml += `<span class="s-icon">💡<span class="up-count">(${assign.uplights})</span></span>`;
                     if(assign.karaoke) iconsHtml += `<span class="s-icon">🎤</span>`;
                 }
-                // Spacing fix between ID and Name
                 dayHtml += `<div class="show-box" style="background:${bgColor}" onclick="openAssign('${s.id}', '${s.client}', '${s.date}')">
                     <div class="dj-line">${djText}</div><b><span class="id-badge">#${s.id}</span> ${s.client}</b>
                     ${iconsHtml ? `<div class="icon-tray">${iconsHtml}</div>` : ''}
@@ -213,38 +207,22 @@
         }
     }
 
-    // --- TEXT EXPORT LOGIC ---
     function copySchedule(djName) {
         const now = new Date();
-        const futureLimit = new Date();
-        futureLimit.setMonth(now.getMonth() + 8);
-        
+        const futureLimit = new Date(); futureLimit.setMonth(now.getMonth() + 8);
         const days = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
         let scheduleText = `${djName}'s Schedule (Next 8 Months):\n\n`;
-        
-        // Filter shows where this DJ is assigned
         const myShows = showData.filter(s => {
-            const d = new Date(s.date + "T12:00:00"); // Noon to avoid TZ flip
-            const assign = assignments.find(a => a.id === s.id);
-            const isWorking = assign && (assign.primary === djName || assign.secondary === djName);
-            return isWorking && d >= now && d <= futureLimit;
+            const d = new Date(s.date + "T12:00:00");
+            const assign = assignments.find(a => String(a.id) === String(s.id));
+            return assign && (assign.primary === djName || assign.secondary === djName) && d >= now && d <= futureLimit;
         }).sort((a,b) => new Date(a.date) - new Date(b.date));
-
-        if (myShows.length === 0) return alert("No shows assigned for this DJ.");
-
+        if (myShows.length === 0) return alert("No shows assigned.");
         myShows.forEach(s => {
             const d = new Date(s.date + "T12:00:00");
-            const dateFmt = `${d.getMonth() + 1}/${d.getDate()}`;
-            const dayFmt = days[d.getDay()];
-            const setup = formatTime(s.rawStart);
-            const end = formatTime(s.rawEnd);
-            
-            scheduleText += `${dateFmt} - ${dayFmt} - ${setup} to ${end}\n`;
+            scheduleText += `${d.getMonth() + 1}/${d.getDate()} - ${days[d.getDay()]} - ${formatTime(s.rawStart)} to ${formatTime(s.rawEnd)}\n`;
         });
-
-        navigator.clipboard.writeText(scheduleText).then(() => {
-            alert(`Schedule for ${djName} copied to clipboard!`);
-        });
+        navigator.clipboard.writeText(scheduleText).then(() => alert(`Copied to clipboard!`));
     }
 
     function openAssign(id, client, date) {
@@ -254,7 +232,7 @@
         const pSel = document.getElementById('primarySelect'), sSel = document.getElementById('secondarySelect');
         pSel.innerHTML = sSel.innerHTML = '<option value="">None</option>';
         djSettings.forEach(dj => { pSel.innerHTML += `<option value="${dj.name}">${dj.name}</option>`; sSel.innerHTML += `<option value="${dj.name}">${dj.name}</option>`; });
-        const curr = assignments.find(a => a.id === id) || {};
+        const curr = assignments.find(a => String(a.id) === String(id)) || {};
         pSel.value = curr.primary || ""; sSel.value = curr.secondary || "";
         document.getElementById('checkCeremony').checked = curr.ceremony || false;
         document.getElementById('checkReception').checked = curr.reception || false;
@@ -268,17 +246,15 @@
 
     function checkOffStatus() {
         const p = document.getElementById('primarySelect').value, s = document.getElementById('secondarySelect').value;
-        const warning = document.getElementById('offWarning');
         const pOff = offData.some(row => row[1] === currentEventDate && row[0].toLowerCase() === p.toLowerCase());
         const sOff = offData.some(row => row[1] === currentEventDate && row[0].toLowerCase() === s.toLowerCase());
-        warning.style.display = (pOff || sOff) ? 'block' : 'none';
+        document.getElementById('offWarning').style.display = (pOff || sOff) ? 'block' : 'none';
     }
 
     function submitAssignment() {
         document.getElementById('saveAssignBtn').innerText = "SAVING...";
         submitHiddenForm({ 
-            action: 'assignDJ', id: currentEventId, 
-            primary: document.getElementById('primarySelect').value, secondary: document.getElementById('secondarySelect').value,
+            action: 'assignDJ', id: currentEventId, primary: document.getElementById('primarySelect').value, secondary: document.getElementById('secondarySelect').value,
             ceremony: document.getElementById('checkCeremony').checked, reception: document.getElementById('checkReception').checked,
             booth: document.getElementById('checkBooth').checked, prints: document.getElementById('checkPrints').checked,
             guestbook: document.getElementById('checkGuestbook').checked, uplights: document.getElementById('uplightSelect').value,
