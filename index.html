@@ -2,45 +2,65 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Fun Squad DJs | Master Cloud Planner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fun Squad DJs | Master Planner</title>
     <style>
         :root {
             --lane: #2ecc71; --jacob: #3498db; --jon: #f1c40f; --dylan: #e67e22; --conflict: #e74c3c;
+            --dark: #2c3e50; --light: #f0f2f5;
         }
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; margin: 0; }
-        .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 25px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .controls { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: #ccc; border: 1px solid #ccc; border-radius: 8px; overflow: hidden; }
-        .weekday { background: #2c3e50; color: white; text-align: center; padding: 10px; font-weight: bold; font-size: 0.9rem; }
-        .day { background: white; min-height: 120px; padding: 8px; position: relative; }
-        .day.conflict { background: #fff0f0; border: 2px solid var(--conflict); }
-        .date-num { font-weight: bold; color: #777; margin-bottom: 5px; display: block; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--light); padding: 15px; margin: 0; color: #333; }
         
+        /* Layout */
+        .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 10px 20px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .controls { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        
+        /* Grid */
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; background: #dfe4ea; border: 2px solid #dfe4ea; border-radius: 12px; overflow: hidden; }
+        .weekday { background: var(--dark); color: white; text-align: center; padding: 12px; font-weight: bold; font-size: 0.85rem; text-transform: uppercase; }
+        
+        /* Days */
+        .day { background: white; min-height: 150px; padding: 10px; display: flex; flex-direction: column; gap: 5px; position: relative; }
+        .day.today { background: #fff9db; }
+        .day.conflict { background: #fff5f5; border: 2px solid var(--conflict); }
+        .day.other-month { background: #f8f9fa; color: #ccc; }
+        .date-num { font-weight: 900; color: #a4b0be; font-size: 1.1rem; }
+
         /* DJ Name Tags */
-        .name-tag { color: white; padding: 4px; border-radius: 4px; font-size: 11px; margin-bottom: 3px; text-align: center; font-weight: bold; text-transform: uppercase; }
+        .name-tag { color: white; padding: 5px; border-radius: 6px; font-size: 10px; text-align: center; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
         .Lane { background: var(--lane); }
         .Jacob { background: var(--jacob); }
         .Jon { background: var(--jon); color: #333; }
         .Dylan { background: var(--dylan); }
         
-        .show-tag { background: #34495e; color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px; display: inline-block; margin-bottom: 5px; }
-        .alert-text { color: var(--conflict); font-size: 10px; font-weight: bold; margin-top: 5px; display: block; }
+        /* Show Details */
+        .show-box { background: #34495e; color: white; font-size: 10px; padding: 6px; border-radius: 6px; border-left: 4px solid #1abc9c; }
+        .show-box b { display: block; color: #1abc9c; font-size: 11px; margin-bottom: 3px; }
+        .show-box i { display: block; font-style: normal; color: #bdc3c7; margin-top: 2px; }
         
-        button { padding: 10px 20px; cursor: pointer; border: none; border-radius: 5px; background: #2c3e50; color: white; font-weight: bold; }
-        .save-btn { background: #27ae60; }
-        select, input { padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        .alert-text { color: var(--conflict); font-size: 10px; font-weight: bold; text-align: center; background: #ffebeb; padding: 4px; border-radius: 4px; margin-top: auto; }
+        
+        /* Buttons/Inputs */
+        button { padding: 10px 18px; cursor: pointer; border: none; border-radius: 8px; background: var(--dark); color: white; font-weight: bold; transition: 0.2s; }
+        button:hover { opacity: 0.9; transform: translateY(-1px); }
+        .save-btn { background: var(--accent, #27ae60); }
+        select, input { padding: 10px; border: 1px solid #ced4da; border-radius: 8px; font-size: 0.9rem; outline: none; }
+        
+        #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); display: flex; justify-content: center; align-items: center; font-weight: bold; z-index: 1000; }
     </style>
 </head>
 <body>
 
+<div id="loading-overlay">Syncing Fun Squad Data...</div>
+
 <div class="header">
     <button onclick="changeMonth(-1)">◀ PREV</button>
-    <h2 id="monthLabel">Loading...</h2>
+    <h2 id="monthLabel">Month Year</h2>
     <button onclick="changeMonth(1)">NEXT ▶</button>
 </div>
 
 <div class="controls">
-    <strong>NEW REQUEST:</strong>
+    <strong>TIME OFF:</strong>
     <select id="djName">
         <option value="Lane">Lane</option>
         <option value="Jacob">Jacob</option>
@@ -48,7 +68,7 @@
         <option value="Dylan">Dylan</option>
     </select>
     <input type="date" id="offDate">
-    <button class="save-btn" onclick="saveToCloud()">SAVE TO CALENDAR</button>
+    <button class="save-btn" onclick="saveToCloud()">SAVE REQUEST</button>
 </div>
 
 <div id="calendar" class="calendar-grid"></div>
@@ -58,16 +78,66 @@
     
     let viewDate = new Date();
     let offData = []; 
+    let showData = [];
 
-    async function loadFromCloud() {
+    // Helper: Clean iCal strings
+    const clean = (str) => str ? str.replace(/\\,/g, ',').replace(/\\n/g, ' ').trim() : "";
+
+    // Helper: Convert DTSTART string to readable time
+    function formatTime(icalStr) {
+        if(!icalStr) return "";
+        let hh = parseInt(icalStr.substring(9, 11));
+        let mm = icalStr.substring(11, 13);
+        let ampm = hh >= 12 ? 'PM' : 'AM';
+        hh = hh % 12 || 12;
+        return `${hh}:${mm} ${ampm}`;
+    }
+
+    async function loadIcalData() {
+        try {
+            const res = await fetch('events.ics');
+            let text = await res.text();
+            
+            // "Unfold" iCal lines (remove line breaks followed by a space)
+            text = text.replace(/\r?\n[ \t]/g, "");
+
+            const events = [];
+            const blocks = text.split("BEGIN:VEVENT");
+            blocks.shift(); 
+
+            blocks.forEach(block => {
+                const summary = block.match(/SUMMARY:(.*)/)?.[1];
+                const loc = block.match(/LOCATION:(.*)/)?.[1];
+                const startRaw = block.match(/DTSTART:(\d{8}T\d{6})/)?.[1];
+                const endRaw = block.match(/DTEND:(\d{8}T\d{6})/)?.[1];
+                
+                if (startRaw) {
+                    const dateStr = `${startRaw.substring(0, 4)}-${startRaw.substring(4, 6)}-${startRaw.substring(6, 8)}`;
+                    events.push({
+                        date: dateStr,
+                        client: clean(summary).replace("DJ Event for ", ""),
+                        timeRange: `${formatTime(startRaw)} - ${formatTime(endRaw)}`,
+                        loc: clean(loc).split(',')[0]
+                    });
+                }
+            });
+            return events;
+        } catch (e) {
+            console.error("ICS load error:", e);
+            return [];
+        }
+    }
+
+    async function init() {
+        document.getElementById('loading-overlay').style.display = 'flex';
+        showData = await loadIcalData();
         try {
             const res = await fetch(scriptURL);
             offData = await res.json();
-            render();
-        } catch(e) {
-            console.error("Cloud Error:", e);
-            render(); 
-        }
+        } catch(e) { console.error("Cloud error."); }
+        
+        document.getElementById('loading-overlay').style.display = 'none';
+        render();
     }
 
     async function saveToCloud() {
@@ -80,19 +150,9 @@
         btn.disabled = true;
 
         try {
-            await fetch(scriptURL, {
-                method: 'POST',
-                body: JSON.stringify({ name, date })
-            });
-            alert("Success! Request saved.");
-            loadFromCloud(); // Refresh the view
-            btn.innerText = "SAVE TO CALENDAR";
-            btn.disabled = false;
-        } catch(e) {
-            alert("Error saving.");
-            btn.innerText = "SAVE TO CALENDAR";
-            btn.disabled = false;
-        }
+            await fetch(scriptURL, { method: 'POST', body: JSON.stringify({ name, date }) });
+            location.reload(); 
+        } catch(e) { alert("Error saving."); btn.innerText = "SAVE REQUEST"; btn.disabled = false; }
     }
 
     function render() {
@@ -108,47 +168,37 @@
         const firstDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-        for(let i=0; i<firstDay; i++) grid.innerHTML += `<div class="day" style="background:#f0f0f0"></div>`;
+        // Previous month days
+        for(let i=0; i<firstDay; i++) grid.innerHTML += `<div class="day other-month"></div>`;
 
         for(let d=1; d<=daysInMonth; d++) {
             const dateStr = `${year}-${(month+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`;
+            const todayShows = showData.filter(s => s.date === dateStr);
             
-            const djsOffToday = offData.filter(row => {
+            const todayOff = offData.filter(row => {
                 if (!row[1]) return false;
-                
-                let rawDate = row[1];
-                let formattedDate = "";
-
-                // Fix for Google turning strings into Date objects
-                if (typeof rawDate === "string") {
-                    formattedDate = rawDate.split('T')[0].trim();
-                } else {
-                    // If it's a date object, convert to YYYY-MM-DD
-                    let dObj = new Date(rawDate);
-                    formattedDate = dObj.getFullYear() + "-" + 
-                                   String(dObj.getMonth()+1).padStart(2,'0') + "-" + 
-                                   String(dObj.getDate()).padStart(2,'0');
-                }
-                
-                return formattedDate === dateStr;
+                let dObj = new Date(row[1]);
+                let fmt = dObj.getFullYear() + "-" + String(dObj.getMonth()+1).padStart(2,'0') + "-" + String(dObj.getDate()).padStart(2,'0');
+                return fmt === dateStr;
             });
-            
-            const dayOfWeek = new Date(year, month, d).getDay();
-            const showsToday = (dayOfWeek === 6 || dayOfWeek === 0) ? 3 : 0;
-            const availableCount = 4 - djsOffToday.length;
-            const isConflict = (showsToday > 0 && showsToday > availableCount);
 
-            let dayHtml = `<div class="day ${isConflict ? 'conflict' : ''}">
+            const available = 4 - todayOff.length;
+            const isConflict = todayShows.length > available;
+            const isRealToday = new Date().toISOString().split('T')[0] === dateStr;
+
+            let dayHtml = `<div class="day ${isConflict ? 'conflict' : ''} ${isRealToday ? 'today' : ''}">
                 <span class="date-num">${d}</span>`;
             
-            if(showsToday > 0) dayHtml += `<span class="show-tag">🎸 ${showsToday} SHOWS</span>`;
+            todayShows.forEach(s => {
+                dayHtml += `<div class="show-box"><b>🎤 ${s.client}</b>${s.timeRange}<i>@ ${s.loc}</i></div>`;
+            });
 
-            djsOffToday.forEach(row => {
+            todayOff.forEach(row => {
                 const name = String(row[0]).trim();
                 dayHtml += `<div class="name-tag ${name}">${name}</div>`;
             });
 
-            if(isConflict) dayHtml += `<span class="alert-text">⚠️ NEED ${showsToday - availableCount} MORE</span>`;
+            if(isConflict) dayHtml += `<span class="alert-text">⚠️ NEED ${todayShows.length - available} MORE DJ(S)</span>`;
 
             dayHtml += `</div>`;
             grid.innerHTML += dayHtml;
@@ -160,7 +210,7 @@
         render();
     }
 
-    loadFromCloud();
+    init();
 </script>
 </body>
 </html>
