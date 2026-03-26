@@ -27,9 +27,10 @@
         .ics-btn { background: var(--success); }
         .today-link { display: block; text-align: center; color: #95a5a6; font-size: 0.65rem; text-decoration: none; margin-bottom: 10px; cursor: pointer; font-weight: bold; text-transform: uppercase; }
         .modal { display:none; position:fixed; z-index:2000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.6); }
-        .modal-content { background:white; margin:2% auto; padding:25px; width:360px; border-radius:15px; text-align: left; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
+        .modal-content { background:white; margin:2% auto; padding:25px; width:380px; border-radius:15px; text-align: left; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
         .check-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-weight: bold; }
-        .dj-edit-row { display: flex; align-items: center; justify-content: space-between; background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 5px; }
+        .dj-edit-row { display: flex; align-items: center; background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 10px; gap: 10px; }
+        .copy-btn { padding: 5px 10px; font-size: 10px; background: var(--success); }
         #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; justify-content: center; align-items: center; z-index: 3000; font-weight: bold; }
     </style>
 </head>
@@ -44,8 +45,8 @@
         <h2 id="assignTitle" style="margin-top:0">Show Details</h2>
         <p id="assignDetails" style="color:#666; font-size:0.8rem;"></p>
         <div id="offWarning" style="color:red; font-weight:bold; font-size:0.75rem; margin-bottom:10px; display:none;">⚠️ SELECTED DJ HAS THIS DAY OFF!</div>
-        <label>Primary DJ:</label><select id="primarySelect" onchange="checkOffStatus()"></select>
-        <label>Secondary DJ:</label><select id="secondarySelect" onchange="checkOffStatus()"></select>
+        <label>Primary DJ:</label><select id="primarySelect" onchange="checkOffStatus()" style="width:100%; padding:8px; border-radius:6px; margin-bottom:10px;"></select>
+        <label>Secondary DJ:</label><select id="secondarySelect" onchange="checkOffStatus()" style="width:100%; padding:8px; border-radius:6px; margin-bottom:10px;"></select>
         <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
         <h3 style="margin-bottom:10px;">Equipment & Services</h3>
         <div class="check-row"><input type="checkbox" id="checkCeremony"> Ceremony System (🔈)</div>
@@ -64,11 +65,12 @@
     <div class="modal-content">
         <h2>Manage Crew</h2>
         <div id="djSettingsList"></div>
-        <button style="background:var(--accent); width:100%;" id="saveColorsBtn" onclick="saveAllColors()">SAVE COLORS</button>
+        <button style="background:var(--accent); width:100%;" onclick="saveAllColors()">SAVE ALL COLORS</button>
         <hr>
+        <h3>Add New DJ</h3>
         <input type="text" id="newDjName" placeholder="Name" style="padding:10px; width:80%; margin-bottom:5px; border-radius:8px; border:1px solid #ddd;">
         <input type="color" id="newDjColor" value="#3498db" style="width:100%; height:30px;"><br><br>
-        <button style="background:var(--success); width:100%;" id="addDjBtn" onclick="addNewDj()">ADD DJ</button><br><br>
+        <button style="background:var(--success); width:100%;" onclick="addNewDj()">ADD DJ</button><br><br>
         <button onclick="closeModal('djModal')" style="background:#95a5a6; width:100%;">Close</button>
     </div>
 </div>
@@ -83,7 +85,7 @@
 </div>
 
 <div class="header">
-    <button class="nav-btn" onclick="changeMonth(-1)">◀ PREV</button>
+    <button style="background:var(--dark); width:80px;" onclick="changeMonth(-1)">◀ PREV</button>
     <div class="header-center">
         <h2 id="monthLabel">Month Year</h2>
         <div class="btn-group">
@@ -91,18 +93,64 @@
             <button class="ics-btn" onclick="openModal('uploadModal')">ICS</button>
         </div>
     </div>
-    <button class="nav-btn" onclick="changeMonth(1)">NEXT ▶</button>
+    <button style="background:var(--dark); width:80px;" onclick="changeMonth(1)">NEXT ▶</button>
 </div>
 <div class="today-link" onclick="goToToday()">Jump to Today</div>
 <div id="calendar" class="calendar-grid"></div>
 
 <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbzD5oSI_dWKMNl9xeC9zp4bHPvAwzKU6K6jrQ4hx36zduuZVkmrOPIxM2GvMN8lYKg/exec'; 
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbz0othSrXn9a3hXoGkgcSztEbF9hxaY-GRltnwQ6XwhrRfeAN4Ba-DpyMJ21TpyDJCb/exec'; 
     const GITHUB_REPO = 'ljensenpdx/DJTimeOffTracker'; 
 
     let viewDate = new Date();
     let offData = [], showData = [], djSettings = [], assignments = [];
     let currentEventId = null, currentEventDate = null;
+
+    const clean = (str) => str ? str.replace(/\\,/g, ',').replace(/\\n/g, ' ').trim() : "";
+    
+    function formatTime(icalStr) {
+        if(!icalStr) return "";
+        let hh = parseInt(icalStr.substring(9, 11));
+        let mm = icalStr.substring(11, 13);
+        let ampm = hh >= 12 ? 'PM' : 'AM';
+        hh = hh % 12 || 12;
+        return `${hh}:${mm} ${ampm}`;
+    }
+
+    async function loadIcalData() {
+        try {
+            const res = await fetch('events.ics?t=' + new Date().getTime());
+            let text = await res.text();
+            text = text.replace(/\r?\n[ \t]/g, "");
+            const events = [];
+            const blocks = text.split("BEGIN:VEVENT");
+            blocks.shift(); 
+            blocks.forEach(block => {
+                const startRaw = block.match(/DTSTART:(\d{8}T\d{6})/)?.[1];
+                const endRaw = block.match(/DTEND:(\d{8}T\d{6})/)?.[1];
+                const summary = clean(block.match(/SUMMARY:(.*)/)?.[1]);
+                const desc = clean(block.match(/DESCRIPTION:(.*)/)?.[1]);
+                const idMatch = (summary + desc).match(/(?:ID:\s*|#)(\d{4,})|(\d{4,})/);
+                
+                // Street Address with City Logic
+                let fullLoc = clean(block.match(/LOCATION:(.*)/)?.[1]) || "No Location";
+                let shortLoc = fullLoc.split(',').slice(0, 2).join(', ');
+
+                if (startRaw) {
+                    events.push({
+                        id: idMatch ? (idMatch[1] || idMatch[2]) : "??",
+                        date: `${startRaw.substring(0, 4)}-${startRaw.substring(4, 6)}-${startRaw.substring(6, 8)}`,
+                        rawStart: startRaw,
+                        rawEnd: endRaw,
+                        client: summary.replace("DJ Event for ", ""),
+                        time: `${formatTime(startRaw)} - ${formatTime(endRaw)}`,
+                        loc: shortLoc
+                    });
+                }
+            });
+            return events;
+        } catch (e) { return []; }
+    }
 
     async function init() {
         document.getElementById('loading-overlay').style.display = 'flex';
@@ -116,33 +164,6 @@
         showData = await loadIcalData();
         document.getElementById('loading-overlay').style.display = 'none';
         render();
-    }
-
-    async function loadIcalData() {
-        try {
-            const res = await fetch('events.ics?t=' + new Date().getTime());
-            let text = await res.text();
-            text = text.replace(/\r?\n[ \t]/g, "");
-            const events = [];
-            const blocks = text.split("BEGIN:VEVENT");
-            blocks.shift(); 
-            blocks.forEach(block => {
-                const startRaw = block.match(/DTSTART:(\d{8}T\d{6})/)?.[1];
-                const summary = block.match(/SUMMARY:(.*)/)?.[1].replace(/\\,/g, ',').replace(/\\n/g, ' ').trim();
-                const desc = (block.match(/DESCRIPTION:(.*)/)?.[1] || "").trim();
-                const idMatch = (summary + desc).match(/(?:ID:\s*|#)(\d{4,})|(\d{4,})/);
-                if (startRaw) {
-                    events.push({
-                        id: idMatch ? (idMatch[1] || idMatch[2]) : "??",
-                        date: `${startRaw.substring(0, 4)}-${startRaw.substring(4, 6)}-${startRaw.substring(6, 8)}`,
-                        client: summary.replace("DJ Event for ", ""),
-                        time: "Wedding Day",
-                        loc: (block.match(/LOCATION:(.*)/)?.[1] || "No Location").split(',')[0]
-                    });
-                }
-            });
-            return events;
-        } catch (e) { return []; }
     }
 
     function render() {
@@ -182,13 +203,48 @@
                     if(assign.uplights > 0) iconsHtml += `<span class="s-icon">💡<span class="up-count">(${assign.uplights})</span></span>`;
                     if(assign.karaoke) iconsHtml += `<span class="s-icon">🎤</span>`;
                 }
+                // Spacing fix between ID and Name
                 dayHtml += `<div class="show-box" style="background:${bgColor}" onclick="openAssign('${s.id}', '${s.client}', '${s.date}')">
-                    <div class="dj-line">${djText}</div><b><span class="id-badge">#${s.id}</span>${s.client}</b>
+                    <div class="dj-line">${djText}</div><b><span class="id-badge">#${s.id}</span> ${s.client}</b>
                     ${iconsHtml ? `<div class="icon-tray">${iconsHtml}</div>` : ''}
                     <div style="font-size:8px; opacity:0.8; margin-top:4px;">@ ${s.loc}</div></div>`;
             });
             grid.innerHTML += dayHtml + `</div>`;
         }
+    }
+
+    // --- TEXT EXPORT LOGIC ---
+    function copySchedule(djName) {
+        const now = new Date();
+        const futureLimit = new Date();
+        futureLimit.setMonth(now.getMonth() + 8);
+        
+        const days = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+        let scheduleText = `${djName}'s Schedule (Next 8 Months):\n\n`;
+        
+        // Filter shows where this DJ is assigned
+        const myShows = showData.filter(s => {
+            const d = new Date(s.date + "T12:00:00"); // Noon to avoid TZ flip
+            const assign = assignments.find(a => a.id === s.id);
+            const isWorking = assign && (assign.primary === djName || assign.secondary === djName);
+            return isWorking && d >= now && d <= futureLimit;
+        }).sort((a,b) => new Date(a.date) - new Date(b.date));
+
+        if (myShows.length === 0) return alert("No shows assigned for this DJ.");
+
+        myShows.forEach(s => {
+            const d = new Date(s.date + "T12:00:00");
+            const dateFmt = `${d.getMonth() + 1}/${d.getDate()}`;
+            const dayFmt = days[d.getDay()];
+            const setup = formatTime(s.rawStart);
+            const end = formatTime(s.rawEnd);
+            
+            scheduleText += `${dateFmt} - ${dayFmt} - ${setup} to ${end}\n`;
+        });
+
+        navigator.clipboard.writeText(scheduleText).then(() => {
+            alert(`Schedule for ${djName} copied to clipboard!`);
+        });
     }
 
     function openAssign(id, client, date) {
@@ -278,7 +334,14 @@
     function openModal(id) { document.getElementById(id).style.display = 'block'; if(id === 'djModal') loadDjList(); }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
     function loadDjList() {
-        document.getElementById('djSettingsList').innerHTML = djSettings.map(dj => `<div class="dj-edit-row" data-name="${dj.name}"><strong>${dj.name}</strong><input type="color" value="${dj.color}" style="margin-left:auto;"></div>`).join('');
+        document.getElementById('djSettingsList').innerHTML = djSettings.map(dj => `
+            <div class="dj-edit-row" data-name="${dj.name}">
+                <strong>${dj.name}</strong>
+                <div style="display:flex; gap:10px; align-items:center; margin-left:auto;">
+                    <button class="copy-btn" onclick="copySchedule('${dj.name}')">📋 EXPORT</button>
+                    <input type="color" value="${dj.color}" style="width:30px; height:30px; border:none; cursor:pointer;">
+                </div>
+            </div>`).join('');
     }
     function changeMonth(dir) { viewDate.setDate(1); viewDate.setMonth(viewDate.getMonth() + dir); render(); }
     function goToToday() { viewDate = new Date(); render(); }
