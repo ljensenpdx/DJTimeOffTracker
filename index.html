@@ -3,16 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fun Squad DJs | Master Schedule</title>
+    <title>Fun Squad DJs | Master Planner</title>
     <style>
-        :root {
-            --lane: #2ecc71; --jacob: #3498db; --jon: #f1c40f; --dylan: #e67e22; --conflict: #e74c3c;
-            --dark: #2c3e50; --light: #f0f2f5;
-        }
+        :root { --dark: #2c3e50; --light: #f0f2f5; --conflict: #e74c3c; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--light); padding: 15px; margin: 0; color: #333; }
         
         /* Layout */
-        .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 25px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 10px 20px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         
         /* Grid */
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; background: #dfe4ea; border: 2px solid #dfe4ea; border-radius: 12px; overflow: hidden; }
@@ -23,14 +20,10 @@
         .day.today { background: #fff9db; border: 2px solid #f1c40f; }
         .day.conflict { background: #fff5f5; border: 2px solid var(--conflict); }
         .day.other-month { background: #f8f9fa; color: #ccc; }
-        .date-num { font-weight: 900; color: #a4b0be; font-size: 1.1rem; margin-bottom: 2px; }
+        .date-num { font-weight: 900; color: #a4b0be; font-size: 1.1rem; }
 
         /* DJ Name Tags (Top Priority) */
         .name-tag { color: white; padding: 5px; border-radius: 6px; font-size: 10px; text-align: center; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
-        .Lane { background: var(--lane); }
-        .Jacob { background: var(--jacob); }
-        .Jon { background: var(--jon); color: #333; }
-        .Dylan { background: var(--dylan); }
         
         /* Show Details (Bottom Priority) */
         .show-box { background: #34495e; color: white; font-size: 10px; padding: 6px; border-radius: 6px; border-left: 4px solid #1abc9c; margin-top: 2px; }
@@ -39,22 +32,41 @@
         
         .alert-text { color: var(--conflict); font-size: 10px; font-weight: bold; text-align: center; background: #ffebeb; padding: 4px; border-radius: 4px; margin-top: auto; }
         
-        /* Navigation */
-        button { padding: 10px 18px; cursor: pointer; border: none; border-radius: 8px; background: var(--dark); color: white; font-weight: bold; transition: 0.2s; }
-        button:hover { opacity: 0.9; transform: translateY(-1px); }
+        /* Modal / UI */
+        #djModal { display:none; position:fixed; z-index:2000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.6); }
+        .modal-content { background:white; margin:10% auto; padding:25px; width:320px; border-radius:15px; text-align:center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .dj-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; background:#f9f9f9; padding:8px; border-radius:8px; }
         
-        #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); display: flex; justify-content: center; align-items: center; font-weight: bold; z-index: 1000; }
+        button { padding: 10px 18px; cursor: pointer; border: none; border-radius: 8px; background: var(--dark); color: white; font-weight: bold; transition: 0.2s; }
+        button:hover { opacity: 0.9; }
+        .manage-btn { background: #3498db; font-size: 0.7rem; margin-top: 5px; }
+        
+        #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; justify-content: center; align-items: center; z-index: 3000; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div id="loading-overlay">Syncing Fun Squad Data...</div>
 
+<div id="djModal">
+    <div class="modal-content">
+        <h3>Manage Crew</h3>
+        <div id="djSettingsList"></div>
+        <hr>
+        <h4>Add New DJ</h4>
+        <input type="text" id="newDjName" placeholder="DJ Name" style="padding:10px; border:1px solid #ddd; border-radius:8px; width:80%; margin-bottom:10px;">
+        <input type="color" id="newDjColor" value="#3498db" style="width:100%; height:40px; border:none; background:none; cursor:pointer;"><br><br>
+        <button onclick="addOrUpdateDj()" style="background:#27ae60; width:100%;">Save & Sync Form</button><br><br>
+        <button onclick="closeModal()" style="background:#95a5a6; width:100%;">Close</button>
+    </div>
+</div>
+
 <div class="header">
     <button onclick="changeMonth(-1)">◀ PREV</button>
     <div style="text-align: center;">
         <h2 id="monthLabel" style="margin: 0;">Month Year</h2>
-        <button onclick="goToToday()" style="padding: 4px 10px; font-size: 0.7rem; margin-top: 5px;">JUMP TO TODAY</button>
+        <button class="manage-btn" onclick="openModal()">MANAGE CREW</button>
+        <button onclick="goToToday()" style="font-size: 0.6rem; padding: 2px 8px; margin-left: 5px; background: #95a5a6;">TODAY</button>
     </div>
     <button onclick="changeMonth(1)">NEXT ▶</button>
 </div>
@@ -62,12 +74,13 @@
 <div id="calendar" class="calendar-grid"></div>
 
 <script>
-    // Deployment URL for the "Translator" Apps Script
+    // YOUR NEW GOOGLE APPS SCRIPT URL
     const scriptURL = 'https://script.google.com/macros/s/AKfycbzeNOknbVPmveeF8ccZjqBGXYWVnBlsY4FMVfl1mOL85ZWuMZINV_Ag3ksz27Z3fshN/exec'; 
     
     let viewDate = new Date();
     let offData = []; 
     let showData = [];
+    let djSettings = [];
 
     const clean = (str) => str ? str.replace(/\\,/g, ',').replace(/\\n/g, ' ').trim() : "";
 
@@ -83,24 +96,20 @@
     async function loadIcalData() {
         try {
             const res = await fetch('events.ics?t=' + new Date().getTime());
-            if (!res.ok) throw new Error("ICS missing");
             let text = await res.text();
             text = text.replace(/\r?\n[ \t]/g, "");
             const events = [];
             const blocks = text.split("BEGIN:VEVENT");
             blocks.shift(); 
             blocks.forEach(block => {
-                const summary = block.match(/SUMMARY:(.*)/)?.[1];
-                const loc = block.match(/LOCATION:(.*)/)?.[1];
                 const startRaw = block.match(/DTSTART:(\d{8}T\d{6})/)?.[1];
                 const endRaw = block.match(/DTEND:(\d{8}T\d{6})/)?.[1];
                 if (startRaw) {
-                    const dateStr = `${startRaw.substring(0, 4)}-${startRaw.substring(4, 6)}-${startRaw.substring(6, 8)}`;
                     events.push({
-                        date: dateStr,
-                        client: clean(summary).replace("DJ Event for ", ""),
-                        timeRange: `${formatTime(startRaw)} - ${formatTime(endRaw)}`,
-                        loc: clean(loc).split(',')[0]
+                        date: `${startRaw.substring(0, 4)}-${startRaw.substring(4, 6)}-${startRaw.substring(6, 8)}`,
+                        client: clean(block.match(/SUMMARY:(.*)/)?.[1]).replace("DJ Event for ", ""),
+                        time: `${formatTime(startRaw)} - ${formatTime(endRaw)}`,
+                        loc: clean(block.match(/LOCATION:(.*)/)?.[1]).split(',')[0]
                     });
                 }
             });
@@ -109,71 +118,78 @@
     }
 
     async function init() {
-        document.getElementById('loading-overlay').style.display = 'flex';
-        showData = await loadIcalData();
         try {
             const res = await fetch(scriptURL);
-            offData = await res.json();
+            const data = await res.json();
+            offData = data.offData;
+            djSettings = data.djs;
+            showData = await loadIcalData();
+            document.getElementById('loading-overlay').style.display = 'none';
+            render();
         } catch(e) { console.error("Sync failed"); }
-        document.getElementById('loading-overlay').style.display = 'none';
-        render();
     }
 
     function render() {
         const grid = document.getElementById('calendar');
         grid.innerHTML = '';
-        const month = viewDate.getMonth();
-        const year = viewDate.getFullYear();
-        const now = new Date(); 
-
+        const month = viewDate.getMonth(), year = viewDate.getFullYear(), now = new Date();
         document.getElementById('monthLabel').innerText = viewDate.toLocaleString('default', { month: 'long', year: 'numeric' });
         ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => grid.innerHTML += `<div class="weekday">${d}</div>`);
-
-        const firstDay = new Date(year, month, 1).getDay();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-
+        const firstDay = new Date(year, month, 1).getDay(), daysInMonth = new Date(year, month + 1, 0).getDate();
         for(let i=0; i<firstDay; i++) grid.innerHTML += `<div class="day other-month"></div>`;
 
         for(let d=1; d<=daysInMonth; d++) {
             const dateStr = `${year}-${(month+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`;
-            const isRealToday = (d === now.getDate() && month === now.getMonth() && year === now.getFullYear());
-            
+            const isToday = (d === now.getDate() && month === now.getMonth() && year === now.getFullYear());
+            const todayOff = offData.filter(row => row[1] === dateStr);
             const todayShows = showData.filter(s => s.date === dateStr);
             
-            // Filters based on the clean [Name, Date] pairs from the script
-            const todayOff = offData.filter(row => row[1] === dateStr);
-
-            const available = 4 - todayOff.length;
+            // Availability is total crew minus those off
+            const available = djSettings.length - todayOff.length;
             const isConflict = todayShows.length > available;
 
-            let dayHtml = `<div class="day ${isConflict ? 'conflict' : ''} ${isRealToday ? 'today' : ''}">
-                <span class="date-num">${d}</span>`;
+            let dayHtml = `<div class="day ${isConflict ? 'conflict' : ''} ${isToday ? 'today' : ''}"><span class="date-num">${d}</span>`;
             
             // 1. DJs OFF (TOP)
             todayOff.forEach(row => {
-                const name = String(row[0]).trim();
-                dayHtml += `<div class="name-tag ${name}">${name}</div>`;
+                const dj = djSettings.find(s => s.name.toLowerCase() === row[0].toLowerCase());
+                const color = dj ? dj.color : "#95a5a6";
+                dayHtml += `<div class="name-tag" style="background:${color}">${row[0]}</div>`;
             });
 
             // 2. SHOWS (BELOW)
             todayShows.forEach(s => {
-                dayHtml += `<div class="show-box"><b>🎤 ${s.client}</b>${s.timeRange}<i>@ ${s.loc}</i></div>`;
+                dayHtml += `<div class="show-box"><b>🎤 ${s.client}</b>${s.time}<i>@ ${s.loc}</i></div>`;
             });
 
-            if(isConflict) dayHtml += `<span class="alert-text">⚠️ NEED ${todayShows.length - available} MORE DJ(S)</span>`;
-            dayHtml += `</div>`;
-            grid.innerHTML += dayHtml;
+            if(isConflict) dayHtml += `<span class="alert-text">⚠️ NEED ${todayShows.length - available} MORE</span>`;
+            grid.innerHTML += dayHtml + `</div>`;
         }
     }
 
-    function changeMonth(dir) {
-        viewDate.setMonth(viewDate.getMonth() + dir);
-        render();
+    // Modal Logic
+    function openModal() {
+        document.getElementById('djModal').style.display = 'block';
+        document.getElementById('djSettingsList').innerHTML = djSettings.map(dj => `
+            <div class="dj-row">
+                <strong>${dj.name}</strong>
+                <input type="color" value="${dj.color}" onchange="updateDjColor('${dj.name}', this.value)">
+            </div>
+        `).join('');
     }
+    function closeModal() { document.getElementById('djModal').style.display = 'none'; }
+    function changeMonth(dir) { viewDate.setMonth(viewDate.getMonth() + dir); render(); }
+    function goToToday() { viewDate = new Date(); render(); }
 
-    function goToToday() {
-        viewDate = new Date();
-        render();
+    async function addOrUpdateDj() {
+        const name = document.getElementById('newDjName').value;
+        const color = document.getElementById('newDjColor').value;
+        if(!name) return alert("Enter a name");
+        await fetch(scriptURL, { method: 'POST', body: JSON.stringify({ action: "updateDJ", name, color }) });
+        location.reload();
+    }
+    async function updateDjColor(name, color) {
+        await fetch(scriptURL, { method: 'POST', body: JSON.stringify({ action: "updateDJ", name, color }) });
     }
 
     init();
