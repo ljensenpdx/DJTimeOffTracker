@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fun Squad DJs | Master Planner</title>
     <style>
-        :root { --dark: #2c3e50; --light: #f0f2f5; --conflict: #e74c3c; --accent: #3498db; --success: #27ae60; }
+        :root { --dark: #2c3e50; --light: #f0f2f5; --conflict: #e74c3c; --accent: #3498db; --success: #27ae60; --warning: #e67e22; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--light); padding: 15px; margin: 0; color: #333; }
         .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 10px 20px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .header-center { text-align: center; }
@@ -27,10 +27,11 @@
         .ics-btn { background: var(--success); }
         .today-link { display: block; text-align: center; color: #95a5a6; font-size: 0.65rem; text-decoration: none; margin-bottom: 10px; cursor: pointer; font-weight: bold; text-transform: uppercase; }
         .modal { display:none; position:fixed; z-index:2000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.6); }
-        .modal-content { background:white; margin:2% auto; padding:25px; width:380px; border-radius:15px; text-align: left; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
+        .modal-content { background:white; margin:2% auto; padding:25px; width:400px; border-radius:15px; text-align: left; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
         .check-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-weight: bold; }
-        .dj-edit-row { display: flex; align-items: center; background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 10px; gap: 10px; }
-        .copy-btn { padding: 5px 10px; font-size: 10px; background: var(--success); }
+        .dj-edit-row { display: flex; align-items: center; background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 10px; gap: 8px; }
+        .copy-btn { padding: 5px 8px; font-size: 10px; background: var(--success); }
+        .lock-btn { padding: 5px 8px; font-size: 10px; background: var(--warning); }
         #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; justify-content: center; align-items: center; z-index: 3000; font-weight: bold; }
     </style>
 </head>
@@ -68,7 +69,7 @@
         <button style="background:var(--accent); width:100%;" onclick="saveAllColors()">SAVE ALL COLORS</button>
         <hr>
         <h3>Add New DJ</h3>
-        <input type="text" id="newDjName" placeholder="Name" style="padding:10px; width:80%; border-radius:8px; border:1px solid #ddd;">
+        <input type="text" id="newDjName" placeholder="Name" style="padding:10px; width:80%; margin-bottom:5px; border-radius:8px; border:1px solid #ddd;">
         <input type="color" id="newDjColor" value="#3498db" style="width:100%; height:30px;"><br><br>
         <button style="background:var(--success); width:100%;" onclick="addNewDj()">ADD DJ</button><br><br>
         <button onclick="closeModal('djModal')" style="background:#95a5a6; width:100%;">Close</button>
@@ -99,7 +100,7 @@
 <div id="calendar" class="calendar-grid"></div>
 
 <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbyfxk-FlMqATfLE1Dq3-PORjwaJZK_RqPIXwM4ZrPlBWNrObyaL5M3isFjAC9_oYU5k/exec'; 
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbxVWnXi05Rzc9ddneurszg8icGh867dByYGyy4BtVO4HV868bji3ZnuaU1lkFmCe6BQ/exec'; 
     const GITHUB_REPO = 'ljensenpdx/DJTimeOffTracker'; 
 
     let viewDate = new Date();
@@ -176,12 +177,10 @@
             const todayOff = offData.filter(row => row[1] === dateStr);
             const todayShows = showData.filter(s => s.date === dateStr);
             let dayHtml = `<div class="day ${isToday ? 'today' : ''}"><span class="date-num">${d}</span>`;
-            
             todayOff.forEach(row => {
                 const dj = djSettings.find(s => s.name.toLowerCase() === row[0].toLowerCase());
                 dayHtml += `<div style="background:${dj ? dj.color : '#95a5a6'}; color:white; padding:3px; border-radius:4px; font-size:9px; font-weight:bold; text-align:center; margin-bottom:2px;">${row[0]}</div>`;
             });
-
             todayShows.forEach(s => {
                 const assign = assignments.find(a => String(a.id) === String(s.id));
                 let bgColor = '#34495e', djText = "Unassigned", iconsHtml = "";
@@ -222,7 +221,30 @@
             const d = new Date(s.date + "T12:00:00");
             scheduleText += `${d.getMonth() + 1}/${d.getDate()} - ${days[d.getDay()]} - ${formatTime(s.rawStart)} to ${formatTime(s.rawEnd)}\n`;
         });
-        navigator.clipboard.writeText(scheduleText).then(() => alert(`Copied to clipboard!`));
+        navigator.clipboard.writeText(scheduleText).then(() => alert(`Schedule copied!`));
+    }
+
+    // --- LOCK SCHEDULE LOGIC ---
+    function lockSchedule(djName) {
+        const now = new Date();
+        const futureLimit = new Date(); futureLimit.setMonth(now.getMonth() + 8);
+        let lockText = `${djName} has committed to the following shows:\n\n`;
+        
+        const myShows = showData.filter(s => {
+            const d = new Date(s.date + "T12:00:00");
+            const assign = assignments.find(a => String(a.id) === String(s.id));
+            return assign && (assign.primary === djName || assign.secondary === djName) && d >= now && d <= futureLimit;
+        }).sort((a,b) => new Date(a.date) - new Date(b.date));
+
+        if (myShows.length === 0) return alert("No shows committed.");
+
+        myShows.forEach(s => {
+            const d = new Date(s.date + "T12:00:00");
+            const dateFmt = `${d.getMonth() + 1}/${d.getDate()}`;
+            lockText += `${s.id} - ${s.client} - ${dateFmt}\n`;
+        });
+
+        navigator.clipboard.writeText(lockText).then(() => alert(`Boss-format lock list for ${djName} copied!`));
     }
 
     function openAssign(id, client, date) {
@@ -280,7 +302,7 @@
     }
 
     function saveAllColors() {
-        const updates = Array.from(document.querySelectorAll('.dj-edit-row')).map(row => ({ name: row.dataset.name, color: row.querySelector('input').value }));
+        const updates = Array.from(document.querySelectorAll('.dj-edit-row')).map(row => ({ name: row.dataset.name, color: row.querySelector('input[type="color"]').value }));
         submitHiddenForm({ action: 'saveColors', updates: updates });
         setTimeout(() => location.reload(), 2000);
     }
@@ -313,9 +335,10 @@
         document.getElementById('djSettingsList').innerHTML = djSettings.map(dj => `
             <div class="dj-edit-row" data-name="${dj.name}">
                 <strong>${dj.name}</strong>
-                <div style="display:flex; gap:10px; align-items:center; margin-left:auto;">
+                <div style="display:flex; gap:5px; align-items:center; margin-left:auto;">
                     <button class="copy-btn" onclick="copySchedule('${dj.name}')">📋 EXPORT</button>
-                    <input type="color" value="${dj.color}" style="width:30px; height:30px; border:none; cursor:pointer;">
+                    <button class="lock-btn" onclick="lockSchedule('${dj.name}')">🔒 LOCK</button>
+                    <input type="color" value="${dj.color}" style="width:25px; height:25px; border:none; cursor:pointer;">
                 </div>
             </div>`).join('');
     }
