@@ -100,7 +100,7 @@
 <div id="calendar" class="calendar-grid"></div>
 
 <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbyuGjfzj8Ihck39G5idZfb2NPcA481sroC7efLdhF8d4KLZminukd3HL2wIxjRl7gJR/exec'; 
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbz0othSrXn9a3hXoGkgcSztEbF9hxaY-GRltnwQ6XwhrRfeAN4Ba-DpyMJ21TpyDJCb/exec'; 
     const GITHUB_REPO = 'ljensenpdx/DJTimeOffTracker'; 
 
     let viewDate = new Date();
@@ -224,12 +224,10 @@
         navigator.clipboard.writeText(scheduleText).then(() => alert(`Schedule copied!`));
     }
 
-    // --- LOCK SCHEDULE LOGIC ---
     function lockSchedule(djName) {
         const now = new Date();
         const futureLimit = new Date(); futureLimit.setMonth(now.getMonth() + 8);
         let lockText = `${djName} has committed to the following shows:\n\n`;
-        
         const myShows = showData.filter(s => {
             const d = new Date(s.date + "T12:00:00");
             const assign = assignments.find(a => String(a.id) === String(s.id));
@@ -241,7 +239,9 @@
         myShows.forEach(s => {
             const d = new Date(s.date + "T12:00:00");
             const dateFmt = `${d.getMonth() + 1}/${d.getDate()}`;
-            lockText += `${s.id} - ${s.client} - ${dateFmt}\n`;
+            const assign = assignments.find(a => String(a.id) === String(s.id));
+            const role = (assign.primary === djName) ? "Primary" : "Secondary";
+            lockText += `${s.id} - ${s.client} - ${dateFmt} - ${role}\n`;
         });
 
         navigator.clipboard.writeText(lockText).then(() => alert(`Boss-format lock list for ${djName} copied!`));
