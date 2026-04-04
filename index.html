@@ -22,7 +22,7 @@
         /* THE FULL COLOR SHOW BOX */
         .show-box { 
             color: #ffffff; 
-            padding: 12px 0 12px 0; /* Vertical padding only, let children handle sides */
+            padding: 12px 0 12px 0;
             border-radius: 8px; 
             cursor: pointer; 
             transition: 0.2s; 
@@ -36,9 +36,7 @@
         }
         .show-box:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.3); }
 
-        /* Content containers to handle side padding since Type bar needs to be full width */
         .box-pad { padding: 0 12px; }
-
         .dj-names-text { font-weight: 900; font-size: 11px; text-transform: uppercase; margin-bottom: 2px; }
 
         /* THE WHITE TYPE BAR - Full Width */
@@ -52,7 +50,7 @@
             text-transform: uppercase; 
             margin: 6px 0;
             width: 100%;
-            text-shadow: none; /* Remove shadow for black text on white */
+            text-shadow: none;
             border-top: 1px solid rgba(0,0,0,0.05);
             border-bottom: 1px solid rgba(0,0,0,0.05);
         }
@@ -60,10 +58,9 @@
         /* Large bold text */
         .client-info { font-size: 14px; font-weight: 900; display: block; line-height: 1.2; }
         .timing-info { font-size: 14px; font-weight: 900; display: block; margin: 2px 0; }
-
         .addr-text { font-size: 10px; font-weight: 600; opacity: 0.9; margin-bottom: 4px; }
 
-        /* Icons Tray */
+        /* Icons Tray - Bottom */
         .icon-tray { 
             display: flex; 
             flex-wrap: wrap; 
@@ -75,7 +72,6 @@
         .s-icon { font-size: 20px; filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.3)); }
         .up-count { font-size: 12px; font-weight: 900; }
 
-        /* Standard UI */
         button { padding: 10px 18px; cursor: pointer; border: none; border-radius: 8px; background: var(--dark); color: white; font-weight: bold; font-size: 0.75rem; }
         .crew-btn { background: var(--accent); }
         .ics-btn { background: var(--success); }
@@ -99,18 +95,14 @@
         </div>
         <p id="assignDetails" style="color:#666; font-size:0.8rem; margin-bottom: 2px;"></p>
         <div id="assignAddress" style="margin-bottom: 10px;"></div>
-        
         <div id="offWarning" style="color:red; font-weight:bold; font-size:0.75rem; margin-bottom:10px; display:none;">⚠️ SELECTED DJ HAS THIS DAY OFF!</div>
-        
         <label>Primary DJ:</label><select id="primarySelect" onchange="checkOffStatus()" style="width:100%; padding:8px; margin-bottom:10px; border-radius:6px; border:1px solid #ddd;"></select>
         <label>Secondary DJ:</label><select id="secondarySelect" onchange="checkOffStatus()" style="width:100%; padding:8px; margin-bottom:10px; border-radius:6px; border:1px solid #ddd;"></select>
-        
         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; text-align: center; gap: 5px; margin: 10px 0 15px 0; background: #f8f9fa; padding: 10px; border-radius: 8px; border: 1px solid #eee;">
             <div><span style="font-size:0.6rem; color:#7f8c8d; text-transform:uppercase; font-weight:bold;">Setup</span><div id="popSetup" style="font-size:0.8rem; font-weight:900;">--</div></div>
             <div><span style="font-size:0.6rem; color:#7f8c8d; text-transform:uppercase; font-weight:bold;">Start</span><div id="popStart" style="font-size:0.8rem; font-weight:900;">--</div></div>
             <div><span style="font-size:0.6rem; color:#7f8c8d; text-transform:uppercase; font-weight:bold;">End</span><div id="popEnd" style="font-size:0.8rem; font-weight:900;">--</div></div>
         </div>
-
         <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
         <h3 style="margin-bottom:10px;">Equipment & Services</h3>
         <div style="font-weight: bold; margin-bottom: 8px;"><input type="checkbox" id="checkCeremony"> Ceremony System (🔈)</div>
@@ -120,7 +112,6 @@
         <div style="font-weight: bold; margin-bottom: 8px;"><input type="checkbox" id="checkGuestbook"> Audio Guestbook (☎️)</div>
         <div style="font-weight: bold; margin-bottom: 8px;"><input type="checkbox" id="checkKaraoke"> Karaoke (🎤) <small style="color:red">*Forces Lane</small></div>
         <div style="font-weight: bold; margin-bottom: 8px;">Up Lights (💡): <select id="uplightSelect" style="width:70px; margin-left:10px;"><option value="0">0</option><option value="4">4</option><option value="8">8</option><option value="12">12</option><option value="16">16</option></select></div>
-        
         <button style="background:var(--success); width:100%; margin-top:10px;" id="saveAssignBtn" onclick="submitAssignment()">SAVE DETAILS</button><br><br>
         <button onclick="closeModal('assignModal')" style="background:#95a5a6; width:100%;">Cancel</button>
     </div>
@@ -164,7 +155,7 @@
 <div id="calendar" class="calendar-grid"></div>
 
 <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbyuuoFCUpCMAv8iDeU_XPA7zZfrJw0GXU2eghXTVCMO7pDVifF1DNOfjaP4VzdVYpeE/exec'; 
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbwYWywRf58cM8SPk_DTn8D2sRD3Pg9iMAC0hDlWmoqqOu-3fLJSYCcoQbW3tzlgtTur/exec'; 
     const GITHUB_REPO = 'ljensenpdx/DJTimeOffTracker'; 
 
     let viewDate = new Date();
@@ -187,7 +178,8 @@
                 const rawDesc = block.match(/DESCRIPTION:(.*)/)?.[1] || "";
                 const idMatch = (summary + rawDesc).match(/(?:ID:\s*|#)(\d{4,})|(\d{4,})/);
                 
-                const typeMatch = rawDesc.match(/Type:\s*([^\\n\\]+)/i);
+                // FIXED TYPE PARSER (Stops at newline sequence \n, not at letter N)
+                const typeMatch = rawDesc.match(/Type:\s*([^\\]+)/i);
                 const eventType = typeMatch ? typeMatch[1].trim() : "EVENT";
 
                 let parsedSetup = "---", parsedStart = "---", parsedEnd = "---";
@@ -205,12 +197,8 @@
                     events.push({
                         id: idMatch ? String(idMatch[1] || idMatch[2]) : "??",
                         date: `${startRaw.substring(0, 4)}-${startRaw.substring(4, 6)}-${startRaw.substring(6, 8)}`,
-                        setup: parsedSetup,
-                        showStart: parsedStart,
-                        end: parsedEnd,
-                        type: eventType,
-                        client: summary.replace("DJ Event for ", ""),
-                        loc: shortLoc
+                        setup: parsedSetup, showStart: parsedStart, end: parsedEnd, type: eventType,
+                        client: summary.replace("DJ Event for ", ""), loc: shortLoc
                     });
                 }
             });
@@ -223,9 +211,7 @@
         try {
             const res = await fetch(scriptURL + '?t=' + new Date().getTime());
             const data = await res.json();
-            offData = data.offData || [];
-            djSettings = data.djs || [];
-            assignments = data.assignments || [];
+            offData = data.offData || []; djSettings = data.djs || []; assignments = data.assignments || [];
         } catch(e) { console.error("Sync error"); }
         showData = await loadIcalData();
         document.getElementById('loading-overlay').style.display = 'none';
@@ -233,8 +219,7 @@
     }
 
     function render() {
-        const grid = document.getElementById('calendar');
-        grid.innerHTML = '';
+        const grid = document.getElementById('calendar'); grid.innerHTML = '';
         const month = viewDate.getMonth(), year = viewDate.getFullYear(), now = new Date();
         document.getElementById('monthLabel').innerText = viewDate.toLocaleString('default', { month: 'long', year: 'numeric' });
         ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => grid.innerHTML += `<div class="weekday">${d}</div>`);
@@ -247,22 +232,18 @@
             const todayOff = offData.filter(row => row[1] === dateStr);
             const todayShows = showData.filter(s => s.date === dateStr);
             let dayHtml = `<div class="day ${isToday ? 'today' : ''}"><span class="date-num">${d}</span>`;
-            
             todayOff.forEach(row => {
                 const dj = djSettings.find(s => s.name.toLowerCase() === row[0].toLowerCase());
                 dayHtml += `<div style="background:${dj ? dj.color : '#95a5a6'}; color:white; padding:3px; border-radius:4px; font-size:9px; font-weight:bold; text-align:center; margin-bottom:2px;">${row[0]}</div>`;
             });
-
             todayShows.forEach(s => {
                 const assign = assignments.find(a => String(a.id) === String(s.id));
                 let djColor1 = '#747d8c', djColor2 = null, djText = "Unassigned", iconsHtml = "";
-                
                 if (assign) {
                     const dj1 = djSettings.find(d => d.name === assign.primary);
                     const dj2 = djSettings.find(d => d.name === assign.secondary);
                     if (dj1 && dj2) { djColor1 = dj1.color; djColor2 = dj2.color; djText = `${assign.primary} / ${assign.secondary}`; }
                     else if (dj1) { djColor1 = dj1.color; djText = assign.primary; }
-                    
                     if(assign.ceremony) iconsHtml += `<span class="s-icon">🔈</span>`;
                     if(assign.reception) iconsHtml += `<span class="s-icon" style="filter: brightness(1.5);">🔊</span>`;
                     if(assign.booth) iconsHtml += `<span class="s-icon">📷</span>`;
@@ -271,11 +252,8 @@
                     if(assign.uplights > 0) iconsHtml += `<span class="s-icon">💡<span class="up-count">(${assign.uplights})</span></span>`;
                     if(assign.karaoke) iconsHtml += `<span class="s-icon">🎤</span>`;
                 }
-
                 const bgSide = djColor2 ? `linear-gradient(135deg, ${djColor1} 50%, ${djColor2} 50%)` : djColor1;
-
-                dayHtml += `
-                <div class="show-box" style="background:${bgSide}" onclick="openAssign('${s.id}', '${s.client}', '${s.date}')">
+                dayHtml += `<div class="show-box" style="background:${bgSide}" onclick="openAssign('${s.id}', '${s.client}', '${s.date}')">
                     <div class="box-pad"><div class="dj-names-text">${djText}</div></div>
                     <div class="type-bar">${s.type}</div>
                     <div class="box-pad">
@@ -283,8 +261,7 @@
                         <div class="timing-info">T: ${s.setup} | S: ${s.showStart} | E: ${s.end}</div>
                         <div class="addr-text">@ ${s.loc}</div>
                         ${iconsHtml ? `<div class="icon-tray">${iconsHtml}</div>` : ''}
-                    </div>
-                </div>`;
+                    </div></div>`;
             });
             grid.innerHTML += dayHtml + `</div>`;
         }
@@ -296,25 +273,17 @@
         document.getElementById('assignTitle').innerText = "Show Details #" + id;
         document.getElementById('assignDetails').innerText = client;
         document.getElementById('popType').innerText = s.type;
-        
         const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.loc)}`;
         document.getElementById('assignAddress').innerHTML = `<a href="${mapsUrl}" target="_blank" style="color:var(--accent); font-size:0.8rem; text-decoration:none; font-weight:bold;">📍 ${s.loc} (Google Maps)</a>`;
-
-        document.getElementById('popSetup').innerText = s.setup;
-        document.getElementById('popStart').innerText = s.showStart;
-        document.getElementById('popEnd').innerText = s.end;
-
+        document.getElementById('popSetup').innerText = s.setup; document.getElementById('popStart').innerText = s.showStart; document.getElementById('popEnd').innerText = s.end;
         const pSel = document.getElementById('primarySelect'), sSel = document.getElementById('secondarySelect');
         pSel.innerHTML = sSel.innerHTML = '<option value="">None</option>';
         djSettings.forEach(dj => { pSel.innerHTML += `<option value="${dj.name}">${dj.name}</option>`; sSel.innerHTML += `<option value="${dj.name}">${dj.name}</option>`; });
         const curr = assignments.find(a => String(a.id) === String(id)) || {};
         pSel.value = curr.primary || ""; sSel.value = curr.secondary || "";
-        document.getElementById('checkCeremony').checked = curr.ceremony || false;
-        document.getElementById('checkReception').checked = curr.reception || false;
-        document.getElementById('checkBooth').checked = curr.booth || false;
-        document.getElementById('checkPrints').checked = curr.prints || false;
-        document.getElementById('checkGuestbook').checked = curr.guestbook || false;
-        document.getElementById('checkKaraoke').checked = curr.karaoke || false;
+        document.getElementById('checkCeremony').checked = curr.ceremony || false; document.getElementById('checkReception').checked = curr.reception || false;
+        document.getElementById('checkBooth').checked = curr.booth || false; document.getElementById('checkPrints').checked = curr.prints || false;
+        document.getElementById('checkGuestbook').checked = curr.guestbook || false; document.getElementById('checkKaraoke').checked = curr.karaoke || false;
         document.getElementById('uplightSelect').value = curr.uplights || "0";
         checkOffStatus(); openModal('assignModal');
     }
@@ -328,118 +297,56 @@
 
     function submitAssignment() {
         document.getElementById('saveAssignBtn').innerText = "SAVING...";
-        submitHiddenForm({ 
-            action: 'assignDJ', id: currentEventId, primary: document.getElementById('primarySelect').value, secondary: document.getElementById('secondarySelect').value,
-            ceremony: document.getElementById('checkCeremony').checked, reception: document.getElementById('checkReception').checked,
-            booth: document.getElementById('checkBooth').checked, prints: document.getElementById('checkPrints').checked,
-            guestbook: document.getElementById('checkGuestbook').checked, uplights: document.getElementById('uplightSelect').value,
-            karaoke: document.getElementById('checkKaraoke').checked
-        });
+        submitHiddenForm({ action: 'assignDJ', id: currentEventId, primary: document.getElementById('primarySelect').value, secondary: document.getElementById('secondarySelect').value, ceremony: document.getElementById('checkCeremony').checked, reception: document.getElementById('checkReception').checked, booth: document.getElementById('checkBooth').checked, prints: document.getElementById('checkPrints').checked, guestbook: document.getElementById('checkGuestbook').checked, uplights: document.getElementById('uplightSelect').value, karaoke: document.getElementById('checkKaraoke').checked });
         setTimeout(() => location.reload(), 2500);
     }
 
     function submitHiddenForm(data) {
-        const form = document.getElementById('cors_bypass_form');
-        form.action = scriptURL; form.innerHTML = '';
-        for (const key in data) {
-            const input = document.createElement('input'); input.type = 'hidden'; input.name = key;
-            input.value = typeof data[key] === 'object' ? JSON.stringify(data[key]) : data[key];
-            form.appendChild(input);
-        }
+        const form = document.getElementById('cors_bypass_form'); form.action = scriptURL; form.innerHTML = '';
+        for (const key in data) { const input = document.createElement('input'); input.type = 'hidden'; input.name = key; input.value = typeof data[key] === 'object' ? JSON.stringify(data[key]) : data[key]; form.appendChild(input); }
         form.submit();
     }
 
     function lockSchedule(djName) {
-        const now = new Date();
-        const futureLimit = new Date(); futureLimit.setMonth(now.getMonth() + 8);
+        const now = new Date(); const futureLimit = new Date(); futureLimit.setMonth(now.getMonth() + 8);
         let lockText = `${djName} has committed to the following shows:\n\n`;
-        const myShows = showData.filter(s => {
-            const d = new Date(s.date + "T12:00:00");
-            const assign = assignments.find(a => String(a.id) === String(s.id));
-            return assign && (assign.primary === djName || assign.secondary === djName) && d >= now && d <= futureLimit;
-        }).sort((a,b) => new Date(a.date) - new Date(b.date));
+        const myShows = showData.filter(s => { const d = new Date(s.date + "T12:00:00"); const assign = assignments.find(a => String(a.id) === String(s.id)); return assign && (assign.primary === djName || assign.secondary === djName) && d >= now && d <= futureLimit; }).sort((a,b) => new Date(a.date) - new Date(b.date));
         if (myShows.length === 0) return alert("No shows committed.");
-        myShows.forEach(s => {
-            const d = new Date(s.date + "T12:00:00");
-            const assign = assignments.find(a => String(a.id) === String(s.id));
-            const role = (assign.primary === djName) ? "Primary" : "Secondary";
-            lockText += `${s.id} - ${s.client} - ${d.getMonth() + 1}/${d.getDate()} - ${role}\n`;
-        });
+        myShows.forEach(s => { const d = new Date(s.date + "T12:00:00"); const assign = assignments.find(a => String(a.id) === String(s.id)); const role = (assign.primary === djName) ? "Primary" : "Secondary"; lockText += `${s.id} - ${s.client} - ${d.getMonth() + 1}/${d.getDate()} - ${role}\n`; });
         navigator.clipboard.writeText(lockText).then(() => alert(`Lock list copied!`));
     }
 
     function copySchedule(djName) {
-        const now = new Date();
-        const futureLimit = new Date(); futureLimit.setMonth(now.getMonth() + 8);
+        const now = new Date(); const futureLimit = new Date(); futureLimit.setMonth(now.getMonth() + 8);
         const days = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
         let scheduleText = `${djName}'s Schedule (Next 8 Months):\n\n`;
-        const myShows = showData.filter(s => {
-            const d = new Date(s.date + "T12:00:00");
-            const assign = assignments.find(a => String(a.id) === String(s.id));
-            return assign && (assign.primary === djName || assign.secondary === djName) && d >= now && d <= futureLimit;
-        }).sort((a,b) => new Date(a.date) - new Date(b.date));
+        const myShows = showData.filter(s => { const d = new Date(s.date + "T12:00:00"); const assign = assignments.find(a => String(a.id) === String(s.id)); return assign && (assign.primary === djName || assign.secondary === djName) && d >= now && d <= futureLimit; }).sort((a,b) => new Date(a.date) - new Date(b.date));
         if (myShows.length === 0) return alert("No shows assigned.");
-        myShows.forEach(s => {
-            const d = new Date(s.date + "T12:00:00");
-            scheduleText += `${d.getMonth() + 1}/${d.getDate()} - ${days[d.getDay()]} - ${s.setup} to ${s.end}\n`;
-        });
+        myShows.forEach(s => { const d = new Date(s.date + "T12:00:00"); scheduleText += `${d.getMonth() + 1}/${d.getDate()} - ${days[d.getDay()]} - ${s.setup} to ${s.end}\n`; });
         navigator.clipboard.writeText(scheduleText).then(() => alert(`Schedule copied!`));
     }
 
-    function addNewDj() {
-        submitHiddenForm({ action: 'addDJ', name: document.getElementById('newDjName').value, color: document.getElementById('newDjColor').value });
-        setTimeout(() => location.reload(), 2500);
-    }
-
-    function saveAllColors() {
-        const updates = Array.from(document.querySelectorAll('.dj-edit-row')).map(row => ({ name: row.dataset.name, color: row.querySelector('input[type="color"]').value }));
-        submitHiddenForm({ action: 'saveColors', updates: updates });
-        setTimeout(() => location.reload(), 2000);
-    }
-
+    function addNewDj() { submitHiddenForm({ action: 'addDJ', name: document.getElementById('newDjName').value, color: document.getElementById('newDjColor').value }); setTimeout(() => location.reload(), 2500); }
+    function saveAllColors() { const updates = Array.from(document.querySelectorAll('.dj-edit-row')).map(row => ({ name: row.dataset.name, color: row.querySelector('input[type="color"]').value })); submitHiddenForm({ action: 'saveColors', updates: updates }); setTimeout(() => location.reload(), 2000); }
     function handleIcsUpload() {
-        const fileInput = document.getElementById('icsInput');
-        if (!fileInput.files[0]) return alert("Select file");
-        let token = localStorage.getItem('gh_token');
-        if (!token) { token = prompt("Enter Token:"); if (token) localStorage.setItem('gh_token', token); }
+        const fileInput = document.getElementById('icsInput'); if (!fileInput.files[0]) return alert("Select file");
+        let token = localStorage.getItem('gh_token'); if (!token) { token = prompt("Enter Token:"); if (token) localStorage.setItem('gh_token', token); }
         if (!token) return;
-        const btn = document.getElementById('uploadBtn');
-        btn.innerText = "UPLOADING..."; btn.disabled = true;
+        const btn = document.getElementById('uploadBtn'); btn.innerText = "UPLOADING..."; btn.disabled = true;
         fileInput.files[0].text().then(content => {
             const base64 = btoa(unescape(encodeURIComponent(content)));
-            fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/events.ics`, { headers: { 'Authorization': `token ${token}` } })
-            .then(res => res.json()).then(data => {
-                return fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/events.ics`, {
-                    method: 'PUT', headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: `Update ICS`, content: base64, sha: data.sha })
-                });
-            })
-            .then(res => { if (res.ok) { alert("Success!"); location.reload(); } else { throw new Error(); } })
-            .catch(() => { alert("Failed."); localStorage.removeItem('gh_token'); btn.innerText = "UPLOAD"; btn.disabled = false; });
+            fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/events.ics`, { headers: { 'Authorization': `token ${token}` } }).then(res => res.json()).then(data => { return fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/events.ics`, { method: 'PUT', headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ message: `Update ICS`, content: base64, sha: data.sha }) }); }).then(res => { if (res.ok) { alert("Success!"); location.reload(); } else { throw new Error(); } }).catch(() => { alert("Failed."); localStorage.removeItem('gh_token'); btn.innerText = "UPLOAD"; btn.disabled = false; });
         });
     }
 
     function openModal(id) { document.getElementById(id).style.display = 'block'; if(id === 'djModal') loadDjList(); }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-    
     function loadDjList() {
         document.getElementById('djSettingsList').innerHTML = djSettings.map(dj => {
             const count = assignments.filter(a => a.primary === dj.name || a.secondary === dj.name).length;
-            return `
-            <div class="dj-edit-row" data-name="${dj.name}">
-                <strong style="width: 80px;">${dj.name}</strong>
-                <div style="flex-grow: 1; text-align: center;">
-                    <span style="font-weight: 900; color: var(--dark); background: #ebf2f7; padding: 4px 12px; border-radius: 15px; font-size: 0.8rem;">${count} SHOWS</span>
-                </div>
-                <div style="display:flex; gap:5px; align-items:center;">
-                    <button class="copy-btn" onclick="copySchedule('${dj.name}')">📋 EXPORT</button>
-                    <button class="lock-btn" onclick="lockSchedule('${dj.name}')">🔒 LOCK</button>
-                    <input type="color" value="${dj.color}" style="width:25px; height:25px; border:none; cursor:pointer;">
-                </div>
-            </div>`;
+            return `<div class="dj-edit-row" data-name="${dj.name}"><strong style="width: 80px;">${dj.name}</strong><div style="flex-grow: 1; text-align: center;"><span style="font-weight: 900; color: var(--dark); background: #ebf2f7; padding: 4px 12px; border-radius: 15px; font-size: 0.8rem;">${count} SHOWS</span></div><div style="display:flex; gap:5px; align-items:center;"><button class="copy-btn" onclick="copySchedule('${dj.name}')">📋 EXPORT</button><button class="lock-btn" onclick="lockSchedule('${dj.name}')">🔒 LOCK</button><input type="color" value="${dj.color}" style="width:25px; height:25px; border:none; cursor:pointer;"></div></div>`;
         }).join('');
     }
-    
     function changeMonth(dir) { viewDate.setDate(1); viewDate.setMonth(viewDate.getMonth() + dir); render(); }
     function goToToday() { viewDate = new Date(); render(); }
     init();
