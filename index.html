@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fun Squad DJs | Master Planner</title>
     <style>
-        :root { --dark: #2c3e50; --light: #f0f2f5; --conflict: #e74c3c; --accent: #3498db; --success: #27ae60; --warning: #e67e22; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--light); padding: 15px; margin: 0; color: #333; }
+        :root { --dark: #2c3e50; --light: #ffffff; --conflict: #e74c3c; --accent: #3498db; --success: #27ae60; --warning: #e67e22; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f4f7f6; padding: 15px; margin: 0; color: #1a1a1a; }
         
         .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 10px 20px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .header-center { text-align: center; }
@@ -15,72 +15,54 @@
         
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; background: #dfe4ea; border: 2px solid #dfe4ea; border-radius: 12px; overflow: hidden; }
         .weekday { background: var(--dark); color: white; text-align: center; padding: 12px; font-weight: bold; font-size: 0.85rem; text-transform: uppercase; }
-        .day { background: white; min-height: 220px; padding: 10px; display: flex; flex-direction: column; gap: 8px; position: relative; }
+        .day { background: white; min-height: 240px; padding: 10px; display: flex; flex-direction: column; gap: 8px; position: relative; }
         .day.today { background: #fff9db; border: 2px solid #f1c40f; }
         .date-num { font-weight: 900; color: #a4b0be; font-size: 1.1rem; }
         
-        /* THE NEW WHITE BOX STYLE */
+        /* THE CLEAN WHITE SHOW BOX */
         .show-box { 
             background: white; 
-            color: #1a1a1a; 
+            color: #000000; 
             padding: 12px; 
             border-radius: 8px; 
             cursor: pointer; 
             transition: 0.2s; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
-            border: 1px solid #e0e6ed;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+            border: 1px solid #dcdde1;
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 2px;
+            position: relative;
+            overflow: hidden;
         }
-        .show-box:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .show-box:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.15); }
 
-        /* DJ Name Header */
-        .dj-line { 
-            font-weight: 900; 
-            font-size: 10px;
-            padding: 3px 8px; 
-            border-radius: 4px; 
-            display: inline-block; 
-            text-transform: uppercase; 
-            letter-spacing: 0.5px;
-            margin-bottom: 2px;
-            align-self: flex-start;
-        }
-        
-        /* Wedding/Type Tag */
-        .type-tag { 
-            font-size: 9px; 
-            font-weight: 900; 
-            background: #f1f2f6; 
-            color: #57606f;
-            padding: 2px 6px; 
-            border-radius: 4px; 
-            text-transform: uppercase; 
-            display: inline-block;
-            width: fit-content;
-        }
+        /* DJ Indicator - Subtle side border to keep color coding without ruining the white box */
+        .dj-border { position: absolute; left: 0; top: 0; bottom: 0; width: 6px; }
 
-        /* Name and Timing (Same Large Size) */
-        .client-name { font-size: 13px; font-weight: 900; display: block; margin-top: 2px; }
-        .timing-row { font-size: 13px; font-weight: 900; color: #2c3e50; margin-bottom: 2px; }
+        .dj-names-text { font-weight: 900; font-size: 11px; text-transform: uppercase; color: #7f8c8d; margin-bottom: 2px; }
+        .type-tag { font-size: 9px; font-weight: 900; background: #f1f2f6; color: #2f3542; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; width: fit-content; margin-bottom: 4px; }
 
-        /* Address */
-        .addr-row { font-size: 9px; color: #747d8c; font-weight: 600; }
+        /* Name and Timing - MATCHED LARGE SIZE */
+        .client-info { font-size: 14px; font-weight: 900; color: #000; display: block; line-height: 1.2; }
+        .timing-info { font-size: 14px; font-weight: 900; color: #000; display: block; margin: 2px 0; }
 
-        /* Icons at Bottom - Larger */
+        /* Address Row */
+        .addr-text { font-size: 10px; color: #57606f; font-weight: 600; margin-bottom: 4px; }
+
+        /* Icons Tray - MOVE TO BOTTOM */
         .icon-tray { 
             display: flex; 
             flex-wrap: wrap; 
-            gap: 8px; 
-            margin-top: 6px; 
-            padding-top: 6px;
+            gap: 10px; 
+            margin-top: auto; 
+            padding-top: 8px;
             border-top: 1px solid #f1f2f6;
         }
-        .s-icon { font-size: 18px; }
-        .up-count { font-size: 11px; font-weight: 900; margin-left: -2px; }
-        
-        /* Standard UI elements */
+        .s-icon { font-size: 20px; }
+        .up-count { font-size: 12px; font-weight: 900; color: #2f3542; }
+
+        /* Modals and Buttons */
         button { padding: 10px 18px; cursor: pointer; border: none; border-radius: 8px; background: var(--dark); color: white; font-weight: bold; font-size: 0.75rem; }
         .crew-btn { background: var(--accent); }
         .ics-btn { background: var(--success); }
@@ -109,7 +91,8 @@
             <div id="popType" class="type-tag" style="background: var(--dark); color: white; padding: 4px 8px; margin:0;">EVENT</div>
         </div>
         <p id="assignDetails" style="color:#666; font-size:0.8rem; margin-bottom: 2px;"></p>
-        <div id="assignAddress" style="margin-bottom: 10px;"></div>
+        <div id="assignAddress" style="margin-bottom: 15px;"></div>
+        
         <div id="offWarning" style="color:red; font-weight:bold; font-size:0.75rem; margin-bottom:10px; display:none;">⚠️ SELECTED DJ HAS THIS DAY OFF!</div>
         
         <label>Primary DJ:</label><select id="primarySelect" onchange="checkOffStatus()" style="width:100%; padding:8px; margin-bottom:10px; border-radius:6px; border:1px solid #ddd;"></select>
@@ -143,7 +126,7 @@
         <button style="background:var(--accent); width:100%;" onclick="saveAllColors()">SAVE ALL COLORS</button>
         <hr>
         <h3>Add New DJ</h3>
-        <input type="text" id="newDjName" placeholder="Name" style="padding:10px; width:80%; border-radius:8px; border:1px solid #ddd;">
+        <input type="text" id="newDjName" placeholder="Name" style="padding:10px; width:80%; margin-bottom:5px; border-radius:8px; border:1px solid #ddd;">
         <input type="color" id="newDjColor" value="#3498db" style="width:100%; height:30px;"><br><br>
         <button style="background:var(--success); width:100%;" onclick="addNewDj()">ADD DJ</button><br><br>
         <button onclick="closeModal('djModal')" style="background:#95a5a6; width:100%;">Close</button>
@@ -174,7 +157,7 @@
 <div id="calendar" class="calendar-grid"></div>
 
 <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbwabVMnWR4nXMiL13FSNLLhWQniu76lxuzUNog7tAqvEiu6Tz0Xm_pD1l7-KrR6LlhT/exec'; 
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbVWnXi05Rzc9ddneurszg8icGh867dByYGyy4BtVO4HV868bji3ZnuaU1lkFmCe6BQ/exec'; 
     const GITHUB_REPO = 'ljensenpdx/DJTimeOffTracker'; 
 
     let viewDate = new Date();
@@ -260,7 +243,7 @@
             
             todayOff.forEach(row => {
                 const dj = djSettings.find(s => s.name.toLowerCase() === row[0].toLowerCase());
-                dayHtml += `<div style="background:${dj ? dj.color : '#95a5a6'}; color:white; padding:3px; border-radius:4px; font-size:9px; font-weight:bold; text-align:center;">${row[0]}</div>`;
+                dayHtml += `<div style="background:${dj ? dj.color : '#95a5a6'}; color:white; padding:3px; border-radius:4px; font-size:9px; font-weight:bold; text-align:center; margin-bottom:2px;">${row[0]}</div>`;
             });
 
             todayShows.forEach(s => {
@@ -270,14 +253,11 @@
                 if (assign) {
                     const dj1 = djSettings.find(d => d.name === assign.primary);
                     const dj2 = djSettings.find(d => d.name === assign.secondary);
-                    if (dj1 && dj2) { 
-                        djColor1 = dj1.color; djColor2 = dj2.color; 
-                        djText = `${assign.primary} / ${assign.secondary}`; 
-                    } else if (dj1) { 
-                        djColor1 = dj1.color; djText = assign.primary; 
-                    }
+                    if (dj1 && dj2) { djColor1 = dj1.color; djColor2 = dj2.color; djText = `${assign.primary} / ${assign.secondary}`; }
+                    else if (dj1) { djColor1 = dj1.color; djText = assign.primary; }
+                    
                     if(assign.ceremony) iconsHtml += `<span class="s-icon">🔈</span>`;
-                    if(assign.reception) iconsHtml += `<span class="s-icon" style="filter:hue-rotate(150deg);">🔊</span>`;
+                    if(assign.reception) iconsHtml += `<span class="s-icon" style="filter:grayscale(1) brightness(0.5);">🔊</span>`;
                     if(assign.booth) iconsHtml += `<span class="s-icon">📷</span>`;
                     if(assign.prints) iconsHtml += `<span class="s-icon">🖨️</span>`;
                     if(assign.guestbook) iconsHtml += `<span class="s-icon">☎️</span>`;
@@ -285,15 +265,16 @@
                     if(assign.karaoke) iconsHtml += `<span class="s-icon">🎤</span>`;
                 }
 
-                const bgStyle = djColor2 ? `linear-gradient(135deg, ${djColor1} 50%, ${djColor2} 50%)` : djColor1;
+                const bgSide = djColor2 ? `linear-gradient(to bottom, ${djColor1} 50%, ${djColor2} 50%)` : djColor1;
 
                 dayHtml += `
                 <div class="show-box" onclick="openAssign('${s.id}', '${s.client}', '${s.date}')">
-                    <div class="dj-line" style="background:${bgStyle}; color:white;">${djText}</div>
+                    <div class="dj-border" style="background:${bgSide}"></div>
+                    <div class="dj-names-text">${djText}</div>
                     <div class="type-tag">${s.type}</div>
-                    <b class="client-name">#${s.id} ${s.client}</b>
-                    <div class="timing-row">T: ${s.setup} | S: ${s.showStart} | E: ${s.end}</div>
-                    <div class="addr-row">@ ${s.loc}</div>
+                    <b class="client-info">#${s.id} ${s.client}</b>
+                    <div class="timing-info">T: ${s.setup} | S: ${s.showStart} | E: ${s.end}</div>
+                    <div class="addr-text">@ ${s.loc}</div>
                     ${iconsHtml ? `<div class="icon-tray">${iconsHtml}</div>` : ''}
                 </div>`;
             });
@@ -309,7 +290,7 @@
         document.getElementById('popType').innerText = s.type;
         
         const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.loc)}`;
-        document.getElementById('assignAddress').innerHTML = `<a href="${mapsUrl}" target="_blank" style="color:var(--accent); font-size:0.75rem; text-decoration:none; font-weight:bold;">📍 ${s.loc}</a>`;
+        document.getElementById('assignAddress').innerHTML = `<a href="${mapsUrl}" target="_blank" style="color:var(--accent); font-size:0.8rem; text-decoration:none; font-weight:bold;">📍 ${s.loc} (Google Maps)</a>`;
 
         document.getElementById('popSetup').innerText = s.setup;
         document.getElementById('popStart').innerText = s.showStart;
@@ -438,9 +419,9 @@
             const count = assignments.filter(a => a.primary === dj.name || a.secondary === dj.name).length;
             return `
             <div class="dj-edit-row" data-name="${dj.name}">
-                <strong style="width: 60px;">${dj.name}</strong>
+                <strong style="width: 80px;">${dj.name}</strong>
                 <div style="flex-grow: 1; text-align: center;">
-                    <span style="font-weight: 900; color: var(--dark); background: #ebf2f7; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem;">${count} SHOWS</span>
+                    <span style="font-weight: 900; color: var(--dark); background: #ebf2f7; padding: 4px 12px; border-radius: 15px; font-size: 0.8rem;">${count} SHOWS</span>
                 </div>
                 <div style="display:flex; gap:5px; align-items:center;">
                     <button class="copy-btn" onclick="copySchedule('${dj.name}')">📋 EXPORT</button>
