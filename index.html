@@ -19,63 +19,70 @@
         .day.today { background: #fff9db; border: 2px solid #f1c40f; }
         .date-num { font-weight: 900; color: #a4b0be; font-size: 1.1rem; }
         
-        /* THE CLEAN WHITE SHOW BOX */
+        /* THE FULL COLOR SHOW BOX */
         .show-box { 
-            background: white; 
-            color: #000000; 
-            padding: 12px; 
+            color: #ffffff; 
+            padding: 12px 0 12px 0; /* Vertical padding only, let children handle sides */
             border-radius: 8px; 
             cursor: pointer; 
             transition: 0.2s; 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
-            border: 1px solid #dcdde1;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); 
             display: flex;
             flex-direction: column;
-            gap: 2px;
             position: relative;
             overflow: hidden;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            border: 1px solid rgba(0,0,0,0.1);
         }
-        .show-box:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.15); }
+        .show-box:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.3); }
 
-        /* DJ Indicator - Subtle side border to keep color coding without ruining the white box */
-        .dj-border { position: absolute; left: 0; top: 0; bottom: 0; width: 6px; }
+        /* Content containers to handle side padding since Type bar needs to be full width */
+        .box-pad { padding: 0 12px; }
 
-        .dj-names-text { font-weight: 900; font-size: 11px; text-transform: uppercase; color: #7f8c8d; margin-bottom: 2px; }
-        .type-tag { font-size: 9px; font-weight: 900; background: #f1f2f6; color: #2f3542; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; width: fit-content; margin-bottom: 4px; }
+        .dj-names-text { font-weight: 900; font-size: 11px; text-transform: uppercase; margin-bottom: 2px; }
 
-        /* Name and Timing - MATCHED LARGE SIZE */
-        .client-info { font-size: 14px; font-weight: 900; color: #000; display: block; line-height: 1.2; }
-        .timing-info { font-size: 14px; font-weight: 900; color: #000; display: block; margin: 2px 0; }
+        /* THE WHITE TYPE BAR - Full Width */
+        .type-bar { 
+            background: white; 
+            color: black; 
+            font-size: 10px; 
+            font-weight: 900; 
+            text-align: center; 
+            padding: 5px 0; 
+            text-transform: uppercase; 
+            margin: 6px 0;
+            width: 100%;
+            text-shadow: none; /* Remove shadow for black text on white */
+            border-top: 1px solid rgba(0,0,0,0.05);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
 
-        /* Address Row */
-        .addr-text { font-size: 10px; color: #57606f; font-weight: 600; margin-bottom: 4px; }
+        /* Large bold text */
+        .client-info { font-size: 14px; font-weight: 900; display: block; line-height: 1.2; }
+        .timing-info { font-size: 14px; font-weight: 900; display: block; margin: 2px 0; }
 
-        /* Icons Tray - MOVE TO BOTTOM */
+        .addr-text { font-size: 10px; font-weight: 600; opacity: 0.9; margin-bottom: 4px; }
+
+        /* Icons Tray */
         .icon-tray { 
             display: flex; 
             flex-wrap: wrap; 
             gap: 10px; 
-            margin-top: auto; 
+            margin-top: 6px; 
             padding-top: 8px;
-            border-top: 1px solid #f1f2f6;
+            border-top: 1px solid rgba(255,255,255,0.3);
         }
-        .s-icon { font-size: 20px; }
-        .up-count { font-size: 12px; font-weight: 900; color: #2f3542; }
+        .s-icon { font-size: 20px; filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.3)); }
+        .up-count { font-size: 12px; font-weight: 900; }
 
-        /* Modals and Buttons */
+        /* Standard UI */
         button { padding: 10px 18px; cursor: pointer; border: none; border-radius: 8px; background: var(--dark); color: white; font-weight: bold; font-size: 0.75rem; }
         .crew-btn { background: var(--accent); }
         .ics-btn { background: var(--success); }
         .today-link { display: block; text-align: center; color: #95a5a6; font-size: 0.65rem; text-decoration: none; margin-bottom: 10px; cursor: pointer; font-weight: bold; text-transform: uppercase; }
         
         .modal { display:none; position:fixed; z-index:2000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.6); }
-        .modal-content { background:white; margin:2% auto; padding:25px; width:420px; border-radius:15px; text-align: left; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
-        .check-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-weight: bold; }
-        .dj-edit-row { display: flex; align-items: center; background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 10px; gap: 8px; }
-        .copy-btn { padding: 5px 8px; font-size: 10px; background: var(--success); }
-        .lock-btn { padding: 5px 8px; font-size: 10px; background: var(--warning); }
-        
-        #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; justify-content: center; align-items: center; z-index: 3000; font-weight: bold; }
+        .modal-content { background:white; margin:2% auto; padding:25px; width:420px; border-radius:15px; text-align: left; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; color: #333; text-shadow: none; }
     </style>
 </head>
 <body>
@@ -88,10 +95,10 @@
     <div class="modal-content">
         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
             <h2 id="assignTitle" style="margin-top:0">Show Details</h2>
-            <div id="popType" class="type-tag" style="background: var(--dark); color: white; padding: 4px 8px; margin:0;">EVENT</div>
+            <div id="popType" style="background: var(--dark); color: white; padding: 4px 8px; font-size: 10px; font-weight: 900; border-radius: 4px;">EVENT</div>
         </div>
         <p id="assignDetails" style="color:#666; font-size:0.8rem; margin-bottom: 2px;"></p>
-        <div id="assignAddress" style="margin-bottom: 15px;"></div>
+        <div id="assignAddress" style="margin-bottom: 10px;"></div>
         
         <div id="offWarning" style="color:red; font-weight:bold; font-size:0.75rem; margin-bottom:10px; display:none;">⚠️ SELECTED DJ HAS THIS DAY OFF!</div>
         
@@ -106,13 +113,13 @@
 
         <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
         <h3 style="margin-bottom:10px;">Equipment & Services</h3>
-        <div class="check-row"><input type="checkbox" id="checkCeremony"> Ceremony System (🔈)</div>
-        <div class="check-row"><input type="checkbox" id="checkReception"> Reception System (🔊)</div>
-        <div class="check-row"><input type="checkbox" id="checkBooth"> Photo Booth (📷)</div>
-        <div class="check-row"><input type="checkbox" id="checkPrints"> On Site Prints (🖨️)</div>
-        <div class="check-row"><input type="checkbox" id="checkGuestbook"> Audio Guestbook (☎️)</div>
-        <div class="check-row"><input type="checkbox" id="checkKaraoke"> Karaoke (🎤) <small style="color:red">*Forces Lane</small></div>
-        <div class="check-row">Up Lights (💡): <select id="uplightSelect" style="width:70px; margin-left:10px;"><option value="0">0</option><option value="4">4</option><option value="8">8</option><option value="12">12</option><option value="16">16</option></select></div>
+        <div style="font-weight: bold; margin-bottom: 8px;"><input type="checkbox" id="checkCeremony"> Ceremony System (🔈)</div>
+        <div style="font-weight: bold; margin-bottom: 8px;"><input type="checkbox" id="checkReception"> Reception System (🔊)</div>
+        <div style="font-weight: bold; margin-bottom: 8px;"><input type="checkbox" id="checkBooth"> Photo Booth (📷)</div>
+        <div style="font-weight: bold; margin-bottom: 8px;"><input type="checkbox" id="checkPrints"> On Site Prints (🖨️)</div>
+        <div style="font-weight: bold; margin-bottom: 8px;"><input type="checkbox" id="checkGuestbook"> Audio Guestbook (☎️)</div>
+        <div style="font-weight: bold; margin-bottom: 8px;"><input type="checkbox" id="checkKaraoke"> Karaoke (🎤) <small style="color:red">*Forces Lane</small></div>
+        <div style="font-weight: bold; margin-bottom: 8px;">Up Lights (💡): <select id="uplightSelect" style="width:70px; margin-left:10px;"><option value="0">0</option><option value="4">4</option><option value="8">8</option><option value="12">12</option><option value="16">16</option></select></div>
         
         <button style="background:var(--success); width:100%; margin-top:10px;" id="saveAssignBtn" onclick="submitAssignment()">SAVE DETAILS</button><br><br>
         <button onclick="closeModal('assignModal')" style="background:#95a5a6; width:100%;">Cancel</button>
@@ -126,7 +133,7 @@
         <button style="background:var(--accent); width:100%;" onclick="saveAllColors()">SAVE ALL COLORS</button>
         <hr>
         <h3>Add New DJ</h3>
-        <input type="text" id="newDjName" placeholder="Name" style="padding:10px; width:80%; margin-bottom:5px; border-radius:8px; border:1px solid #ddd;">
+        <input type="text" id="newDjName" placeholder="Name" style="padding:10px; width:80%; border-radius:8px; border:1px solid #ddd;">
         <input type="color" id="newDjColor" value="#3498db" style="width:100%; height:30px;"><br><br>
         <button style="background:var(--success); width:100%;" onclick="addNewDj()">ADD DJ</button><br><br>
         <button onclick="closeModal('djModal')" style="background:#95a5a6; width:100%;">Close</button>
@@ -157,7 +164,7 @@
 <div id="calendar" class="calendar-grid"></div>
 
 <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbwckOA45bvB0o1aDm-9qGZJF5xVwsFjv3a9StrKohTopGdAx9b9EXO4fbNG37dxYJF9/exec'; 
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbyuuoFCUpCMAv8iDeU_XPA7zZfrJw0GXU2eghXTVCMO7pDVifF1DNOfjaP4VzdVYpeE/exec'; 
     const GITHUB_REPO = 'ljensenpdx/DJTimeOffTracker'; 
 
     let viewDate = new Date();
@@ -257,7 +264,7 @@
                     else if (dj1) { djColor1 = dj1.color; djText = assign.primary; }
                     
                     if(assign.ceremony) iconsHtml += `<span class="s-icon">🔈</span>`;
-                    if(assign.reception) iconsHtml += `<span class="s-icon" style="filter:grayscale(1) brightness(0.5);">🔊</span>`;
+                    if(assign.reception) iconsHtml += `<span class="s-icon" style="filter: brightness(1.5);">🔊</span>`;
                     if(assign.booth) iconsHtml += `<span class="s-icon">📷</span>`;
                     if(assign.prints) iconsHtml += `<span class="s-icon">🖨️</span>`;
                     if(assign.guestbook) iconsHtml += `<span class="s-icon">☎️</span>`;
@@ -265,17 +272,18 @@
                     if(assign.karaoke) iconsHtml += `<span class="s-icon">🎤</span>`;
                 }
 
-                const bgSide = djColor2 ? `linear-gradient(to bottom, ${djColor1} 50%, ${djColor2} 50%)` : djColor1;
+                const bgSide = djColor2 ? `linear-gradient(135deg, ${djColor1} 50%, ${djColor2} 50%)` : djColor1;
 
                 dayHtml += `
-                <div class="show-box" onclick="openAssign('${s.id}', '${s.client}', '${s.date}')">
-                    <div class="dj-border" style="background:${bgSide}"></div>
-                    <div class="dj-names-text">${djText}</div>
-                    <div class="type-tag">${s.type}</div>
-                    <b class="client-info">#${s.id} ${s.client}</b>
-                    <div class="timing-info">T: ${s.setup} | S: ${s.showStart} | E: ${s.end}</div>
-                    <div class="addr-text">@ ${s.loc}</div>
-                    ${iconsHtml ? `<div class="icon-tray">${iconsHtml}</div>` : ''}
+                <div class="show-box" style="background:${bgSide}" onclick="openAssign('${s.id}', '${s.client}', '${s.date}')">
+                    <div class="box-pad"><div class="dj-names-text">${djText}</div></div>
+                    <div class="type-bar">${s.type}</div>
+                    <div class="box-pad">
+                        <b class="client-info">#${s.id} ${s.client}</b>
+                        <div class="timing-info">T: ${s.setup} | S: ${s.showStart} | E: ${s.end}</div>
+                        <div class="addr-text">@ ${s.loc}</div>
+                        ${iconsHtml ? `<div class="icon-tray">${iconsHtml}</div>` : ''}
+                    </div>
                 </div>`;
             });
             grid.innerHTML += dayHtml + `</div>`;
