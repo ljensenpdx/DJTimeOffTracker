@@ -21,7 +21,6 @@
         .toggle-btn { background: #95a5a6; padding: 6px 12px; font-size: 0.75rem; border-radius: 6px; color: white; cursor: pointer; border: none; font-weight: bold; }
         .toggle-btn.active { background: var(--accent); }
 
-        /* Grand Total Badge */
         .total-badge { background: var(--dark); color: white; padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 
         /* Calendar Grid */
@@ -31,71 +30,23 @@
         .day.today { background: #fff9db; border: 2px solid #f1c40f; }
         .date-num { font-weight: 900; color: #a4b0be; font-size: 1.1rem; }
         
-        /* FULL COLOR SHOW BOX */
-        .show-box { 
-            color: #ffffff; 
-            padding: 10px 0;
-            border-radius: 8px; 
-            cursor: pointer; 
-            transition: 0.2s; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2); 
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            overflow: hidden;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-            border: 1px solid rgba(0,0,0,0.1);
-        }
+        /* SHOW BOX */
+        .show-box { color: #ffffff; padding: 10px 0; border-radius: 8px; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.2); display: flex; flex-direction: column; position: relative; overflow: hidden; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); border: 1px solid rgba(0,0,0,0.1); }
         .show-box:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.3); }
-
         .box-pad { padding: 0 12px; }
-        
-        /* Top Row DJ & Price */
         .top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
         .dj-names-text { font-weight: 900; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
 
-        /* YELLOW PRICE BOX */
-        .price-tag { 
-            background: #ffff00; 
-            color: #000000; 
-            font-size: 13px; 
-            font-weight: 900; 
-            padding: 2px 6px; 
-            border-radius: 4px; 
-            text-shadow: none; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
+        /* YELLOW PRICE TAG */
+        .price-tag { background: #ffff00; color: #000000; font-size: 13px; font-weight: 900; padding: 2px 6px; border-radius: 4px; text-shadow: none; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
 
-        /* WHITE TYPE BAR */
-        .type-bar { 
-            background: white; 
-            color: black; 
-            font-size: 11px; 
-            font-weight: 900; 
-            text-align: center; 
-            padding: 4px 0; 
-            text-transform: uppercase; 
-            margin: 6px 0;
-            width: 100%;
-            text-shadow: none;
-            border-top: 1px solid rgba(0,0,0,0.05);
-            border-bottom: 1px solid rgba(0,0,0,0.05);
-        }
+        .type-bar { background: white; color: black; font-size: 11px; font-weight: 900; text-align: center; padding: 4px 0; text-transform: uppercase; margin: 6px 0; width: 100%; text-shadow: none; border-top: 1px solid rgba(0,0,0,0.05); border-bottom: 1px solid rgba(0,0,0,0.05); }
 
-        /* Card Content */
         .client-info { font-size: 14px; font-weight: 900; display: block; line-height: 1.2; margin-bottom: 2px; }
         .timing-info { font-size: 14px; font-weight: 900; display: block; margin: 2px 0; white-space: nowrap; }
         .addr-text { font-size: 10px; font-weight: 600; opacity: 0.95; margin-bottom: 4px; }
 
-        /* Icons Tray */
-        .icon-tray { 
-            display: flex; 
-            flex-wrap: wrap; 
-            gap: 12px; 
-            margin-top: auto; 
-            padding: 8px 12px 0 12px;
-            border-top: 1px solid rgba(255,255,255,0.3);
-        }
+        .icon-tray { display: flex; flex-wrap: wrap; gap: 12px; margin-top: auto; padding: 8px 12px 0 12px; border-top: 1px solid rgba(255,255,255,0.3); }
         .s-icon { font-size: 20px; filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.4)); }
         .up-count { font-size: 12px; font-weight: 900; vertical-align: middle; }
 
@@ -106,9 +57,6 @@
         
         .modal { display:none; position:fixed; z-index:2000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.6); }
         .modal-content { background:white; margin:2% auto; padding:25px; width:440px; border-radius:15px; text-align: left; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; color: #333; text-shadow: none; }
-        .dj-edit-row { display: flex; align-items: center; background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 10px; gap: 8px; }
-        input[type="text"], select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ddd; margin-bottom: 12px; font-weight: bold; box-sizing: border-box; }
-        
         #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; justify-content: center; align-items: center; z-index: 3000; font-weight: bold; }
     </style>
 </head>
@@ -137,6 +85,17 @@
             <div><span style="font-size:0.6rem; color:#7f8c8d; text-transform:uppercase; font-weight:bold;">🟢 Start</span><div id="popStart" style="font-size:0.8rem; font-weight:900;">--</div></div>
             <div><span style="font-size:0.6rem; color:#7f8c8d; text-transform:uppercase; font-weight:bold;">🛑 End</span><div id="popEnd" style="font-size:0.8rem; font-weight:900;">--</div></div>
         </div>
+
+        <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
+        <h3 style="margin-bottom:10px;">Equipment & Services</h3>
+        <div style="font-weight: bold; margin-bottom: 8px;"><input type="checkbox" id="checkCeremony"> Ceremony System (🔈)</div>
+        <div style="font-weight: bold; margin-bottom: 8px;"><input type="checkbox" id="checkReception"> Reception System (🔊)</div>
+        <div style="font-weight: bold; margin-bottom: 8px;"><input type="checkbox" id="checkBooth"> Photo Booth (📷)</div>
+        <div style="font-weight: bold; margin-bottom: 8px;"><input type="checkbox" id="checkPrints"> On Site Prints (🖨️)</div>
+        <div style="font-weight: bold; margin-bottom: 8px;"><input type="checkbox" id="checkGuestbook"> Audio Guestbook (☎️)</div>
+        <div style="font-weight: bold; margin-bottom: 8px;"><input type="checkbox" id="checkKaraoke"> Karaoke (🎤) <small style="color:red">*Forces Lane</small></div>
+        <div style="font-weight: bold; margin-bottom: 8px;">Up Lights (💡): <select id="uplightSelect" style="width:70px; margin-left:10px; display:inline-block;"><option value="0">0</option><option value="4">4</option><option value="8">8</option><option value="12">12</option><option value="16">16</option></select></div>
+
         <button style="background:var(--success); width:100%; margin-top:10px;" onclick="submitAssignment()">SAVE DETAILS</button><br><br>
         <button onclick="closeModal('assignModal')" style="background:#95a5a6; width:100%;">Cancel</button>
     </div>
@@ -160,14 +119,14 @@
 <div class="filter-bar">
     <button id="priceToggle" class="toggle-btn active" onclick="togglePrices()">SHOW PRICES</button>
     <select id="djFilter" onchange="applyFilter()"><option value="all">Filter by DJ: ALL</option><option value="unassigned">UNASSIGNED ONLY</option></select>
-    <span id="totalEventsBadge" class="total-badge">Imported Events: 0</span>
+    <span id="totalEventsBadge" class="total-badge">Total Imported: 0</span>
     <div class="today-link" onclick="goToToday()" style="margin-bottom:0">Jump to Today</div>
 </div>
 
 <div id="calendar" class="calendar-grid"></div>
 
 <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbzYhLqC2CJNH9OEZGhQkpxlB_2fOXm3TWTl2-ASwipqLMMOugtIJEke-2MY4Fbcx0Je/exec'; 
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbz_D4PuL_ngWb2_v1S4psWDjS6NX1M0sA3FNCzSEeaPms-ug5UTaw6JifNwtl9aFMWJ/exec'; 
     const GITHUB_REPO = 'ljensenpdx/DJTimeOffTracker'; 
 
     let viewDate = new Date();
@@ -260,7 +219,6 @@
         const firstDay = new Date(year, month, 1).getDay(), daysInMonth = new Date(year, month + 1, 0).getDate();
         for(let i=0; i<firstDay; i++) grid.innerHTML += `<div class="day other-month"></div>`;
 
-        // CALCULATE GRAND TOTAL IMPORTED
         const filteredTotalCount = showData.filter(s => {
             const assign = assignments.find(a => String(a.id) === String(s.id));
             if (currentFilter === 'unassigned') return !assign || (!assign.primary && !assign.secondary);
@@ -288,7 +246,6 @@
                 const assign = assignments.find(a => String(a.id) === String(s.id));
                 let djColor1 = '#34495e', djColor2 = null, djText = "Unassigned", iconsHtml = "", priceText = "";
                 
-                // STATUS ICON LOGIC
                 let sIcon = "❌"; 
                 if (s.status === "BOOKED AND PAID") sIcon = "✅"; 
                 else if (s.status === "CONTRACT SENT - WAITING ON PAYMENT") sIcon = "⚠️";
@@ -360,6 +317,10 @@
     function handleIcsUpload() { const fI = document.getElementById('icsInput'); if (!fI.files[0]) return alert("Select file"); let token = localStorage.getItem('gh_token'); if (!token) { token = prompt("Enter Token:"); if (token) localStorage.setItem('gh_token', token); } if (!token) return; const btn = document.getElementById('uploadBtn'); btn.innerText = "UPLOADING..."; btn.disabled = true; fI.files[0].text().then(c => { const b64 = btoa(unescape(encodeURIComponent(c))); fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/events.ics`, { headers: { 'Authorization': `token ${token}` } }).then(res => res.json()).then(data => { return fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/events.ics`, { method: 'PUT', headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ message: `Update ICS`, content: b64, sha: data.sha }) }); }).then(res => { if (res.ok) { alert("Success!"); location.reload(); } else { throw new Error(); } }).catch(() => { alert("Failed."); localStorage.removeItem('gh_token'); btn.innerText = "UPLOAD"; btn.disabled = false; }); }); }
     function changeMonth(dir) { viewDate.setDate(1); viewDate.setMonth(viewDate.getMonth() + dir); render(); }
     function goToToday() { viewDate = new Date(); render(); }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    function openModal(id) { document.getElementById(id).style.display = 'block'; if(id === 'djModal') loadDjList(); }
+    function loadDjList() { const unassignedCount = showData.filter(s => { const assign = assignments.find(a => String(a.id) === String(s.id)); return !assign || (!assign.primary && !assign.secondary); }).length; let html = `<div class="dj-edit-row" style="background:#dfe4ea; border: 1px solid #ced6e0;"><strong style="width: 80px; color:#2f3542;">Unassigned</strong><div style="flex-grow: 1; text-align: center;"><span style="font-weight: 900; color: #fff; background: var(--conflict); padding: 4px 12px; border-radius: 15px; font-size: 0.8rem;">${unassignedCount} SHOWS</span></div><div style="width:130px;"></div></div><hr style="border:0; border-top:1px solid #eee; margin:15px 0;">`; html += djSettings.map(dj => { const count = assignments.filter(a => a.primary === dj.name || a.secondary === dj.name).length; return `<div class="dj-edit-row" data-name="${dj.name}"><strong style="width: 80px;">${dj.name}</strong><div style="flex-grow: 1; text-align: center;"><span style="font-weight: 900; color: var(--dark); background: #ebf2f7; padding: 4px 12px; border-radius: 15px; font-size: 0.8rem;">${count} SHOWS</span></div><div style="display:flex; gap:5px; align-items:center;"><button style="padding:5px 8px; font-size:10px; background:var(--success);" onclick="copySchedule('${dj.name}')">📋 EXPORT</button><button style="padding:5px 8px; font-size:10px; background:var(--warning);" onclick="lockSchedule('${dj.name}')">🔒 LOCK</button><input type="color" value="${dj.color}" style="width:25px; height:25px; border:none; cursor:pointer;"></div></div>`; }).join(''); document.getElementById('djSettingsList').innerHTML = html; }
+
     init();
 </script>
 </body>
