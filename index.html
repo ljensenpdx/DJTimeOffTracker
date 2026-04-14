@@ -17,10 +17,8 @@
         /* Filter Bar */
         .filter-bar { display: flex; justify-content: center; gap: 12px; margin-bottom: 10px; align-items: center; flex-wrap: wrap; }
         .filter-bar select { padding: 6px 10px; border-radius: 6px; border: 1px solid #ddd; font-weight: bold; font-size: 0.8rem; background: white; }
-        
         .toggle-btn { background: #95a5a6; padding: 6px 12px; font-size: 0.75rem; border-radius: 6px; color: white; cursor: pointer; border: none; font-weight: bold; }
         .toggle-btn.active { background: var(--accent); }
-
         .total-badge { background: var(--dark); color: white; padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 
         /* Calendar Grid */
@@ -36,19 +34,13 @@
         .box-pad { padding: 0 12px; }
         .top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
         .dj-names-text { font-weight: 900; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
-
-        /* YELLOW PRICE TAG */
         .price-tag { background: #ffff00; color: #000000; font-size: 13px; font-weight: 900; padding: 2px 6px; border-radius: 4px; text-shadow: none; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-
         .type-bar { background: white; color: black; font-size: 11px; font-weight: 900; text-align: center; padding: 4px 0; text-transform: uppercase; margin: 6px 0; width: 100%; text-shadow: none; border-top: 1px solid rgba(0,0,0,0.05); border-bottom: 1px solid rgba(0,0,0,0.05); }
-
         .client-info { font-size: 14px; font-weight: 900; display: block; line-height: 1.2; margin-bottom: 2px; }
         .timing-info { font-size: 14px; font-weight: 900; display: block; margin: 2px 0; white-space: nowrap; }
         .addr-text { font-size: 10px; font-weight: 600; opacity: 0.95; margin-bottom: 4px; }
-
         .icon-tray { display: flex; flex-wrap: wrap; gap: 12px; margin-top: auto; padding: 8px 12px 0 12px; border-top: 1px solid rgba(255,255,255,0.3); }
         .s-icon { font-size: 20px; filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.4)); }
-        .up-count { font-size: 12px; font-weight: 900; vertical-align: middle; }
 
         button { padding: 10px 18px; cursor: pointer; border: none; border-radius: 8px; background: var(--dark); color: white; font-weight: bold; font-size: 0.75rem; }
         .crew-btn { background: var(--accent); }
@@ -104,25 +96,8 @@
 <div id="djModal" class="modal"><div class="modal-content"><h2>Manage Crew</h2><div id="djSettingsList"></div><button style="background:var(--accent); width:100%; margin-bottom:15px;" onclick="saveAllColors()">SAVE ALL COLORS</button><hr><h3>Add New DJ</h3><input type="text" id="newDjName" placeholder="Name"><input type="color" id="newDjColor" value="#3498db" style="width:100%; height:30px; margin-bottom:10px;"><br><button style="background:var(--success); width:100%;" onclick="addNewDj()">ADD DJ</button><br><br><button onclick="closeModal('djModal')" style="background:#95a5a6; width:100%;">Close</button></div></div>
 <div id="uploadModal" class="modal"><div class="modal-content"><h2>Update ICS Calendar</h2><input type="file" id="icsInput" accept=".ics" style="margin-bottom:20px;"><br><button id="uploadBtn" style="background:var(--success); width:100%;" onclick="handleIcsUpload()">UPLOAD TO GITHUB</button><br><br><button onclick="closeModal('uploadModal')" style="background:#95a5a6; width:100%;">Cancel</button></div></div>
 
-<div class="header">
-    <button style="background:var(--dark); width:80px;" onclick="changeMonth(-1)">◀ PREV</button>
-    <div class="header-center">
-        <h2 id="monthLabel">Month Year</h2>
-        <div class="btn-group">
-            <button class="crew-btn" onclick="openModal('djModal')">CREW</button>
-            <button class="ics-btn" onclick="openModal('uploadModal')">ICS</button>
-        </div>
-    </div>
-    <button style="background:var(--dark); width:80px;" onclick="changeMonth(1)">NEXT ▶</button>
-</div>
-
-<div class="filter-bar">
-    <button id="priceToggle" class="toggle-btn active" onclick="togglePrices()">SHOW PRICES</button>
-    <select id="djFilter" onchange="applyFilter()"><option value="all">Filter by DJ: ALL</option><option value="unassigned">UNASSIGNED ONLY</option></select>
-    <span id="totalEventsBadge" class="total-badge">Total Imported: 0</span>
-    <div class="today-link" onclick="goToToday()" style="margin-bottom:0">Jump to Today</div>
-</div>
-
+<div class="header"><button style="background:var(--dark); width:80px;" onclick="changeMonth(-1)">◀ PREV</button><div class="header-center"><h2 id="monthLabel">Month Year</h2><div class="btn-group"><button class="crew-btn" onclick="openModal('djModal')">CREW</button><button class="ics-btn" onclick="openModal('uploadModal')">ICS</button></div></div><button style="background:var(--dark); width:80px;" onclick="changeMonth(1)">NEXT ▶</button></div>
+<div class="filter-bar"><button id="priceToggle" class="toggle-btn active" onclick="togglePrices()">SHOW PRICES</button><select id="djFilter" onchange="applyFilter()"><option value="all">Filter by DJ: ALL</option><option value="unassigned">UNASSIGNED ONLY</option></select><span id="totalEventsBadge" class="total-badge">Total Imported: 0</span><div class="today-link" onclick="goToToday()" style="margin-bottom:0">Jump to Today</div></div>
 <div id="calendar" class="calendar-grid"></div>
 
 <script>
@@ -143,6 +118,53 @@
         return "$" + Math.floor(num).toLocaleString('en-US');
     }
 
+    function formatCityState(loc) {
+        if (!loc) return "Unknown City";
+        const parts = loc.split(',');
+        if (parts.length < 2) return loc.trim();
+        const city = parts[parts.length - 2].trim();
+        const statePart = parts[parts.length - 1].trim().split(' ')[0];
+        return `${city}, ${statePart}`;
+    }
+
+    // Explicitly declaring these so the browser finds them easily
+    window.lockSchedule = function(djName) {
+        const now = new Date(); const futureLimit = new Date(); futureLimit.setMonth(now.getMonth() + 8);
+        let lockText = `${djName} has committed to the following shows:\n\n`;
+        const myShows = showData.filter(s => {
+            const d = new Date(s.date + "T12:00:00");
+            const assign = assignments.find(a => String(a.id) === String(s.id));
+            return assign && (assign.primary === djName || assign.secondary === djName) && d >= now && d <= futureLimit;
+        }).sort((a,b) => new Date(a.date) - new Date(b.date));
+
+        if (myShows.length === 0) return alert("No shows committed.");
+        myShows.forEach(s => {
+            const d = new Date(s.date + "T12:00:00");
+            const assign = assignments.find(a => String(a.id) === String(s.id));
+            const role = (assign.primary === djName) ? "Primary" : "Secondary";
+            lockText += `${s.id} - ${s.client} - ${formatCityState(s.loc)} - ${d.getMonth() + 1}/${d.getDate()} - ${role}\n`;
+        });
+        navigator.clipboard.writeText(lockText).then(() => alert(`Lock list copied!`));
+    };
+
+    window.copySchedule = function(djName) {
+        const now = new Date(); const futureLimit = new Date(); futureLimit.setMonth(now.getMonth() + 8);
+        const days = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+        let scheduleText = `${djName}'s Schedule (Next 8 Months):\n\n`;
+        const myShows = showData.filter(s => {
+            const d = new Date(s.date + "T12:00:00");
+            const assign = assignments.find(a => String(a.id) === String(s.id));
+            return assign && (assign.primary === djName || assign.secondary === djName) && d >= now && d <= futureLimit;
+        }).sort((a,b) => new Date(a.date) - new Date(b.date));
+
+        if (myShows.length === 0) return alert("No shows assigned.");
+        myShows.forEach(s => {
+            const d = new Date(s.date + "T12:00:00");
+            scheduleText += `${d.getMonth() + 1}/${d.getDate()} - ${days[d.getDay()]} - ${formatCityState(s.loc)} - ${s.setup} to ${s.end}\n`;
+        });
+        navigator.clipboard.writeText(scheduleText).then(() => alert(`Schedule copied!`));
+    };
+
     async function loadIcalData() {
         try {
             const res = await fetch('events.ics?t=' + new Date().getTime());
@@ -158,20 +180,17 @@
                 const idMatch = (summary + rawDesc).match(/(?:ID:\s*|#)(\d{4,})|(\d{4,})/);
                 const typeMatch = rawDesc.match(/Type:\s*(.*?)(?:\\n|$)/i);
                 const statusMatch = rawDesc.match(/Status:\s*(.*?)(?:\\n|$)/i);
-                
+                const fullLoc = clean(block.match(/LOCATION:(.*)/)?.[1]);
                 let pS = "---", pSt = "---", pE = "---";
                 const tL = rawDesc.match(/From\s*(\d{1,2}:\d{2}\s*[APM]{2})\s*to\s*(\d{1,2}:\d{2}\s*[APM]{2})\s*\(Setup\s*at\s*(\d{1,2}:\d{2}\s*[APM]{2})\)/i);
                 if (tL) { pSt = tL[1].replace(/\s+/g, ''); pE = tL[2].replace(/\s+/g, ''); pS = tL[3].replace(/\s+/g, ''); }
-                
                 if (startRaw) {
                     events.push({
                         id: idMatch ? String(idMatch[1] || idMatch[2]) : "??",
                         date: `${startRaw.substring(0, 4)}-${startRaw.substring(4, 6)}-${startRaw.substring(6, 8)}`,
-                        setup: pS, showStart: pSt, end: pE, 
-                        type: typeMatch ? typeMatch[1].trim() : "EVENT",
+                        setup: pS, showStart: pSt, end: pE, type: typeMatch ? typeMatch[1].trim() : "EVENT",
                         status: statusMatch ? statusMatch[1].trim() : "UNKNOWN",
-                        client: summary.replace("DJ Event for ", ""), 
-                        loc: clean(block.match(/LOCATION:(.*)/)?.[1]).split(',').slice(0, 2).join(', ')
+                        client: summary.replace("DJ Event for ", ""), loc: fullLoc
                     });
                 }
             });
@@ -193,23 +212,12 @@
     }
 
     function populateFilterDropdown() {
-        const f = document.getElementById('djFilter'); 
-        f.innerHTML = '<option value="all">Filter by DJ: ALL</option><option value="unassigned">UNASSIGNED ONLY</option>';
+        const f = document.getElementById('djFilter'); f.innerHTML = '<option value="all">Filter by DJ: ALL</option><option value="unassigned">UNASSIGNED ONLY</option>';
         djSettings.forEach(dj => { f.innerHTML += `<option value="${dj.name}">${dj.name}</option>`; });
     }
 
-    function togglePrices() { 
-        hidePrices = !hidePrices; 
-        const btn = document.getElementById('priceToggle'); 
-        btn.innerText = hidePrices ? "HIDE PRICES" : "SHOW PRICES"; 
-        btn.classList.toggle('active'); 
-        render(); 
-    }
-    
-    function applyFilter() { 
-        currentFilter = document.getElementById('djFilter').value; 
-        render(); 
-    }
+    function togglePrices() { hidePrices = !hidePrices; const btn = document.getElementById('priceToggle'); btn.innerText = hidePrices ? "HIDE PRICES" : "SHOW PRICES"; btn.classList.toggle('active'); render(); }
+    function applyFilter() { currentFilter = document.getElementById('djFilter').value; render(); }
 
     function render() {
         const grid = document.getElementById('calendar'); grid.innerHTML = '';
@@ -231,25 +239,14 @@
             const dateStr = `${year}-${(month+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`;
             const isToday = (d === (new Date()).getDate() && month === (new Date()).getMonth() && year === (new Date()).getFullYear());
             const todayOff = offData.filter(row => { if (currentFilter !== 'all' && currentFilter !== 'unassigned') return row[1] === dateStr && row[0].toLowerCase() === currentFilter.toLowerCase(); return row[1] === dateStr; });
-            const todayShows = showData.filter(s => { 
-                if (s.date !== dateStr) return false; 
-                const assign = assignments.find(a => String(a.id) === String(s.id)); 
-                if (currentFilter === 'unassigned') return !assign || (!assign.primary && !assign.secondary); 
-                if (currentFilter !== 'all') return assign && (assign.primary === currentFilter || assign.secondary === currentFilter); 
-                return true; 
-            });
-
+            const todayShows = showData.filter(s => { if (s.date !== dateStr) return false; const assign = assignments.find(a => String(a.id) === String(s.id)); if (currentFilter === 'unassigned') return !assign || (!assign.primary && !assign.secondary); if (currentFilter !== 'all') return assign && (assign.primary === currentFilter || assign.secondary === currentFilter); return true; });
             let dayHtml = `<div class="day ${isToday ? 'today' : ''}"><span class="date-num">${d}</span>`;
             todayOff.forEach(row => { const dj = djSettings.find(s => s.name.toLowerCase() === row[0].toLowerCase()); dayHtml += `<div style="background:${dj ? dj.color : '#95a5a6'}; color:white; padding:3px; border-radius:4px; font-size:9px; font-weight:bold; text-align:center; margin-bottom:2px;">${row[0]}</div>`; });
 
             todayShows.forEach(s => {
                 const assign = assignments.find(a => String(a.id) === String(s.id));
                 let djColor1 = '#34495e', djColor2 = null, djText = "Unassigned", iconsHtml = "", priceText = "";
-                
-                let sIcon = "❌"; 
-                if (s.status === "BOOKED AND PAID") sIcon = "✅"; 
-                else if (s.status === "CONTRACT SENT - WAITING ON PAYMENT") sIcon = "⚠️";
-
+                let sIcon = "❌"; if (s.status === "BOOKED AND PAID") sIcon = "✅"; else if (s.status === "CONTRACT SENT - WAITING ON PAYMENT") sIcon = "⚠️";
                 if (assign) {
                     const dj1 = djSettings.find(d => d.name === assign.primary); const dj2 = djSettings.find(d => d.name === assign.secondary);
                     if (dj1 && dj2) { djColor1 = dj1.color; djColor2 = dj2.color; djText = `${assign.primary} / ${assign.secondary}`; }
@@ -263,21 +260,11 @@
                     if(assign.uplights > 0) iconsHtml += `<span class="s-icon">💡<span class="up-count">(${assign.uplights})</span></span>`;
                     if(assign.karaoke) iconsHtml += `<span class="s-icon">🎤</span>`;
                 }
-
                 const bgStyle = djColor2 ? `linear-gradient(135deg, ${djColor1} 50%, ${djColor2} 50%)` : djColor1;
                 dayHtml += `<div class="show-box" style="background:${bgStyle}" onclick="openAssign('${s.id}', '${s.client.replace(/'/g, "\\'")}', '${s.date}')">
-                    <div class="box-pad">
-                        <div class="top-row">
-                            <div class="dj-names-text">${djText}</div>
-                            ${priceText ? `<div class="price-tag">${priceText}</div>` : ''}
-                        </div>
-                    </div>
+                    <div class="box-pad"><div class="top-row"><div class="dj-names-text">${djText}</div>${priceText ? `<div class="price-tag">${priceText}</div>` : ''}</div></div>
                     <div class="type-bar">${s.type}</div>
-                    <div class="box-pad">
-                        <b class="client-info">#${s.id} ${s.client}</b>
-                        <div class="timing-info">${sIcon} 🛠️ ${s.setup} | 🟢 ${s.showStart} | 🛑 ${s.end}</div>
-                        <div class="addr-text">@ ${s.loc}</div>
-                    </div>
+                    <div class="box-pad"><b class="client-info">#${s.id} ${s.client}</b><div class="timing-info">${sIcon} 🛠️ ${s.setup} | 🟢 ${s.showStart} | 🛑 ${s.end}</div><div class="addr-text">@ ${s.loc.split(',').slice(0, 2).join(', ')}</div></div>
                     ${iconsHtml ? `<div class="icon-tray">${iconsHtml}</div>` : ''}
                 </div>`;
             });
@@ -299,13 +286,7 @@
         const curr = assignments.find(a => String(a.id) === String(id)) || {};
         pSel.value = curr.primary || ""; sSel.value = curr.secondary || "";
         document.getElementById('priceInput').value = curr.price || "";
-        document.getElementById('checkCeremony').checked = !!curr.ceremony; 
-        document.getElementById('checkReception').checked = !!curr.reception; 
-        document.getElementById('checkBooth').checked = !!curr.booth; 
-        document.getElementById('checkPrints').checked = !!curr.prints; 
-        document.getElementById('checkGuestbook').checked = !!curr.guestbook; 
-        document.getElementById('checkKaraoke').checked = !!curr.karaoke; 
-        document.getElementById('uplightSelect').value = curr.uplights || "0";
+        document.getElementById('checkCeremony').checked = !!curr.ceremony; document.getElementById('checkReception').checked = !!curr.reception; document.getElementById('checkBooth').checked = !!curr.booth; document.getElementById('checkPrints').checked = !!curr.prints; document.getElementById('checkGuestbook').checked = !!curr.guestbook; document.getElementById('checkKaraoke').checked = !!curr.karaoke; document.getElementById('uplightSelect').value = curr.uplights || "0";
         checkOffStatus(); document.getElementById('assignModal').style.display = 'block';
     }
 
