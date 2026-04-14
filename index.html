@@ -28,17 +28,22 @@
         .day.today { background: #fff9db; border: 2px solid #f1c40f; }
         .date-num { font-weight: 900; color: #a4b0be; font-size: 1.1rem; }
         
-        /* SHOW BOX */
+        /* CARD STYLING */
         .show-box { color: #ffffff; padding: 10px 0; border-radius: 8px; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.2); display: flex; flex-direction: column; position: relative; overflow: hidden; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); border: 1px solid rgba(0,0,0,0.1); }
         .show-box:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.3); }
         .box-pad { padding: 0 12px; }
         .top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
         .dj-names-text { font-weight: 900; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        /* YELLOW PRICE BOX */
         .price-tag { background: #ffff00; color: #000000; font-size: 13px; font-weight: 900; padding: 2px 6px; border-radius: 4px; text-shadow: none; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        
         .type-bar { background: white; color: black; font-size: 11px; font-weight: 900; text-align: center; padding: 4px 0; text-transform: uppercase; margin: 6px 0; width: 100%; text-shadow: none; border-top: 1px solid rgba(0,0,0,0.05); border-bottom: 1px solid rgba(0,0,0,0.05); }
         .client-info { font-size: 14px; font-weight: 900; display: block; line-height: 1.2; margin-bottom: 2px; }
         .timing-info { font-size: 14px; font-weight: 900; display: block; margin: 2px 0; white-space: nowrap; }
         .addr-text { font-size: 10px; font-weight: 600; opacity: 0.95; margin-bottom: 4px; }
+        
+        /* Bottom Tray Icons */
         .icon-tray { display: flex; flex-wrap: wrap; gap: 12px; margin-top: auto; padding: 8px 12px 0 12px; border-top: 1px solid rgba(255,255,255,0.3); }
         .s-icon { font-size: 20px; filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.4)); }
 
@@ -47,8 +52,18 @@
         .ics-btn { background: var(--success); }
         .today-link { display: block; text-align: center; color: #95a5a6; font-size: 0.65rem; text-decoration: none; margin-bottom: 10px; cursor: pointer; font-weight: bold; text-transform: uppercase; }
         
+        /* MODAL STYLING - Widened to 520px to keep rows clean */
         .modal { display:none; position:fixed; z-index:2000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.6); }
-        .modal-content { background:white; margin:2% auto; padding:25px; width:440px; border-radius:15px; text-align: left; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; color: #333; text-shadow: none; }
+        .modal-content { background:white; margin:2% auto; padding:25px; width:520px; border-radius:15px; text-align: left; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; color: #333; text-shadow: none; }
+        
+        /* CLEAN SINGLE-LINE ROW STYLING */
+        .dj-edit-row { display: flex; align-items: center; justify-content: space-between; background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 10px; gap: 10px; }
+        .dj-name-box { width: 90px; font-weight: 900; font-size: 1rem; color: var(--dark); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .dj-count-box { background: #ebf2f7; color: var(--dark); font-weight: 900; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; white-space: nowrap; min-width: 80px; text-align: center; }
+        .dj-action-group { display: flex; gap: 6px; align-items: center; }
+        .color-preview { width: 28px; height: 28px; border: 2px solid white; border-radius: 6px; cursor: pointer; padding: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        
+        input[type="text"], select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ddd; margin-bottom: 12px; font-weight: bold; box-sizing: border-box; }
         #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; justify-content: center; align-items: center; z-index: 3000; font-weight: bold; }
     </style>
 </head>
@@ -93,11 +108,41 @@
     </div>
 </div>
 
-<div id="djModal" class="modal"><div class="modal-content"><h2>Manage Crew</h2><div id="djSettingsList"></div><button style="background:var(--accent); width:100%; margin-bottom:15px;" onclick="saveAllColors()">SAVE ALL COLORS</button><hr><h3>Add New DJ</h3><input type="text" id="newDjName" placeholder="Name"><input type="color" id="newDjColor" value="#3498db" style="width:100%; height:30px; margin-bottom:10px;"><br><button style="background:var(--success); width:100%;" onclick="addNewDj()">ADD DJ</button><br><br><button onclick="closeModal('djModal')" style="background:#95a5a6; width:100%;">Close</button></div></div>
+<div id="djModal" class="modal">
+    <div class="modal-content">
+        <h2>Manage Crew</h2>
+        <div id="djSettingsList"></div>
+        <button style="background:var(--accent); width:100%; margin-bottom:15px;" onclick="saveAllColors()">SAVE ALL COLORS</button>
+        <hr>
+        <h3>Add New DJ</h3>
+        <input type="text" id="newDjName" placeholder="Name">
+        <input type="color" id="newDjColor" value="#3498db" style="width:100%; height:35px; margin-bottom:12px; border:none; cursor:pointer; border-radius:6px;">
+        <button style="background:var(--success); width:100%;" onclick="addNewDj()">ADD DJ</button><br><br>
+        <button onclick="closeModal('djModal')" style="background:#95a5a6; width:100%;">Close</button>
+    </div>
+</div>
+
 <div id="uploadModal" class="modal"><div class="modal-content"><h2>Update ICS Calendar</h2><input type="file" id="icsInput" accept=".ics" style="margin-bottom:20px;"><br><button id="uploadBtn" style="background:var(--success); width:100%;" onclick="handleIcsUpload()">UPLOAD TO GITHUB</button><br><br><button onclick="closeModal('uploadModal')" style="background:#95a5a6; width:100%;">Cancel</button></div></div>
 
-<div class="header"><button style="background:var(--dark); width:80px;" onclick="changeMonth(-1)">◀ PREV</button><div class="header-center"><h2 id="monthLabel">Month Year</h2><div class="btn-group"><button class="crew-btn" onclick="openModal('djModal')">CREW</button><button class="ics-btn" onclick="openModal('uploadModal')">ICS</button></div></div><button style="background:var(--dark); width:80px;" onclick="changeMonth(1)">NEXT ▶</button></div>
-<div class="filter-bar"><button id="priceToggle" class="toggle-btn active" onclick="togglePrices()">SHOW PRICES</button><select id="djFilter" onchange="applyFilter()"><option value="all">Filter by DJ: ALL</option><option value="unassigned">UNASSIGNED ONLY</option></select><span id="totalEventsBadge" class="total-badge">Total Imported: 0</span><div class="today-link" onclick="goToToday()" style="margin-bottom:0">Jump to Today</div></div>
+<div class="header">
+    <button style="background:var(--dark); width:80px;" onclick="changeMonth(-1)">◀ PREV</button>
+    <div class="header-center">
+        <h2 id="monthLabel">Month Year</h2>
+        <div class="btn-group">
+            <button class="crew-btn" onclick="openModal('djModal')">CREW</button>
+            <button class="ics-btn" onclick="openModal('uploadModal')">ICS</button>
+        </div>
+    </div>
+    <button style="background:var(--dark); width:80px;" onclick="changeMonth(dir)">NEXT ▶</button>
+</div>
+
+<div class="filter-bar">
+    <button id="priceToggle" class="toggle-btn active" onclick="togglePrices()">SHOW PRICES</button>
+    <select id="djFilter" onchange="applyFilter()"><option value="all">Filter by DJ: ALL</option><option value="unassigned">UNASSIGNED ONLY</option></select>
+    <span id="totalEventsBadge" class="total-badge">Total Imported: 0</span>
+    <div class="today-link" onclick="goToToday()" style="margin-bottom:0">Jump to Today</div>
+</div>
+
 <div id="calendar" class="calendar-grid"></div>
 
 <script>
@@ -127,7 +172,6 @@
         return `${city}, ${statePart}`;
     }
 
-    // Explicitly declaring these so the browser finds them easily
     window.lockSchedule = function(djName) {
         const now = new Date(); const futureLimit = new Date(); futureLimit.setMonth(now.getMonth() + 8);
         let lockText = `${djName} has committed to the following shows:\n\n`;
@@ -136,7 +180,6 @@
             const assign = assignments.find(a => String(a.id) === String(s.id));
             return assign && (assign.primary === djName || assign.secondary === djName) && d >= now && d <= futureLimit;
         }).sort((a,b) => new Date(a.date) - new Date(b.date));
-
         if (myShows.length === 0) return alert("No shows committed.");
         myShows.forEach(s => {
             const d = new Date(s.date + "T12:00:00");
@@ -156,7 +199,6 @@
             const assign = assignments.find(a => String(a.id) === String(s.id));
             return assign && (assign.primary === djName || assign.secondary === djName) && d >= now && d <= futureLimit;
         }).sort((a,b) => new Date(a.date) - new Date(b.date));
-
         if (myShows.length === 0) return alert("No shows assigned.");
         myShows.forEach(s => {
             const d = new Date(s.date + "T12:00:00");
@@ -226,7 +268,6 @@
         ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => grid.innerHTML += `<div class="weekday">${d}</div>`);
         const firstDay = new Date(year, month, 1).getDay(), daysInMonth = new Date(year, month + 1, 0).getDate();
         for(let i=0; i<firstDay; i++) grid.innerHTML += `<div class="day other-month"></div>`;
-
         const filteredTotalCount = showData.filter(s => {
             const assign = assignments.find(a => String(a.id) === String(s.id));
             if (currentFilter === 'unassigned') return !assign || (!assign.primary && !assign.secondary);
@@ -234,7 +275,6 @@
             return true;
         }).length;
         document.getElementById('totalEventsBadge').innerText = "Total Imported: " + filteredTotalCount;
-
         for(let d=1; d<=daysInMonth; d++) {
             const dateStr = `${year}-${(month+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`;
             const isToday = (d === (new Date()).getDate() && month === (new Date()).getMonth() && year === (new Date()).getFullYear());
@@ -242,7 +282,6 @@
             const todayShows = showData.filter(s => { if (s.date !== dateStr) return false; const assign = assignments.find(a => String(a.id) === String(s.id)); if (currentFilter === 'unassigned') return !assign || (!assign.primary && !assign.secondary); if (currentFilter !== 'all') return assign && (assign.primary === currentFilter || assign.secondary === currentFilter); return true; });
             let dayHtml = `<div class="day ${isToday ? 'today' : ''}"><span class="date-num">${d}</span>`;
             todayOff.forEach(row => { const dj = djSettings.find(s => s.name.toLowerCase() === row[0].toLowerCase()); dayHtml += `<div style="background:${dj ? dj.color : '#95a5a6'}; color:white; padding:3px; border-radius:4px; font-size:9px; font-weight:bold; text-align:center; margin-bottom:2px;">${row[0]}</div>`; });
-
             todayShows.forEach(s => {
                 const assign = assignments.find(a => String(a.id) === String(s.id));
                 let djColor1 = '#34495e', djColor2 = null, djText = "Unassigned", iconsHtml = "", priceText = "";
@@ -300,7 +339,30 @@
     function goToToday() { viewDate = new Date(); render(); }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
     function openModal(id) { document.getElementById(id).style.display = 'block'; if(id === 'djModal') loadDjList(); }
-    function loadDjList() { const unassignedCount = showData.filter(s => { const assign = assignments.find(a => String(a.id) === String(s.id)); return !assign || (!assign.primary && !assign.secondary); }).length; let html = `<div class="dj-edit-row" style="background:#dfe4ea; border: 1px solid #ced6e0;"><strong style="width: 80px; color:#2f3542;">Unassigned</strong><div style="flex-grow: 1; text-align: center;"><span style="font-weight: 900; color: #fff; background: var(--conflict); padding: 4px 12px; border-radius: 15px; font-size: 0.8rem;">${unassignedCount} SHOWS</span></div><div style="width:130px;"></div></div><hr style="border:0; border-top:1px solid #eee; margin:15px 0;">`; html += djSettings.map(dj => { const count = assignments.filter(a => a.primary === dj.name || a.secondary === dj.name).length; return `<div class="dj-edit-row" data-name="${dj.name}"><strong style="width: 80px;">${dj.name}</strong><div style="flex-grow: 1; text-align: center;"><span style="font-weight: 900; color: var(--dark); background: #ebf2f7; padding: 4px 12px; border-radius: 15px; font-size: 0.8rem;">${count} SHOWS</span></div><div style="display:flex; gap:5px; align-items:center;"><button style="padding:5px 8px; font-size:10px; background:var(--success);" onclick="copySchedule('${dj.name}')">📋 EXPORT</button><button style="padding:5px 8px; font-size:10px; background:var(--warning);" onclick="lockSchedule('${dj.name}')">🔒 LOCK</button><input type="color" value="${dj.color}" style="width:25px; height:25px; border:none; cursor:pointer;"></div></div>`; }).join(''); document.getElementById('djSettingsList').innerHTML = html; }
+    
+    // UPDATED LOAD CREW LIST - EVERYTHING ON ONE LINE
+    function loadDjList() {
+        const unassignedCount = showData.filter(s => { const assign = assignments.find(a => String(a.id) === String(s.id)); return !assign || (!assign.primary && !assign.secondary); }).length;
+        let html = `<div class="dj-edit-row" style="background:#dfe4ea; border: 1px solid #ced6e0;">
+            <div class="dj-name-box">Unassigned</div>
+            <div class="dj-count-box" style="background:var(--conflict); color:white;">${unassignedCount} SHOWS</div>
+            <div style="flex-grow:1"></div>
+        </div><hr style="border:0; border-top:1px solid #eee; margin:15px 0;">`;
+        
+        html += djSettings.map(dj => {
+            const count = assignments.filter(a => a.primary === dj.name || a.secondary === dj.name).length;
+            return `<div class="dj-edit-row" data-name="${dj.name}">
+                <div class="dj-name-box">${dj.name}</div>
+                <div class="dj-count-box">${count} SHOWS</div>
+                <div class="dj-action-group">
+                    <button style="padding:6px 10px; font-size:10px; background:var(--success);" onclick="window.copySchedule('${dj.name}')">📋 EXPORT</button>
+                    <button style="padding:6px 10px; font-size:10px; background:var(--warning);" onclick="window.lockSchedule('${dj.name}')">🔒 LOCK</button>
+                </div>
+                <input type="color" value="${dj.color}" class="color-preview">
+            </div>`;
+        }).join('');
+        document.getElementById('djSettingsList').innerHTML = html;
+    }
 
     init();
 </script>
