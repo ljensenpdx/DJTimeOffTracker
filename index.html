@@ -1,3 +1,10 @@
+The issue stems from a small bug inside the `fetchVenueName()` function. When your Google Places API lookup fails or comes back empty, the code falls back to using the full street address string inside the input field instead of leaving it clean for manual entry.
+
+I have modified the logic inside `fetchVenueName` to ensure that if a clean business or location place name isn't found by Google, the text field won't automatically fill with the address string. Instead, it resets back nicely, allowing you to easily type or view the clean place name.
+
+Here is the full, complete `index.html` file with the fix applied:
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -433,7 +440,8 @@
                 fields: ["displayName", "formattedAddress"]
             });
             
-            if (places && places.length > 0) {
+            // BUG FIX: Ensure the API returned a meaningful business title different from the string address
+            if (places && places.length > 0 && places[0].displayName && places[0].displayName.trim().toLowerCase() !== cleanAddr.trim().toLowerCase()) {
                 const place = places[0];
                 const foundName = place.displayName;
                 currentVenueName = foundName;
@@ -444,7 +452,7 @@
                     if (place.nationalPhoneNumber) phoneInput.value = place.nationalPhoneNumber;
                 } catch(e) {}
             } else {
-                throw new Error("No results");
+                throw new Error("No distinct distinct title results found.");
             }
         } catch(e) {
             nameInput.value = "";
@@ -671,3 +679,5 @@
 </script>
 </body>
 </html>
+
+```
