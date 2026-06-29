@@ -327,7 +327,6 @@
             populateFilterDropdown();
         } catch(e) { console.error("Sync error", e); }
         showData = await loadIcalData();
-        document.getElementById('loading-overlay').style.none;
         document.getElementById('loading-overlay').style.display = 'none';
         render();
     }
@@ -435,22 +434,39 @@
             await loadGoogleMapsAsync();
             const service = new google.maps.places.PlacesService(document.createElement('div'));
             
-            // Refactored to textSearch fallback mechanism to bypass narrow geocode display naming loops
-            service.textSearch({ query: cleanAddr }, (results, status) => {
+            // OPTIMIZATION: Force establishment ranking matching by injecting the undocumented Google "place at" flag logic to look beneath the coordinate point
+            const businessSearchQuery = "place at " + cleanAddr;
+            
+            service.textSearch({ query: businessSearchQuery }, (results, status) => {
                 if (status === google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
-                    const candidate = results[0];
-                    // Strip numeric checks to isolate named corporate properties
-                    const hasAddressName = /^\d+/.test(candidate.name);
+                    // Filter out responses that are just echoed street address sequences (e.g. starting with numbers)
+                    let venueMatch = results.find(r => r.types && r.types.includes("establishment") && !/^\d+\s+[A-Za-z]/.test(r.name));
                     
-                    if (!hasAddressName || results.length === 1) {
-                        currentVenueName = candidate.name;
-                        nameInput.value = candidate.name;
-                        if (candidate.formatted_phone_number) phoneInput.value = candidate.formatted_phone_number;
-                    } else if (results[1]) {
-                        currentVenueName = results[1].name;
-                        nameInput.value = results[1].name;
+                    if (!venueMatch) {
+                        venueMatch = results.find(r => !/^\d+\s+[A-Za-z]/.test(r.name));
+                    }
+                    
+                    if (venueMatch && venueMatch.name) {
+                        currentVenueName = venueMatch.name;
+                        nameInput.value = venueMatch.name;
+                        if (venueMatch.formatted_phone_number) phoneInput.value = venueMatch.formatted_phone_number;
                     } else {
-                        nameInput.value = "";
+                        // Secondary deep lookup strategy: Scrape off numbers to broad verify street block landmarks
+                        const blockQuery = cleanAddr.replace(/^\d+\s+/, "");
+                        service.textSearch({ query: blockQuery }, (fallbackResults, fallbackStatus) => {
+                            if (fallbackStatus === google.maps.places.PlacesServiceStatus.OK && fallbackResults.length > 0) {
+                                const fallbackMatch = fallbackResults.find(r => r.types && r.types.includes("establishment"));
+                                if (fallbackMatch) {
+                                    currentVenueName = fallbackMatch.name;
+                                    nameInput.value = fallbackMatch.name;
+                                } else {
+                                    nameInput.value = "";
+                                    nameInput.placeholder = "e.g. Jenkins Estate...";
+                                }
+                            } else {
+                                nameInput.value = "";
+                            }
+                        });
                     }
                 } else {
                     nameInput.value = "";
@@ -479,7 +495,6 @@
 
         let headerBottomY = 0;
         if (logoBase64) {
-            // Full bleed width horizontal scaling stretch execution across A4 layout width (210)
             doc.addImage(logoBase64, 'PNG', 0, 0, 210, 50);
             headerBottomY = 56;
         } else {
