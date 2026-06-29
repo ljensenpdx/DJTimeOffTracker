@@ -76,7 +76,7 @@
         
         <div id="venueNameWrap" style="display:none; margin-bottom:10px;">
             <label>Venue Name <small style="color:#95a5a6; font-weight:normal;">(auto or type your own)</small></label>
-            <input type="text" id="venueNameInput" placeholder="e.g. Hornings Hideout...">
+            <input type="text" id="venueNameInput" placeholder="e.g. Jenkins Estate...">
         </div>
         <div id="venuePhoneWrap" style="display:none; margin-bottom:10px;">
             <label>Venue Phone:</label>
@@ -153,7 +153,6 @@
     // ==========================================
     const scriptURL = 'https://script.google.com/macros/s/AKfycbxcpYGZc2Wp1R2PpzEJH6H8Gojz6h6Oqe-q2MqyqxXVfNv23ZTH97CJUaqs4pdQ0aR9/exec'; 
     const GITHUB_REPO = 'ljensenpdx/DJTimeOffTracker'; 
-    // CORRECTION: Transformed raw path to bypass GitHub visual rendering wrap
     const LOGO_URL = 'https://raw.githubusercontent.com/ljensenpdx/DJTimeOffTracker/main/LARGE%20LOGO.png';
     const GMAPS_API_KEY = 'AIzaSyA86LiHXWFpQj_0hIDEWHnJrIDno6F123I';
 
@@ -215,7 +214,7 @@
                 new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), timeout))
             ]);
         } catch(e) {
-            console.log("Logo cross-origin conversion fallback activated.");
+            console.log("Logo load failed, defaulting to text banner.");
             logoBase64 = null;
         }
         return logoBase64;
@@ -328,6 +327,7 @@
             populateFilterDropdown();
         } catch(e) { console.error("Sync error", e); }
         showData = await loadIcalData();
+        document.getElementById('loading-overlay').style.none;
         document.getElementById('loading-overlay').style.display = 'none';
         render();
     }
@@ -433,30 +433,33 @@
         
         try {
             await loadGoogleMapsAsync();
-            const { Place } = await google.maps.importLibrary("places");
+            const service = new google.maps.places.PlacesService(document.createElement('div'));
             
-            const { places } = await Place.searchByText({
-                textQuery: cleanAddr,
-                fields: ["displayName", "formattedAddress"]
+            // Refactored to textSearch fallback mechanism to bypass narrow geocode display naming loops
+            service.textSearch({ query: cleanAddr }, (results, status) => {
+                if (status === google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
+                    const candidate = results[0];
+                    // Strip numeric checks to isolate named corporate properties
+                    const hasAddressName = /^\d+/.test(candidate.name);
+                    
+                    if (!hasAddressName || results.length === 1) {
+                        currentVenueName = candidate.name;
+                        nameInput.value = candidate.name;
+                        if (candidate.formatted_phone_number) phoneInput.value = candidate.formatted_phone_number;
+                    } else if (results[1]) {
+                        currentVenueName = results[1].name;
+                        nameInput.value = results[1].name;
+                    } else {
+                        nameInput.value = "";
+                    }
+                } else {
+                    nameInput.value = "";
+                }
+                nameInput.disabled = false;
             });
-            
-            if (places && places.length > 0 && places[0].displayName && places[0].displayName.trim().toLowerCase() !== cleanAddr.trim().toLowerCase()) {
-                const place = places[0];
-                const foundName = place.displayName;
-                currentVenueName = foundName;
-                nameInput.value = foundName;
-                
-                try {
-                    await place.fetchFields({ fields: ["nationalPhoneNumber"] });
-                    if (place.nationalPhoneNumber) phoneInput.value = place.nationalPhoneNumber;
-                } catch(e) {}
-            } else {
-                throw new Error("Distinct name check unresolved.");
-            }
         } catch(e) {
             nameInput.value = "";
-            nameInput.placeholder = "e.g. Hornings Hideout...";
-        } finally {
+            nameInput.placeholder = "e.g. Jenkins Estate...";
             nameInput.disabled = false;
         }
     }
@@ -474,10 +477,11 @@
 
         await ensureLogo();
 
-        let headerBottomY = 6;
+        let headerBottomY = 0;
         if (logoBase64) {
-            doc.addImage(logoBase64, 'PNG', 75, headerBottomY, 60, 60);
-            headerBottomY = 70;
+            // Full bleed width horizontal scaling stretch execution across A4 layout width (210)
+            doc.addImage(logoBase64, 'PNG', 0, 0, 210, 50);
+            headerBottomY = 56;
         } else {
             doc.setFillColor(44, 62, 80);
             doc.rect(0, 0, 210, 40, 'F');
@@ -570,7 +574,7 @@
         y += 10;
 
         const venueNameFromInput = document.getElementById('venueNameInput').value.trim();
-        if (venueNameFromInput) {
+        if (venueNameFromInput && venueNameFromInput !== "Looking up venue name...") {
             doc.setFont(undefined, 'bold');
             doc.setTextColor(39, 174, 96);
             doc.text(stripEmoji(venueNameFromInput), 10, y);
