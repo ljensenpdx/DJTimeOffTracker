@@ -1,10 +1,3 @@
-The issue stems from a small bug inside the `fetchVenueName()` function. When your Google Places API lookup fails or comes back empty, the code falls back to using the full street address string inside the input field instead of leaving it clean for manual entry.
-
-I have modified the logic inside `fetchVenueName` to ensure that if a clean business or location place name isn't found by Google, the text field won't automatically fill with the address string. Instead, it resets back nicely, allowing you to easily type or view the clean place name.
-
-Here is the full, complete `index.html` file with the fix applied:
-
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -155,11 +148,18 @@ Here is the full, complete `index.html` file with the fix applied:
 <div id="calendar" class="calendar-grid"></div>
 
 <script>
+    // ==========================================
+    // CONFIGURATION - EASY ACCESS CONFIG
+    // ==========================================
     const scriptURL = 'https://script.google.com/macros/s/AKfycbxcpYGZc2Wp1R2PpzEJH6H8Gojz6h6Oqe-q2MqyqxXVfNv23ZTH97CJUaqs4pdQ0aR9/exec'; 
     const GITHUB_REPO = 'ljensenpdx/DJTimeOffTracker'; 
-    const LOGO_URL = 'https://static.wixstatic.com/media/27837d_2fbc76a1db8b40df893273a42ca07aa8~mv2.png/v1/fill/w_220,h_220,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/FUN%20SQUAD%20DJS%20-%20LOGO.png';
+    // CORRECTION: Transformed raw path to bypass GitHub visual rendering wrap
+    const LOGO_URL = 'https://raw.githubusercontent.com/ljensenpdx/DJTimeOffTracker/main/LARGE%20LOGO.png';
     const GMAPS_API_KEY = 'AIzaSyA86LiHXWFpQj_0hIDEWHnJrIDno6F123I';
 
+    // ==========================================
+    // SYSTEM TRACKING MODULES
+    // ==========================================
     let viewDate = new Date();
     let offData = [], showData = [], djSettings = [], assignments = [];
     let currentEventId = null, currentEventDate = null;
@@ -207,7 +207,7 @@ Here is the full, complete `index.html` file with the fix applied:
         });
     }
 
-    async function ensureLogo(timeout = 3000) {
+    async function ensureLogo(timeout = 2000) {
         if (logoBase64) return logoBase64;
         try {
             logoBase64 = await Promise.race([
@@ -215,7 +215,7 @@ Here is the full, complete `index.html` file with the fix applied:
                 new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), timeout))
             ]);
         } catch(e) {
-            console.log("Logo load failed or timed out, using text fallback");
+            console.log("Logo cross-origin conversion fallback activated.");
             logoBase64 = null;
         }
         return logoBase64;
@@ -234,7 +234,7 @@ Here is the full, complete `index.html` file with the fix applied:
                 if (typeof google !== 'undefined' && google.maps && google.maps.importLibrary) {
                     resolve();
                 } else {
-                    reject(new Error('Google Maps API not available'));
+                    reject(new Error('API Unavailable'));
                 }
                 delete window[cb];
             };
@@ -243,7 +243,7 @@ Here is the full, complete `index.html` file with the fix applied:
             script.defer = true;
             script.onerror = () => {
                 delete window[cb];
-                reject(new Error('Google Maps script failed'));
+                reject(new Error('Script connection failed'));
             };
             document.head.appendChild(script);
         });
@@ -440,7 +440,6 @@ Here is the full, complete `index.html` file with the fix applied:
                 fields: ["displayName", "formattedAddress"]
             });
             
-            // BUG FIX: Ensure the API returned a meaningful business title different from the string address
             if (places && places.length > 0 && places[0].displayName && places[0].displayName.trim().toLowerCase() !== cleanAddr.trim().toLowerCase()) {
                 const place = places[0];
                 const foundName = place.displayName;
@@ -452,7 +451,7 @@ Here is the full, complete `index.html` file with the fix applied:
                     if (place.nationalPhoneNumber) phoneInput.value = place.nationalPhoneNumber;
                 } catch(e) {}
             } else {
-                throw new Error("No distinct distinct title results found.");
+                throw new Error("Distinct name check unresolved.");
             }
         } catch(e) {
             nameInput.value = "";
@@ -464,7 +463,7 @@ Here is the full, complete `index.html` file with the fix applied:
 
     async function generateEventPDF() {
         const { jsPDF } = window.jspdf;
-        if (!jsPDF) return alert("PDF library is still loading. Wait a moment and try again.");
+        if (!jsPDF) return alert("PDF Engine loading. Try again.");
         const s = showData.find(ev => String(ev.id) === String(currentEventId));
         const assign = assignments.find(a => String(a.id) === String(currentEventId)) || {};
         if (!s) return;
@@ -679,5 +678,3 @@ Here is the full, complete `index.html` file with the fix applied:
 </script>
 </body>
 </html>
-
-```
