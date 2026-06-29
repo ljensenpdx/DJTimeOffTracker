@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fun Squad DJs | Master Planner</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA86LiHXWFpQj_0hIDEWHnJrIDno6F123I&libraries=places"></script>
     <style>
         :root { --dark: #2c3e50; --light: #ffffff; --conflict: #e74c3c; --accent: #3498db; --success: #27ae60; --warning: #e67e22; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f4f7f6; padding: 15px; margin: 0; color: #1a1a1a; }
@@ -58,7 +57,6 @@
         
         input[type="text"], select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ddd; margin-bottom: 12px; font-weight: bold; box-sizing: border-box; }
         #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; justify-content: center; align-items: center; z-index: 3000; font-weight: bold; }
-        #gplaces-div { display:none; }
     </style>
 </head>
 <body>
@@ -66,7 +64,6 @@
 <div id="loading-overlay">Syncing Fun Squad Data...</div>
 <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
 <form id="cors_bypass_form" method="POST" target="hidden_iframe" style="display:none;"></form>
-<div id="gplaces-div"></div>
 
 <div id="assignModal" class="modal">
     <div class="modal-content">
@@ -154,6 +151,7 @@
     const scriptURL = 'https://script.google.com/macros/s/AKfycbxcpYGZc2Wp1R2PpzEJH6H8Gojz6h6Oqe-q2MqyqxXVfNv23ZTH97CJUaqs4pdQ0aR9/exec'; 
     const GITHUB_REPO = 'ljensenpdx/DJTimeOffTracker'; 
     const LOGO_URL = 'https://static.wixstatic.com/media/27837d_2fbc76a1db8b40df893273a42ca07aa8~mv2.png/v1/fill/w_220,h_220,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/FUN%20SQUAD%20DJS%20-%20LOGO.png';
+    const GMAPS_API_KEY = 'AIzaSyA86LiHXWFpQj_0hIDEWHnJrIDno6F123I';
 
     let viewDate = new Date();
     let offData = [], showData = [], djSettings = [], assignments = [];
@@ -161,6 +159,7 @@
     let hidePrices = false, currentFilter = 'all';
     let currentVenueName = "";
     let logoBase64 = null;
+    let googleMapsPromise = null;
 
     const clean = (str) => str ? str.replace(/\\,/g, ',').replace(/\\n/g, ' ').trim() : "";
     const stripEmoji = (str) => str.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F900}-\u{1F9FF}]|[\u{1FA70}-\u{1FAFF}]|[\u{1F000}-\u{1F02F}]|[\u{FE00}-\u{FE0F}]|[\u{1F004}]|[\u{1F0CF}]|[\u{1F18E}]|[\u{1F191}-\u{1F251}]|[\u{23E9}-\u{23F3}]|[\u{23F8}-\u{23FA}]|[\u{25AA}-\u{25AB}]|[\u{25FB}-\u{25FE}]|[\u{2B50}]|[\u{2B55}]|[\u{2934}-\u{2935}]|[\u{2194}-\u{2199}]|[\u{303D}]|[\u{00A9}]|[\u{00AE}]|[\u{2122}]/gu, '').trim();
@@ -213,6 +212,35 @@
             logoBase64 = null;
         }
         return logoBase64;
+    }
+
+    function loadGoogleMapsAsync() {
+        if (googleMapsPromise) return googleMapsPromise;
+        googleMapsPromise = new Promise((resolve, reject) => {
+            if (typeof google !== 'undefined' && google.maps && google.maps.importLibrary) {
+                resolve();
+                return;
+            }
+            const script = document.createElement('script');
+            const cb = '_fsgmaps_' + Date.now();
+            window[cb] = () => {
+                if (typeof google !== 'undefined' && google.maps && google.maps.importLibrary) {
+                    resolve();
+                } else {
+                    reject(new Error('Google Maps API not available'));
+                }
+                delete window[cb];
+            };
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${GMAPS_API_KEY}&loading=async&libraries=places&callback=${cb}`;
+            script.async = true;
+            script.defer = true;
+            script.onerror = () => {
+                delete window[cb];
+                reject(new Error('Google Maps script failed'));
+            };
+            document.head.appendChild(script);
+        });
+        return googleMapsPromise;
     }
 
     window.lockSchedule = function(djName) {
@@ -381,7 +409,7 @@
         checkOffStatus(); document.getElementById('assignModal').style.display = 'block';
     }
 
-    function fetchVenueName(address) {
+    async function fetchVenueName(address) {
         currentVenueName = "";
         const nameWrap = document.getElementById('venueNameWrap');
         const nameInput = document.getElementById('venueNameInput');
@@ -392,41 +420,38 @@
         nameInput.value = "Looking up venue name...";
         nameInput.disabled = true;
         phoneWrap.style.display = 'block';
+        phoneInput.value = "";
         
         const cleanAddr = cleanAddressForLookup(address);
         
-        if (typeof google === 'undefined' || !google.maps || !google.maps.places) {
+        try {
+            await loadGoogleMapsAsync();
+            const { Place } = await google.maps.importLibrary("places");
+            
+            const { places } = await Place.searchByText({
+                textQuery: cleanAddr,
+                fields: ["displayName", "formattedAddress"]
+            });
+            
+            if (places && places.length > 0) {
+                const place = places[0];
+                const foundName = place.displayName;
+                currentVenueName = foundName;
+                nameInput.value = foundName;
+                
+                try {
+                    await place.fetchFields({ fields: ["nationalPhoneNumber"] });
+                    if (place.nationalPhoneNumber) phoneInput.value = place.nationalPhoneNumber;
+                } catch(e) {}
+            } else {
+                throw new Error("No results");
+            }
+        } catch(e) {
             nameInput.value = "";
             nameInput.placeholder = "e.g. Hornings Hideout...";
+        } finally {
             nameInput.disabled = false;
-            return;
         }
-        
-        const placesDiv = document.getElementById('gplaces-div');
-        const service = new google.maps.places.PlacesService(placesDiv);
-        
-        service.textSearch({ query: cleanAddr }, (results, status) => {
-            if (status === google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
-                const topResult = results[0];
-                currentVenueName = topResult.name;
-                nameInput.value = topResult.name;
-                
-                if (topResult.place_id) {
-                    service.getDetails({ placeId: topResult.place_id, fields: ['formatted_phone_number'] }, (place, detailStatus) => {
-                        if (detailStatus === google.maps.places.PlacesServiceStatus.OK && place.formatted_phone_number) {
-                            phoneInput.value = place.formatted_phone_number;
-                        }
-                        nameInput.disabled = false;
-                    });
-                } else {
-                    nameInput.disabled = false;
-                }
-            } else {
-                nameInput.value = "";
-                nameInput.placeholder = "e.g. Hornings Hideout...";
-                nameInput.disabled = false;
-            }
-        });
     }
 
     async function generateEventPDF() {
@@ -462,7 +487,7 @@
         doc.setFontSize(9);
         doc.setTextColor(150);
         doc.setFont(undefined, 'normal');
-        const eventTypeClean = stripEmoji(s.type).replace(/\(On Site Location:[^)]*\)/gi, '').trim();
+        const eventTypeClean = stripEmoji(s.type);
         doc.text(`Event #${s.id}  |  ${eventTypeClean}`, 200, headerBottomY - 2, { align: 'right' });
 
         const boxY = headerBottomY + 2;
