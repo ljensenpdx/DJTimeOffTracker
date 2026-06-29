@@ -175,24 +175,30 @@
             const img = new Image();
             img.crossOrigin = "anonymous";
             img.onload = function() {
-                const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0);
-                resolve(canvas.toDataURL('image/png'));
+                try {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    resolve(canvas.toDataURL('image/png'));
+                } catch(e) { reject(e); }
             };
-            img.onerror = reject;
+            img.onerror = () => reject(new Error('Image load failed'));
             img.src = url;
         });
     }
 
-    async function ensureLogo() {
+    async function ensureLogo(timeout = 3000) {
         if (logoBase64) return logoBase64;
         try {
-            logoBase64 = await getImageDataUrl(LOGO_URL);
+            logoBase64 = await Promise.race([
+                getImageDataUrl(LOGO_URL),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), timeout))
+            ]);
         } catch(e) {
-            console.error("Logo load failed", e);
+            console.log("Logo load failed or timed out, using text fallback");
+            logoBase64 = null;
         }
         return logoBase64;
     }
@@ -268,13 +274,11 @@
     async function init() {
         document.getElementById('loading-overlay').style.display = 'flex';
         try {
-            const [data] = await Promise.all([
-                fetch(scriptURL + '?t=' + new Date().getTime()).then(r => r.json()),
-                ensureLogo()
-            ]);
+            const res = await fetch(scriptURL + '?t=' + new Date().getTime());
+            const data = await res.json();
             offData = data.offData || []; djSettings = data.djs || []; assignments = data.assignments || [];
             populateFilterDropdown();
-        } catch(e) { console.error("Sync error"); }
+        } catch(e) { console.error("Sync error", e); }
         showData = await loadIcalData();
         document.getElementById('loading-overlay').style.display = 'none';
         render();
@@ -306,4 +310,287 @@
             const dateStr = `${year}-${(month+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`;
             const isToday = (d === (new Date()).getDate() && month === (new Date()).getMonth() && year === (new Date()).getFullYear());
             const todayOff = offData.filter(row => { if (currentFilter !== 'all' && currentFilter !== 'unassigned') return row[1] === dateStr && row[0].toLowerCase() === currentFilter.toLowerCase(); return row[1] === dateStr; });
-            const today
+            const todayShows = showData.filter(s => { if (s.date !== dateStr) return false; const assign = assignments.find(a => String(a.id) === String(s.id)); if (currentFilter === 'unassigned') return !assign || (!assign.primary && !assign.secondary); if (currentFilter !== 'all') return assign && (assign.primary === currentFilter || assign.secondary === currentFilter); return true; });
+            let dayHtml = `<div class="day ${isToday ? 'today' : ''}"><span class="date-num">${d}</span>`;
+            todayOff.forEach(row => { const dj = djSettings.find(s => s.name.toLowerCase() === row[0].toLowerCase()); dayHtml += `<div style="background:${dj ? dj.color : '#95a5a6'}; color:white; padding:3px; border-radius:4px; font-size:9px; font-weight:bold; text-align:center; margin-bottom:2px;">${row[0]}</div>`; });
+            todayShows.forEach(s => {
+                const assign = assignments.find(a => String(a.id) === String(s.id));
+                let djColor1 = '#34495e', djColor2 = null, djText = "Unassigned", iconsHtml = "", priceText = "";
+                let sIcon = "❌"; if (s.status === "BOOKED AND PAID") sIcon = "✅"; else if (s.status === "CONTRACT SENT - WAITING ON PAYMENT") sIcon = "⚠️";
+                if (assign) {
+                    const dj1 = djSettings.find(d => d.name === assign.primary); const dj2 = djSettings.find(d => d.name === assign.secondary);
+                    if (dj1 && dj2) { djColor1 = dj1.color; djColor2 = dj2.color; djText = `${assign.primary} / ${assign.secondary}`; }
+                    else if (dj1) { djColor1 = dj1.color; djText = assign.primary; }
+                    priceText = (!hidePrices && assign.price) ? formatCurrency(assign.price) : "";
+                    if(assign.ceremony) iconsHtml += `<span class="s-icon">🔈</span>`;
+                    if(assign.reception) iconsHtml += `<span class="s-icon" style="filter: brightness(1.5);">🔊</span>`;
+                    if(assign.booth) iconsHtml += `<span class="s-icon">📷</span>`;
+                    if(assign.prints) iconsHtml += `<span class="s-icon">🖨️</span>`;
+                    if(assign.guestbook) iconsHtml += `<span class="s-icon">☎️</span>`;
+                    if(assign.uplights > 0) iconsHtml += `<span class="s-icon">💡<span class="up-count">(${assign.uplights})</span></span>`;
+                    if(assign.karaoke) iconsHtml += `<span class="s-icon">🎤</span>`;
+                }
+                const bgStyle = djColor2 ? `linear-gradient(135deg, ${djColor1} 50%, ${djColor2} 50%)` : djColor1;
+                dayHtml += `<div class="show-box" style="background:${bgStyle}" onclick="openAssign('${s.id}', '${s.client.replace(/'/g, "\\'")}', '${s.date}')">
+                    <div class="box-pad"><div class="top-row"><div class="dj-names-text">${djText}</div>${priceText ? `<div class="price-tag">${priceText}</div>` : ''}</div></div>
+                    <div class="type-bar">${s.type}</div>
+                    <div class="box-pad"><b class="client-info">#${s.id} ${s.client}</b><div class="timing-info">${sIcon} 🛠️ ${s.setup} | 🟢 ${s.showStart} | 🛑 ${s.end}</div><div class="addr-text">@ ${s.loc.split(',').slice(0, 2).join(', ')}</div></div>
+                    ${iconsHtml ? `<div class="icon-tray">${iconsHtml}</div>` : ''}
+                </div>`;
+            });
+            grid.innerHTML += dayHtml + `</div>`;
+        }
+    }
+
+    function openAssign(id, client, date) {
+        currentEventId = id; currentEventDate = date;
+        const s = showData.find(ev => String(ev.id) === String(id)); if (!s) return;
+        document.getElementById('assignTitle').innerText = "Show Details #" + id;
+        document.getElementById('assignDetails').innerText = client; document.getElementById('popType').innerText = s.type;
+        const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.loc)}`;
+        document.getElementById('assignAddress').innerHTML = `<a href="${mapsUrl}" target="_blank" style="color:var(--accent); font-size:0.8rem; text-decoration:none; font-weight:bold;">📍 ${s.loc}</a>`;
+        document.getElementById('popSetup').innerText = s.setup; document.getElementById('popStart').innerText = s.showStart; document.getElementById('popEnd').innerText = s.end;
+        fetchVenueName(s.loc);
+        const pSel = document.getElementById('primarySelect'), sSel = document.getElementById('secondarySelect');
+        pSel.innerHTML = sSel.innerHTML = '<option value="">None</option>';
+        djSettings.forEach(dj => { pSel.innerHTML += `<option value="${dj.name}">${dj.name}</option>`; sSel.innerHTML += `<option value="${dj.name}">${dj.name}</option>`; });
+        const curr = assignments.find(a => String(a.id) === String(id)) || {};
+        pSel.value = curr.primary || ""; sSel.value = curr.secondary || "";
+        document.getElementById('priceInput').value = curr.price || "";
+        document.getElementById('checkCeremony').checked = !!curr.ceremony; document.getElementById('checkReception').checked = !!curr.reception; document.getElementById('checkBooth').checked = !!curr.booth; document.getElementById('checkPrints').checked = !!curr.prints; document.getElementById('checkGuestbook').checked = !!curr.guestbook; document.getElementById('checkKaraoke').checked = !!curr.karaoke; document.getElementById('uplightSelect').value = curr.uplights || "0";
+        checkOffStatus(); document.getElementById('assignModal').style.display = 'block';
+    }
+
+    async function fetchVenueName(address) {
+        currentVenueName = "";
+        const el = document.getElementById('venueNameDisplay');
+        if (!address || !el) return;
+        el.style.display = 'block';
+        el.style.color = "var(--accent)";
+        el.innerText = "Looking up venue name...";
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`);
+            const data = await res.json();
+            if (data && data.length > 0) {
+                const display = data[0].display_name;
+                currentVenueName = display.split(',')[0];
+                el.innerText = "📍 " + currentVenueName;
+                el.style.color = "var(--success)";
+            } else {
+                el.innerText = "No venue name found.";
+                el.style.color = "#95a5a6";
+            }
+        } catch(e) {
+            el.innerText = "Unable to lookup venue.";
+            el.style.color = "#95a5a6";
+        }
+    }
+
+    async function generateEventPDF() {
+        const { jsPDF } = window.jspdf;
+        if (!jsPDF) return alert("PDF library is still loading. Wait a moment and try again.");
+        const s = showData.find(ev => String(ev.id) === String(currentEventId));
+        const assign = assignments.find(a => String(a.id) === String(currentEventId)) || {};
+        if (!s) return;
+
+        const primary = assign.primary || "UNASSIGNED";
+        const secondary = assign.secondary || "";
+        const doc = new jsPDF();
+
+        await ensureLogo();
+
+        let headerBottomY = 6;
+        if (logoBase64) {
+            doc.addImage(logoBase64, 'PNG', 75, headerBottomY, 60, 60);
+            headerBottomY = 70;
+        } else {
+            doc.setFillColor(44, 62, 80);
+            doc.rect(0, 0, 210, 40, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(22);
+            doc.setFont(undefined, 'bold');
+            doc.text("FUN SQUAD DJs", 105, 20, { align: 'center' });
+            doc.setFontSize(11);
+            doc.setTextColor(241, 196, 15);
+            doc.text("DISPATCH PLAN", 105, 30, { align: 'center' });
+            headerBottomY = 46;
+        }
+
+        doc.setFontSize(9);
+        doc.setTextColor(150);
+        doc.setFont(undefined, 'normal');
+        const eventTypeClean = stripEmoji(s.type).replace(/\(On Site Location:[^)]*\)/gi, '').trim();
+        doc.text(`Event #${s.id}  |  ${eventTypeClean}`, 200, headerBottomY - 2, { align: 'right' });
+
+        const boxY = headerBottomY + 2;
+        const boxW = 58;
+        const boxH = 28;
+        const gap = 8;
+
+        doc.setFillColor(241, 196, 15);
+        doc.rect(10, boxY, boxW, boxH, 'F');
+        doc.setFontSize(9);
+        doc.setTextColor(44, 62, 80);
+        doc.setFont(undefined, 'bold');
+        doc.text("SETUP", 10 + boxW/2, boxY + 7, { align: 'center' });
+        doc.setFontSize(22);
+        doc.setTextColor(0, 0, 0);
+        doc.text(s.setup, 10 + boxW/2, boxY + 21, { align: 'center' });
+
+        doc.setFillColor(39, 174, 96);
+        doc.rect(10 + boxW + gap, boxY, boxW, boxH, 'F');
+        doc.setFontSize(9);
+        doc.setTextColor(255, 255, 255);
+        doc.setFont(undefined, 'bold');
+        doc.text("START", 10 + boxW + gap + boxW/2, boxY + 7, { align: 'center' });
+        doc.setFontSize(16);
+        doc.text(s.showStart, 10 + boxW + gap + boxW/2, boxY + 21, { align: 'center' });
+
+        doc.setFillColor(192, 57, 43);
+        doc.rect(10 + (boxW + gap)*2, boxY, boxW, boxH, 'F');
+        doc.setFontSize(9);
+        doc.setTextColor(255, 255, 255);
+        doc.setFont(undefined, 'bold');
+        doc.text("END", 10 + (boxW + gap)*2 + boxW/2, boxY + 7, { align: 'center' });
+        doc.setFontSize(16);
+        doc.text(s.end, 10 + (boxW + gap)*2 + boxW/2, boxY + 21, { align: 'center' });
+
+        const d = new Date(s.date + "T12:00:00");
+        const dateStr = `${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}-${d.getFullYear()}`;
+        const dayName = d.toLocaleString('en-US', { weekday: 'long' });
+        const dateBannerY = boxY + boxH + 6;
+
+        doc.setFillColor(173, 216, 230);
+        doc.rect(10, dateBannerY, 190, 16, 'F');
+        doc.setFontSize(16);
+        doc.setTextColor(0, 51, 102);
+        doc.setFont(undefined, 'bold');
+        doc.text(`${dateStr}  -  ${dayName}`, 105, dateBannerY + 11, { align: 'center' });
+
+        let y = dateBannerY + 26;
+        doc.setDrawColor(200);
+        doc.line(10, y, 200, y);
+        y += 10;
+
+        doc.setFontSize(14);
+        doc.setTextColor(44, 62, 80);
+        doc.setFont(undefined, 'bold');
+        doc.text("DJ ASSIGNMENT", 10, y);
+        doc.setDrawColor(44, 62, 80);
+        doc.line(10, y + 2, 200, y + 2);
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(11);
+        y += 10;
+        doc.text(`Primary: ${primary}`, 10, y); y += 7;
+        if (secondary) { doc.text(`Secondary: ${secondary}`, 10, y); y += 7; }
+
+        y += 5;
+        doc.setFontSize(14);
+        doc.setFont(undefined, 'bold');
+        doc.text("EVENT DETAILS", 10, y);
+        doc.setDrawColor(44, 62, 80);
+        doc.line(10, y + 2, 200, y + 2);
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(11);
+        y += 10;
+
+        if (currentVenueName) {
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(39, 174, 96);
+            doc.text(stripEmoji(currentVenueName), 10, y);
+            doc.setTextColor(44, 62, 80);
+            doc.setFont(undefined, 'normal');
+            y += 7;
+        }
+
+        const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.loc)}`;
+        const addrLine = stripEmoji(s.loc);
+        doc.setTextColor(0, 102, 204);
+        doc.text(addrLine, 10, y);
+        const addrW = doc.getTextWidth(addrLine);
+        doc.setDrawColor(0, 102, 204);
+        doc.line(10, y + 1, 10 + addrW, y + 1);
+        doc.link(10, y - 4, addrW, 6, { url: mapsUrl });
+        doc.setTextColor(44, 62, 80);
+        doc.setDrawColor(200);
+        y += 12;
+
+        doc.setFontSize(14);
+        doc.setFont(undefined, 'bold');
+        doc.text("EQUIPMENT & SERVICES", 10, y);
+        doc.setDrawColor(44, 62, 80);
+        doc.line(10, y + 2, 200, y + 2);
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(11);
+        y += 10;
+
+        const items = [
+            assign.ceremony ? 'Ceremony System' : null,
+            assign.reception ? 'Reception System' : null,
+            assign.booth ? 'Photo Booth' : null,
+            assign.prints ? 'On Site Prints' : null,
+            assign.guestbook ? 'Audio Guestbook' : null,
+            assign.karaoke ? 'Karaoke' : null,
+            (assign.uplights || 0) > 0 ? `Up Lights x${assign.uplights}` : null
+        ].filter(Boolean);
+
+        if (items.length === 0) {
+            doc.setTextColor(150);
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'italic');
+            doc.text("No equipment assigned for this event.", 14, y);
+            doc.setFont(undefined, 'normal');
+            doc.setTextColor(44, 62, 80);
+            y += 7;
+        } else {
+            items.forEach(label => {
+                doc.text(`- ${label}`, 14, y);
+                y += 7;
+            });
+        }
+
+        doc.setFontSize(8);
+        doc.setTextColor(180);
+        doc.text("Generated by Fun Squad DJs Master Planner", 105, 285, { align: 'center' });
+
+        doc.save(`Event-${s.id}-${primary}.pdf`);
+    }
+
+    function submitAssignment() { submitHiddenForm({ action: 'assignDJ', id: currentEventId, primary: document.getElementById('primarySelect').value, secondary: document.getElementById('secondarySelect').value, price: document.getElementById('priceInput').value, ceremony: document.getElementById('checkCeremony').checked, reception: document.getElementById('checkReception').checked, booth: document.getElementById('checkBooth').checked, prints: document.getElementById('checkPrints').checked, guestbook: document.getElementById('checkGuestbook').checked, uplights: document.getElementById('uplightSelect').value, karaoke: document.getElementById('checkKaraoke').checked }); setTimeout(() => location.reload(), 2500); }
+    function checkOffStatus() { const p = document.getElementById('primarySelect').value, s = document.getElementById('secondarySelect').value; const w = document.getElementById('offWarning'); const pOff = offData.some(row => row[1] === currentEventDate && row[0].toLowerCase() === p.toLowerCase()); const sOff = offData.some(row => row[1] === currentEventDate && row[0].toLowerCase() === s.toLowerCase()); if (w) w.style.display = (pOff || sOff) ? 'block' : 'none'; }
+    function submitHiddenForm(data) { const f = document.getElementById('cors_bypass_form'); f.action = scriptURL; f.innerHTML = ''; for (const k in data) { const i = document.createElement('input'); i.type = 'hidden'; i.name = k; i.value = typeof data[k] === 'object' ? JSON.stringify(data[k]) : data[k]; f.appendChild(i); } f.submit(); }
+    function addNewDj() { submitHiddenForm({ action: 'addDJ', name: document.getElementById('newDjName').value, color: document.getElementById('newDjColor').value }); setTimeout(() => location.reload(), 2500); }
+    function saveAllColors() { const updates = Array.from(document.querySelectorAll('.dj-edit-row')).filter(r => r.dataset.name).map(row => ({ name: row.dataset.name, color: row.querySelector('input[type="color"]').value })); submitHiddenForm({ action: 'saveColors', updates: updates }); setTimeout(() => location.reload(), 2000); }
+    function handleIcsUpload() { const fI = document.getElementById('icsInput'); if (!fI.files[0]) return alert("Select file"); let token = localStorage.getItem('gh_token'); if (!token) { token = prompt("Enter Token:"); if (token) localStorage.setItem('gh_token', token); } if (!token) return; const btn = document.getElementById('uploadBtn'); btn.innerText = "UPLOADING..."; btn.disabled = true; fI.files[0].text().then(c => { const b64 = btoa(unescape(encodeURIComponent(c))); fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/events.ics`, { headers: { 'Authorization': `token ${token}` } }).then(res => res.json()).then(data => { return fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/events.ics`, { method: 'PUT', headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ message: `Update ICS`, content: b64, sha: data.sha }) }); }).then(res => { if (res.ok) { alert("Success!"); location.reload(); } else { throw new Error(); } }).catch(() => { alert("Failed."); localStorage.removeItem('gh_token'); btn.innerText = "UPLOAD"; btn.disabled = false; }); }); }
+    function changeMonth(dir) { viewDate.setDate(1); viewDate.setMonth(viewDate.getMonth() + dir); render(); }
+    function goToToday() { viewDate = new Date(); render(); }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    function openModal(id) { document.getElementById(id).style.display = 'block'; if(id === 'djModal') loadDjList(); }
+    
+    function loadDjList() {
+        const unassignedCount = showData.filter(s => { const assign = assignments.find(a => String(a.id) === String(s.id)); return !assign || (!assign.primary && !assign.secondary); }).length;
+        let html = `<div class="dj-edit-row" style="background:#dfe4ea; border: 1px solid #ced6e0;">
+            <div class="dj-name-box">Unassigned</div>
+            <div class="dj-count-box" style="background:var(--conflict); color:white;">${unassignedCount} SHOWS</div>
+            <div style="flex-grow:1"></div>
+        </div><hr style="border:0; border-top:1px solid #eee; margin:15px 0;">`;
+        
+        html += djSettings.map(dj => {
+            const count = assignments.filter(a => a.primary === dj.name || a.secondary === dj.name).length;
+            return `<div class="dj-edit-row" data-name="${dj.name}">
+                <div class="dj-name-box">${dj.name}</div>
+                <div class="dj-count-box">${count} SHOWS</div>
+                <div class="dj-action-group">
+                    <button style="padding:6px 10px; font-size:10px; background:var(--success);" onclick="window.copySchedule('${dj.name}')">📋 EXPORT</button>
+                    <button style="padding:6px 10px; font-size:10px; background:var(--warning);" onclick="window.lockSchedule('${dj.name}')">🔒 LOCK</button>
+                </div>
+                <input type="color" value="${dj.color}" class="color-preview">
+            </div>`;
+        }).join('');
+        document.getElementById('djSettingsList').innerHTML = html;
+    }
+
+    init();
+</script>
+</body>
+</html>
