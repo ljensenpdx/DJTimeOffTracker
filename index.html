@@ -74,6 +74,10 @@
         <p id="assignDetails" style="color:#666; font-size:0.8rem; margin-bottom: 2px;"></p>
         <div id="assignAddress" style="margin-bottom: 10px;"></div>
         <div id="venueNameDisplay" style="font-weight:900; margin-bottom:10px; font-size:0.9rem; display:none;"></div>
+        <div id="venuePhoneWrap" style="display:none; margin-bottom:10px;">
+            <label>Venue Phone:</label>
+            <input type="text" id="venuePhoneInput" placeholder="Paste from Google Maps...">
+        </div>
         <div id="offWarning" style="color:red; font-weight:bold; font-size:0.75rem; margin-bottom:10px; display:none;">⚠️ SELECTED DJ HAS THIS DAY OFF!</div>
         
         <label>Booking Price:</label><input type="text" id="priceInput" placeholder="$0.00">
@@ -153,6 +157,7 @@
 
     const clean = (str) => str ? str.replace(/\\,/g, ',').replace(/\\n/g, ' ').trim() : "";
     const stripEmoji = (str) => str.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F900}-\u{1F9FF}]|[\u{1FA70}-\u{1FAFF}]|[\u{1F000}-\u{1F02F}]|[\u{FE00}-\u{FE0F}]|[\u{1F004}]|[\u{1F0CF}]|[\u{1F18E}]|[\u{1F191}-\u{1F251}]|[\u{23E9}-\u{23F3}]|[\u{23F8}-\u{23FA}]|[\u{25AA}-\u{25AB}]|[\u{25FB}-\u{25FE}]|[\u{2B50}]|[\u{2B55}]|[\u{2934}-\u{2935}]|[\u{2194}-\u{2199}]|[\u{303D}]|[\u{00A9}]|[\u{00AE}]|[\u{2122}]/gu, '').trim();
+    const cleanAddressForLookup = (str) => str.replace(/\(On Site Location:[^)]*\)/gi, '').trim();
 
     function formatCurrency(val) {
         if (!val) return "";
@@ -253,7 +258,7 @@
                 const idMatch = (summary + rawDesc).match(/(?:ID:\s*|#)(\d{4,})|(\d{4,})/);
                 const typeMatch = rawDesc.match(/Type:\s*(.*?)(?:\\n|$)/i);
                 const statusMatch = rawDesc.match(/Status:\s*(.*?)(?:\\n|$)/i);
-                const fullLoc = clean(block.match(/LOCATION:(.*)/)?.[1]);
+                const fullLoc = clean(block.match(/LOCATION:(.*)/)?.[1]).replace(/\(On Site Location:[^)]*\)/gi, '').trim();
                 let pS = "---", pSt = "---", pE = "---";
                 const tL = rawDesc.match(/From\s*(\d{1,2}:\d{2}\s*[APM]{2})\s*to\s*(\d{1,2}:\d{2}\s*[APM]{2})\s*\(Setup\s*at\s*(\d{1,2}:\d{2}\s*[APM]{2})\)/i);
                 if (tL) { pSt = tL[1].replace(/\s+/g, ''); pE = tL[2].replace(/\s+/g, ''); pS = tL[3].replace(/\s+/g, ''); }
@@ -261,7 +266,8 @@
                     events.push({
                         id: idMatch ? String(idMatch[1] || idMatch[2]) : "??",
                         date: `${startRaw.substring(0, 4)}-${startRaw.substring(4, 6)}-${startRaw.substring(6, 8)}`,
-                        setup: pS, showStart: pSt, end: pE, type: typeMatch ? typeMatch[1].trim() : "EVENT",
+                        setup: pS, showStart: pSt, end: pE, 
+                        type: (typeMatch ? typeMatch[1].trim() : "EVENT").replace(/\(On Site Location:[^)]*\)/gi, '').trim(),
                         status: statusMatch ? statusMatch[1].trim() : "UNKNOWN",
                         client: summary.replace("DJ Event for ", ""), loc: fullLoc
                     });
@@ -350,6 +356,13 @@
         const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.loc)}`;
         document.getElementById('assignAddress').innerHTML = `<a href="${mapsUrl}" target="_blank" style="color:var(--accent); font-size:0.8rem; text-decoration:none; font-weight:bold;">📍 ${s.loc}</a>`;
         document.getElementById('popSetup').innerText = s.setup; document.getElementById('popStart').innerText = s.showStart; document.getElementById('popEnd').innerText = s.end;
+        
+        currentVenueName = "";
+        document.getElementById('venueNameDisplay').style.display = 'none';
+        document.getElementById('venueNameDisplay').innerText = "";
+        document.getElementById('venuePhoneWrap').style.display = 'none';
+        document.getElementById('venuePhoneInput').value = "";
+        
         fetchVenueName(s.loc);
         const pSel = document.getElementById('primarySelect'), sSel = document.getElementById('secondarySelect');
         pSel.innerHTML = sSel.innerHTML = '<option value="">None</option>';
@@ -364,18 +377,29 @@
     async function fetchVenueName(address) {
         currentVenueName = "";
         const el = document.getElementById('venueNameDisplay');
+        const phoneWrap = document.getElementById('venuePhoneWrap');
+        const phoneInput = document.getElementById('venuePhoneInput');
         if (!address || !el) return;
         el.style.display = 'block';
         el.style.color = "var(--accent)";
         el.innerText = "Looking up venue name...";
+        
+        const cleanAddr = cleanAddressForLookup(address);
+        
         try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`);
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cleanAddr)}&format=json&limit=1&extratags=1`);
             const data = await res.json();
             if (data && data.length > 0) {
                 const display = data[0].display_name;
                 currentVenueName = display.split(',')[0];
                 el.innerText = "📍 " + currentVenueName;
                 el.style.color = "var(--success)";
+                
+                const extratags = data[0].extratags || {};
+                const foundPhone = extratags.phone || extratags['contact:phone'] || "";
+                if (foundPhone) phoneInput.value = foundPhone;
+                
+                phoneWrap.style.display = 'block';
             } else {
                 el.innerText = "No venue name found.";
                 el.style.color = "#95a5a6";
@@ -503,6 +527,12 @@
             y += 7;
         }
 
+        const venuePhone = document.getElementById('venuePhoneInput').value.trim();
+        if (venuePhone) {
+            doc.text(`Phone: ${venuePhone}`, 10, y);
+            y += 7;
+        }
+
         const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.loc)}`;
         const addrLine = stripEmoji(s.loc);
         doc.setTextColor(0, 102, 204);
@@ -513,7 +543,9 @@
         doc.link(10, y - 4, addrW, 6, { url: mapsUrl });
         doc.setTextColor(44, 62, 80);
         doc.setDrawColor(200);
-        y += 12;
+        y += 7;
+
+        doc.text(`Date: ${dateStr} (${dayName})`, 10, y); y += 12;
 
         doc.setFontSize(14);
         doc.setFont(undefined, 'bold');
