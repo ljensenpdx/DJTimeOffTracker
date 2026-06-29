@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fun Squad DJs | Master Planner</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root { --dark: #2c3e50; --light: #ffffff; --conflict: #e74c3c; --accent: #3498db; --success: #27ae60; --warning: #e67e22; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f4f7f6; padding: 15px; margin: 0; color: #1a1a1a; }
@@ -79,6 +80,7 @@
         </div>
         <p id="assignDetails" style="color:#666; font-size:0.8rem; margin-bottom: 2px;"></p>
         <div id="assignAddress" style="margin-bottom: 10px;"></div>
+        <div id="venueNameDisplay" style="font-weight:900; margin-bottom:10px; font-size:0.9rem; display:none;"></div>
         <div id="offWarning" style="color:red; font-weight:bold; font-size:0.75rem; margin-bottom:10px; display:none;">⚠️ SELECTED DJ HAS THIS DAY OFF!</div>
         
         <label>Booking Price:</label><input type="text" id="priceInput" placeholder="$0.00">
@@ -102,6 +104,7 @@
         <div style="font-weight: bold; margin-bottom: 8px;">Up Lights (💡): <select id="uplightSelect" style="width:70px; margin-left:10px; display:inline-block;"><option value="0">0</option><option value="4">4</option><option value="8">8</option><option value="12">12</option><option value="16">16</option></select></div>
 
         <button style="background:var(--success); width:100%; margin-top:10px;" onclick="submitAssignment()">SAVE DETAILS</button><br><br>
+        <button style="background:#8e44ad; width:100%; margin-bottom:10px;" onclick="generateEventPDF()">📄 GENERATE EVENT PDF</button>
         <button onclick="closeModal('assignModal')" style="background:#95a5a6; width:100%;">Cancel</button>
     </div>
 </div>
@@ -157,6 +160,7 @@
     let offData = [], showData = [], djSettings = [], assignments = [];
     let currentEventId = null, currentEventDate = null;
     let hidePrices = false, currentFilter = 'all';
+    let currentVenueName = "";
 
     const clean = (str) => str ? str.replace(/\\,/g, ',').replace(/\\n/g, ' ').trim() : "";
 
@@ -323,6 +327,7 @@
         const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.loc)}`;
         document.getElementById('assignAddress').innerHTML = `<a href="${mapsUrl}" target="_blank" style="color:var(--accent); font-size:0.8rem; text-decoration:none; font-weight:bold;">📍 ${s.loc}</a>`;
         document.getElementById('popSetup').innerText = s.setup; document.getElementById('popStart').innerText = s.showStart; document.getElementById('popEnd').innerText = s.end;
+        fetchVenueName(s.loc);
         const pSel = document.getElementById('primarySelect'), sSel = document.getElementById('secondarySelect');
         pSel.innerHTML = sSel.innerHTML = '<option value="">None</option>';
         djSettings.forEach(dj => { pSel.innerHTML += `<option value="${dj.name}">${dj.name}</option>`; sSel.innerHTML += `<option value="${dj.name}">${dj.name}</option>`; });
@@ -331,6 +336,139 @@
         document.getElementById('priceInput').value = curr.price || "";
         document.getElementById('checkCeremony').checked = !!curr.ceremony; document.getElementById('checkReception').checked = !!curr.reception; document.getElementById('checkBooth').checked = !!curr.booth; document.getElementById('checkPrints').checked = !!curr.prints; document.getElementById('checkGuestbook').checked = !!curr.guestbook; document.getElementById('checkKaraoke').checked = !!curr.karaoke; document.getElementById('uplightSelect').value = curr.uplights || "0";
         checkOffStatus(); document.getElementById('assignModal').style.display = 'block';
+    }
+
+    async function fetchVenueName(address) {
+        currentVenueName = "";
+        const el = document.getElementById('venueNameDisplay');
+        if (!address || !el) return;
+        el.style.display = 'block';
+        el.style.color = "var(--accent)";
+        el.innerText = "🔍 Looking up venue name...";
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`);
+            const data = await res.json();
+            if (data && data.length > 0) {
+                const display = data[0].display_name;
+                currentVenueName = display.split(',')[0];
+                el.innerText = "📍 " + currentVenueName;
+                el.style.color = "var(--success)";
+            } else {
+                el.innerText = "No venue name found.";
+                el.style.color = "#95a5a6";
+            }
+        } catch(e) {
+            el.innerText = "Unable to lookup venue.";
+            el.style.color = "#95a5a6";
+        }
+    }
+
+    function createLogoDataURL() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 600;
+        canvas.height = 150;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#2c3e50';
+        ctx.fillRect(0, 0, 600, 150);
+        ctx.fillStyle = '#3498db';
+        ctx.fillRect(0, 0, 600, 8);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 64px Arial, Helvetica, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('FUN SQUAD DJs', 300, 65);
+        ctx.fillStyle = '#f1c40f';
+        ctx.font = 'bold 24px Arial, Helvetica, sans-serif';
+        ctx.fillText('EVENT EXECUTION PLAN', 300, 110);
+        return canvas.toDataURL('image/png');
+    }
+
+    function generateEventPDF() {
+        const { jsPDF } = window.jspdf;
+        if (!jsPDF) return alert("PDF library is still loading. Wait a moment and try again.");
+        const s = showData.find(ev => String(ev.id) === String(currentEventId));
+        const assign = assignments.find(a => String(a.id) === String(currentEventId)) || {};
+        if (!s) return;
+
+        const doc = new jsPDF();
+        const primary = assign.primary || "UNASSIGNED";
+        const secondary = assign.secondary || "";
+        const logoData = createLogoDataURL();
+
+        doc.addImage(logoData, 'PNG', 10, 8, 80, 20);
+        doc.setFontSize(10);
+        doc.setTextColor(150);
+        doc.text(`Event ID: #${s.id}  |  ${s.type.toUpperCase()}`, 200, 14, { align: 'right' });
+
+        doc.setDrawColor(200);
+        doc.line(10, 32, 200, 32);
+
+        let y = 42;
+        doc.setFontSize(16);
+        doc.setTextColor(44, 62, 80);
+        doc.setFont(undefined, 'bold');
+        doc.text("DJ ASSIGNMENT", 10, y);
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(12);
+        y += 10;
+        doc.text(`Primary: ${primary}`, 10, y); y += 7;
+        if (secondary) { doc.text(`Secondary: ${secondary}`, 10, y); y += 7; }
+
+        y += 5;
+        doc.setFontSize(16);
+        doc.setFont(undefined, 'bold');
+        doc.text("EVENT DETAILS", 10, y);
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(12);
+        y += 10;
+        if (currentVenueName) {
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(39, 174, 96);
+            doc.text(currentVenueName, 10, y);
+            doc.setTextColor(44, 62, 80);
+            doc.setFont(undefined, 'normal');
+            y += 7;
+        }
+        doc.text(`Address: ${s.loc}`, 10, y); y += 7;
+        doc.text(`Client: ${s.client}`, 10, y); y += 7;
+        doc.text(`Status: ${s.status}`, 10, y); y += 12;
+
+        doc.setFontSize(16);
+        doc.setFont(undefined, 'bold');
+        doc.text("SCHEDULE", 10, y);
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(12);
+        y += 10;
+        doc.text(`Setup:  ${s.setup}`, 10, y); y += 7;
+        doc.text(`Start:  ${s.showStart}`, 10, y); y += 7;
+        doc.text(`End:    ${s.end}`, 10, y); y += 12;
+
+        doc.setFontSize(16);
+        doc.setFont(undefined, 'bold');
+        doc.text("EQUIPMENT & SERVICES", 10, y);
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(11);
+        y += 10;
+        const items = [
+            { label: 'Ceremony System (🔈)', check: !!assign.ceremony },
+            { label: 'Reception System (🔊)', check: !!assign.reception },
+            { label: 'Photo Booth (📷)', check: !!assign.booth },
+            { label: 'On Site Prints (🖨️)', check: !!assign.prints },
+            { label: 'Audio Guestbook (☎️)', check: !!assign.guestbook },
+            { label: 'Karaoke (🎤)', check: !!assign.karaoke },
+            { label: `Up Lights (💡) x${assign.uplights || 0}`, check: (assign.uplights || 0) > 0 }
+        ];
+        items.forEach(item => {
+            const box = item.check ? "[X]" : "[   ]";
+            doc.text(`${box}  ${item.label}`, 14, y);
+            y += 7;
+        });
+
+        doc.setFontSize(9);
+        doc.setTextColor(180);
+        doc.text("Generated by Fun Squad DJs Master Planner", 105, 285, { align: 'center' });
+
+        doc.save(`Event-${s.id}-${primary}.pdf`);
     }
 
     function submitAssignment() { submitHiddenForm({ action: 'assignDJ', id: currentEventId, primary: document.getElementById('primarySelect').value, secondary: document.getElementById('secondarySelect').value, price: document.getElementById('priceInput').value, ceremony: document.getElementById('checkCeremony').checked, reception: document.getElementById('checkReception').checked, booth: document.getElementById('checkBooth').checked, prints: document.getElementById('checkPrints').checked, guestbook: document.getElementById('checkGuestbook').checked, uplights: document.getElementById('uplightSelect').value, karaoke: document.getElementById('checkKaraoke').checked }); setTimeout(() => location.reload(), 2500); }
