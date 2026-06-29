@@ -399,16 +399,24 @@
         document.getElementById('popSetup').innerText = s.setup; document.getElementById('popStart').innerText = s.showStart; document.getElementById('popEnd').innerText = s.end;
         
         currentVenueName = "";
-        document.getElementById('venueNameWrap').style.display = 'none';
+        document.getElementById('venueNameWrap').style.display = 'block';
         document.getElementById('venueNameInput').value = "";
-        document.getElementById('venuePhoneWrap').style.display = 'none';
+        document.getElementById('venuePhoneWrap').style.display = 'block';
         document.getElementById('venuePhoneInput').value = "";
         
-        fetchVenueName(s.loc);
+        const curr = assignments.find(a => String(a.id) === String(id)) || {};
+        
+        // If details have already been saved to your Sheets file previously, render them instantly rather than searching
+        if (curr.venue_name) {
+            document.getElementById('venueNameInput').value = curr.venue_name;
+            document.getElementById('venuePhoneInput').value = curr.venue_phone || "";
+        } else {
+            fetchVenueName(s.loc);
+        }
+
         const pSel = document.getElementById('primarySelect'), sSel = document.getElementById('secondarySelect');
         pSel.innerHTML = sSel.innerHTML = '<option value="">None</option>';
         djSettings.forEach(dj => { pSel.innerHTML += `<option value="${dj.name}">${dj.name}</option>`; sSel.innerHTML += `<option value="${dj.name}">${dj.name}</option>`; });
-        const curr = assignments.find(a => String(a.id) === String(id)) || {};
         pSel.value = curr.primary || ""; sSel.value = curr.secondary || "";
         document.getElementById('priceInput').value = curr.price || "";
         document.getElementById('checkCeremony').checked = !!curr.ceremony; document.getElementById('checkReception').checked = !!curr.reception; document.getElementById('checkBooth').checked = !!curr.booth; document.getElementById('checkPrints').checked = !!curr.prints; document.getElementById('checkGuestbook').checked = !!curr.guestbook; document.getElementById('checkKaraoke').checked = !!curr.karaoke; document.getElementById('uplightSelect').value = curr.uplights || "0";
@@ -417,15 +425,11 @@
 
     async function fetchVenueName(address) {
         currentVenueName = "";
-        const nameWrap = document.getElementById('venueNameWrap');
         const nameInput = document.getElementById('venueNameInput');
-        const phoneWrap = document.getElementById('venuePhoneWrap');
         const phoneInput = document.getElementById('venuePhoneInput');
         
-        nameWrap.style.display = 'block';
         nameInput.value = "Looking up venue name...";
         nameInput.disabled = true;
-        phoneWrap.style.display = 'block';
         phoneInput.value = "";
         
         const cleanAddr = cleanAddressForLookup(address);
@@ -433,25 +437,26 @@
         try {
             await loadGoogleMapsAsync();
             const service = new google.maps.places.PlacesService(document.createElement('div'));
-            
-            // OPTIMIZATION: Force establishment ranking matching by injecting the undocumented Google "place at" flag logic to look beneath the coordinate point
             const businessSearchQuery = "place at " + cleanAddr;
             
             service.textSearch({ query: businessSearchQuery }, (results, status) => {
                 if (status === google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
-                    // Filter out responses that are just echoed street address sequences (e.g. starting with numbers)
                     let venueMatch = results.find(r => r.types && r.types.includes("establishment") && !/^\d+\s+[A-Za-z]/.test(r.name));
-                    
-                    if (!venueMatch) {
-                        venueMatch = results.find(r => !/^\d+\s+[A-Za-z]/.test(r.name));
-                    }
+                    if (!venueMatch) venueMatch = results.find(r => !/^\d+\s+[A-Za-z]/.test(r.name));
                     
                     if (venueMatch && venueMatch.name) {
                         currentVenueName = venueMatch.name;
                         nameInput.value = venueMatch.name;
-                        if (venueMatch.formatted_phone_number) phoneInput.value = venueMatch.formatted_phone_number;
+                        
+                        // FIX: Request place details dynamically using the place_id context window to scrape phone numbers
+                        if (venueMatch.place_id) {
+                            service.getDetails({ placeId: venueMatch.place_id, fields: ['formatted_phone_number'] }, (details, detailStatus) => {
+                                if (detailStatus === google.maps.places.PlacesServiceStatus.OK && details && details.formatted_phone_number) {
+                                    phoneInput.value = details.formatted_phone_number;
+                                }
+                            });
+                        }
                     } else {
-                        // Secondary deep lookup strategy: Scrape off numbers to broad verify street block landmarks
                         const blockQuery = cleanAddr.replace(/^\d+\s+/, "");
                         service.textSearch({ query: blockQuery }, (fallbackResults, fallbackStatus) => {
                             if (fallbackStatus === google.maps.places.PlacesServiceStatus.OK && fallbackResults.length > 0) {
@@ -459,6 +464,11 @@
                                 if (fallbackMatch) {
                                     currentVenueName = fallbackMatch.name;
                                     nameInput.value = fallbackMatch.name;
+                                    if (fallbackMatch.place_id) {
+                                        service.getDetails({ placeId: fallbackMatch.place_id, fields: ['formatted_phone_number'] }, (d, s) => {
+                                            if (s === google.maps.places.PlacesServiceStatus.OK && d && d.formatted_phone_number) phoneInput.value = d.formatted_phone_number;
+                                        });
+                                    }
                                 } else {
                                     nameInput.value = "";
                                     nameInput.placeholder = "e.g. Jenkins Estate...";
@@ -659,7 +669,27 @@
         doc.save(`Event-${s.id}-${primary}.pdf`);
     }
 
-    function submitAssignment() { submitHiddenForm({ action: 'assignDJ', id: currentEventId, primary: document.getElementById('primarySelect').value, secondary: document.getElementById('secondarySelect').value, price: document.getElementById('priceInput').value, ceremony: document.getElementById('checkCeremony').checked, reception: document.getElementById('checkReception').checked, booth: document.getElementById('checkBooth').checked, prints: document.getElementById('checkPrints').checked, guestbook: document.getElementById('checkGuestbook').checked, uplights: document.getElementById('uplightSelect').value, karaoke: document.getElementById('checkKaraoke').checked }); setTimeout(() => location.reload(), 2500); }
+    // FIX: Pass venue_name and venue_phone downstream to clear custom sheet saving variables
+    function submitAssignment() { 
+        submitHiddenForm({ 
+            action: 'assignDJ', 
+            id: currentEventId, 
+            primary: document.getElementById('primarySelect').value, 
+            secondary: document.getElementById('secondarySelect').value, 
+            price: document.getElementById('priceInput').value, 
+            ceremony: document.getElementById('checkCeremony').checked, 
+            reception: document.getElementById('checkReception').checked, 
+            booth: document.getElementById('checkBooth').checked, 
+            prints: document.getElementById('checkPrints').checked, 
+            guestbook: document.getElementById('checkGuestbook').checked, 
+            uplights: document.getElementById('uplightSelect').value, 
+            karaoke: document.getElementById('checkKaraoke').checked,
+            venue_name: document.getElementById('venueNameInput').value,
+            venue_phone: document.getElementById('venuePhoneInput').value
+        }); 
+        setTimeout(() => location.reload(), 2500); 
+    }
+    
     function checkOffStatus() { const p = document.getElementById('primarySelect').value, s = document.getElementById('secondarySelect').value; const w = document.getElementById('offWarning'); const pOff = offData.some(row => row[1] === currentEventDate && row[0].toLowerCase() === p.toLowerCase()); const sOff = offData.some(row => row[1] === currentEventDate && row[0].toLowerCase() === s.toLowerCase()); if (w) w.style.display = (pOff || sOff) ? 'block' : 'none'; }
     function submitHiddenForm(data) { const f = document.getElementById('cors_bypass_form'); f.action = scriptURL; f.innerHTML = ''; for (const k in data) { const i = document.createElement('input'); i.type = 'hidden'; i.name = k; i.value = typeof data[k] === 'object' ? JSON.stringify(data[k]) : data[k]; f.appendChild(i); } f.submit(); }
     function addNewDj() { submitHiddenForm({ action: 'addDJ', name: document.getElementById('newDjName').value, color: document.getElementById('newDjColor').value }); setTimeout(() => location.reload(), 2500); }
