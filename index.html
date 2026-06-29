@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fun Squad DJs | Master Planner</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA86LiHXWFpQj_0hIDEWHnJrIDno6F123I&libraries=places"></script>
     <style>
         :root { --dark: #2c3e50; --light: #ffffff; --conflict: #e74c3c; --accent: #3498db; --success: #27ae60; --warning: #e67e22; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f4f7f6; padding: 15px; margin: 0; color: #1a1a1a; }
@@ -57,6 +58,7 @@
         
         input[type="text"], select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ddd; margin-bottom: 12px; font-weight: bold; box-sizing: border-box; }
         #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; justify-content: center; align-items: center; z-index: 3000; font-weight: bold; }
+        #gplaces-div { display:none; }
     </style>
 </head>
 <body>
@@ -64,6 +66,7 @@
 <div id="loading-overlay">Syncing Fun Squad Data...</div>
 <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
 <form id="cors_bypass_form" method="POST" target="hidden_iframe" style="display:none;"></form>
+<div id="gplaces-div"></div>
 
 <div id="assignModal" class="modal">
     <div class="modal-content">
@@ -73,7 +76,11 @@
         </div>
         <p id="assignDetails" style="color:#666; font-size:0.8rem; margin-bottom: 2px;"></p>
         <div id="assignAddress" style="margin-bottom: 10px;"></div>
-        <div id="venueNameDisplay" style="font-weight:900; margin-bottom:10px; font-size:0.9rem; display:none;"></div>
+        
+        <div id="venueNameWrap" style="display:none; margin-bottom:10px;">
+            <label>Venue Name <small style="color:#95a5a6; font-weight:normal;">(auto or type your own)</small></label>
+            <input type="text" id="venueNameInput" placeholder="e.g. Hornings Hideout...">
+        </div>
         <div id="venuePhoneWrap" style="display:none; margin-bottom:10px;">
             <label>Venue Phone:</label>
             <input type="text" id="venuePhoneInput" placeholder="Paste from Google Maps...">
@@ -358,8 +365,8 @@
         document.getElementById('popSetup').innerText = s.setup; document.getElementById('popStart').innerText = s.showStart; document.getElementById('popEnd').innerText = s.end;
         
         currentVenueName = "";
-        document.getElementById('venueNameDisplay').style.display = 'none';
-        document.getElementById('venueNameDisplay').innerText = "";
+        document.getElementById('venueNameWrap').style.display = 'none';
+        document.getElementById('venueNameInput').value = "";
         document.getElementById('venuePhoneWrap').style.display = 'none';
         document.getElementById('venuePhoneInput').value = "";
         
@@ -374,40 +381,52 @@
         checkOffStatus(); document.getElementById('assignModal').style.display = 'block';
     }
 
-    async function fetchVenueName(address) {
+    function fetchVenueName(address) {
         currentVenueName = "";
-        const el = document.getElementById('venueNameDisplay');
+        const nameWrap = document.getElementById('venueNameWrap');
+        const nameInput = document.getElementById('venueNameInput');
         const phoneWrap = document.getElementById('venuePhoneWrap');
         const phoneInput = document.getElementById('venuePhoneInput');
-        if (!address || !el) return;
-        el.style.display = 'block';
-        el.style.color = "var(--accent)";
-        el.innerText = "Looking up venue name...";
+        
+        nameWrap.style.display = 'block';
+        nameInput.value = "Looking up venue name...";
+        nameInput.disabled = true;
+        phoneWrap.style.display = 'block';
         
         const cleanAddr = cleanAddressForLookup(address);
         
-        try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cleanAddr)}&format=json&limit=1&extratags=1`);
-            const data = await res.json();
-            if (data && data.length > 0) {
-                const display = data[0].display_name;
-                currentVenueName = display.split(',')[0];
-                el.innerText = "📍 " + currentVenueName;
-                el.style.color = "var(--success)";
-                
-                const extratags = data[0].extratags || {};
-                const foundPhone = extratags.phone || extratags['contact:phone'] || "";
-                if (foundPhone) phoneInput.value = foundPhone;
-                
-                phoneWrap.style.display = 'block';
-            } else {
-                el.innerText = "No venue name found.";
-                el.style.color = "#95a5a6";
-            }
-        } catch(e) {
-            el.innerText = "Unable to lookup venue.";
-            el.style.color = "#95a5a6";
+        if (typeof google === 'undefined' || !google.maps || !google.maps.places) {
+            nameInput.value = "";
+            nameInput.placeholder = "e.g. Hornings Hideout...";
+            nameInput.disabled = false;
+            return;
         }
+        
+        const placesDiv = document.getElementById('gplaces-div');
+        const service = new google.maps.places.PlacesService(placesDiv);
+        
+        service.textSearch({ query: cleanAddr }, (results, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
+                const topResult = results[0];
+                currentVenueName = topResult.name;
+                nameInput.value = topResult.name;
+                
+                if (topResult.place_id) {
+                    service.getDetails({ placeId: topResult.place_id, fields: ['formatted_phone_number'] }, (place, detailStatus) => {
+                        if (detailStatus === google.maps.places.PlacesServiceStatus.OK && place.formatted_phone_number) {
+                            phoneInput.value = place.formatted_phone_number;
+                        }
+                        nameInput.disabled = false;
+                    });
+                } else {
+                    nameInput.disabled = false;
+                }
+            } else {
+                nameInput.value = "";
+                nameInput.placeholder = "e.g. Hornings Hideout...";
+                nameInput.disabled = false;
+            }
+        });
     }
 
     async function generateEventPDF() {
@@ -518,10 +537,11 @@
         doc.setFontSize(11);
         y += 10;
 
-        if (currentVenueName) {
+        const venueNameFromInput = document.getElementById('venueNameInput').value.trim();
+        if (venueNameFromInput) {
             doc.setFont(undefined, 'bold');
             doc.setTextColor(39, 174, 96);
-            doc.text(stripEmoji(currentVenueName), 10, y);
+            doc.text(stripEmoji(venueNameFromInput), 10, y);
             doc.setTextColor(44, 62, 80);
             doc.setFont(undefined, 'normal');
             y += 7;
