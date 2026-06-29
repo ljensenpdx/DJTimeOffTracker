@@ -55,6 +55,9 @@
         .dj-action-group { display: flex; gap: 6px; align-items: center; }
         .color-preview { width: 28px; height: 28px; border: 2px solid white; border-radius: 6px; cursor: pointer; padding: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         
+        .venue-label { font-size: 0.75rem; text-transform: uppercase; color: #7f8c8d; font-weight: bold; margin-bottom: 2px; display: block; }
+        .venue-display-text { font-size: 1.05rem; font-weight: 800; color: var(--dark); margin-bottom: 12px; display: block; }
+
         input[type="text"], select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ddd; margin-bottom: 12px; font-weight: bold; box-sizing: border-box; }
         #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; justify-content: center; align-items: center; z-index: 3000; font-weight: bold; }
     </style>
@@ -72,15 +75,16 @@
             <div id="popType" style="background: var(--dark); color: white; padding: 4px 8px; font-size: 10px; font-weight: 900; border-radius: 4px;">EVENT</div>
         </div>
         <p id="assignDetails" style="color:#666; font-size:0.8rem; margin-bottom: 2px;"></p>
-        <div id="assignAddress" style="margin-bottom: 10px;"></div>
+        <div id="assignAddress" style="margin-bottom: 14px;"></div>
         
-        <div id="venueNameWrap" style="display:none; margin-bottom:10px;">
-            <label>Venue Name <small style="color:#95a5a6; font-weight:normal;">(auto or type your own)</small></label>
-            <input type="text" id="venueNameInput" placeholder="e.g. Jenkins Estate...">
+        <!-- Changes: Text box inputs replaced with stylized clean view prose text lines -->
+        <div id="venueNameWrap" style="display:none;">
+            <span class="venue-label">Venue Name</span>
+            <span id="venueNameText" class="venue-display-text">--</span>
         </div>
-        <div id="venuePhoneWrap" style="display:none; margin-bottom:10px;">
-            <label>Venue Phone:</label>
-            <input type="text" id="venuePhoneInput" placeholder="Paste from Google Maps...">
+        <div id="venuePhoneWrap" style="display:none;">
+            <span class="venue-label">Venue Phone</span>
+            <span id="venuePhoneText" class="venue-display-text">--</span>
         </div>
         <div id="offWarning" style="color:red; font-weight:bold; font-size:0.75rem; margin-bottom:10px; display:none;">⚠️ SELECTED DJ HAS THIS DAY OFF!</div>
         
@@ -398,18 +402,17 @@
         document.getElementById('assignAddress').innerHTML = `<a href="${mapsUrl}" target="_blank" style="color:var(--accent); font-size:0.8rem; text-decoration:none; font-weight:bold;">📍 ${s.loc}</a>`;
         document.getElementById('popSetup').innerText = s.setup; document.getElementById('popStart').innerText = s.showStart; document.getElementById('popEnd').innerText = s.end;
         
-        currentVenueName = "";
         document.getElementById('venueNameWrap').style.display = 'block';
-        document.getElementById('venueNameInput').value = "";
+        document.getElementById('venueNameText').innerText = "";
         document.getElementById('venuePhoneWrap').style.display = 'block';
-        document.getElementById('venuePhoneInput').value = "";
+        document.getElementById('venuePhoneText').innerText = "";
         
         const curr = assignments.find(a => String(a.id) === String(id)) || {};
         
-        // If details have already been saved to your Sheets file previously, render them instantly rather than searching
         if (curr.venue_name) {
-            document.getElementById('venueNameInput').value = curr.venue_name;
-            document.getElementById('venuePhoneInput').value = curr.venue_phone || "";
+            currentVenueName = curr.venue_name;
+            document.getElementById('venueNameText').innerText = curr.venue_name;
+            document.getElementById('venuePhoneText').innerText = curr.venue_phone || "N/A";
         } else {
             fetchVenueName(s.loc);
         }
@@ -425,12 +428,11 @@
 
     async function fetchVenueName(address) {
         currentVenueName = "";
-        const nameInput = document.getElementById('venueNameInput');
-        const phoneInput = document.getElementById('venuePhoneInput');
+        const nameText = document.getElementById('venueNameText');
+        const phoneText = document.getElementById('venuePhoneText');
         
-        nameInput.value = "Looking up venue name...";
-        nameInput.disabled = true;
-        phoneInput.value = "";
+        nameText.innerText = "Looking up venue name...";
+        phoneText.innerText = "";
         
         const cleanAddr = cleanAddressForLookup(address);
         
@@ -445,48 +447,48 @@
                     if (!venueMatch) venueMatch = results.find(r => !/^\d+\s+[A-Za-z]/.test(r.name));
                     
                     if (venueMatch && venueMatch.name) {
-                        currentVenueName = venueMatch.name;
-                        nameInput.value = venueMatch.name;
+                        // CRITICAL ADDITION: Extract the street number from the query address to verify residence status
+                        const initialStreetNumStr = (cleanAddr.match(/^\d+/) || [""])[0];
+                        const checkedFormattedAddress = venueMatch.formatted_address || "";
                         
-                        // FIX: Request place details dynamically using the place_id context window to scrape phone numbers
+                        // Strict Verification: If a street number is present but doesn't exist within the result, mark Private Residence
+                        if (initialStreetNumStr && !checkedFormattedAddress.includes(initialStreetNumStr)) {
+                            currentVenueName = "Private Residence";
+                            nameText.innerText = "Private Residence";
+                            phoneText.innerText = "N/A";
+                            return;
+                        }
+
+                        currentVenueName = venueMatch.name;
+                        nameText.innerText = venueMatch.name;
+                        
                         if (venueMatch.place_id) {
-                            service.getDetails({ placeId: venueMatch.place_id, fields: ['formatted_phone_number'] }, (details, detailStatus) => {
-                                if (detailStatus === google.maps.places.PlacesServiceStatus.OK && details && details.formatted_phone_number) {
-                                    phoneInput.value = details.formatted_phone_number;
+                            service.getDetails({ placeId: venueMatch.place_id, fields: ['formatted_phone_number', 'address_components'] }, (details, detailStatus) => {
+                                if (detailStatus === google.maps.places.PlacesServiceStatus.OK && details) {
+                                    if (details.formatted_phone_number) {
+                                        phoneText.innerText = details.formatted_phone_number;
+                                    } else {
+                                        phoneText.innerText = "N/A";
+                                    }
                                 }
                             });
                         }
                     } else {
-                        const blockQuery = cleanAddr.replace(/^\d+\s+/, "");
-                        service.textSearch({ query: blockQuery }, (fallbackResults, fallbackStatus) => {
-                            if (fallbackStatus === google.maps.places.PlacesServiceStatus.OK && fallbackResults.length > 0) {
-                                const fallbackMatch = fallbackResults.find(r => r.types && r.types.includes("establishment"));
-                                if (fallbackMatch) {
-                                    currentVenueName = fallbackMatch.name;
-                                    nameInput.value = fallbackMatch.name;
-                                    if (fallbackMatch.place_id) {
-                                        service.getDetails({ placeId: fallbackMatch.place_id, fields: ['formatted_phone_number'] }, (d, s) => {
-                                            if (s === google.maps.places.PlacesServiceStatus.OK && d && d.formatted_phone_number) phoneInput.value = d.formatted_phone_number;
-                                        });
-                                    }
-                                } else {
-                                    nameInput.value = "";
-                                    nameInput.placeholder = "e.g. Jenkins Estate...";
-                                }
-                            } else {
-                                nameInput.value = "";
-                            }
-                        });
+                        // Fallback handling to ensure empty business matches become Private Residence markers
+                        currentVenueName = "Private Residence";
+                        nameText.innerText = "Private Residence";
+                        phoneText.innerText = "N/A";
                     }
                 } else {
-                    nameInput.value = "";
+                    currentVenueName = "Private Residence";
+                    nameText.innerText = "Private Residence";
+                    phoneText.innerText = "N/A";
                 }
-                nameInput.disabled = false;
             });
         } catch(e) {
-            nameInput.value = "";
-            nameInput.placeholder = "e.g. Jenkins Estate...";
-            nameInput.disabled = false;
+            currentVenueName = "Private Residence";
+            nameText.innerText = "Private Residence";
+            phoneText.innerText = "N/A";
         }
     }
 
@@ -598,19 +600,19 @@
         doc.setFontSize(11);
         y += 10;
 
-        const venueNameFromInput = document.getElementById('venueNameInput').value.trim();
-        if (venueNameFromInput && venueNameFromInput !== "Looking up venue name...") {
+        const currentSavedVenueName = assign.venue_name || currentVenueName;
+        if (currentSavedVenueName) {
             doc.setFont(undefined, 'bold');
             doc.setTextColor(39, 174, 96);
-            doc.text(stripEmoji(venueNameFromInput), 10, y);
+            doc.text(stripEmoji(currentSavedVenueName), 10, y);
             doc.setTextColor(44, 62, 80);
             doc.setFont(undefined, 'normal');
             y += 7;
         }
 
-        const venuePhone = document.getElementById('venuePhoneInput').value.trim();
-        if (venuePhone) {
-            doc.text(`Phone: ${venuePhone}`, 10, y);
+        const currentSavedVenuePhone = assign.venue_phone || document.getElementById('venuePhoneText').innerText;
+        if (currentSavedVenuePhone && currentSavedVenuePhone !== "N/A" && currentSavedVenuePhone !== "--") {
+            doc.text(`Phone: ${currentSavedVenuePhone}`, 10, y);
             y += 7;
         }
 
@@ -669,7 +671,6 @@
         doc.save(`Event-${s.id}-${primary}.pdf`);
     }
 
-    // FIX: Pass venue_name and venue_phone downstream to clear custom sheet saving variables
     function submitAssignment() { 
         submitHiddenForm({ 
             action: 'assignDJ', 
@@ -684,8 +685,9 @@
             guestbook: document.getElementById('checkGuestbook').checked, 
             uplights: document.getElementById('uplightSelect').value, 
             karaoke: document.getElementById('checkKaraoke').checked,
-            venue_name: document.getElementById('venueNameInput').value,
-            venue_phone: document.getElementById('venuePhoneInput').value
+            // Modified: pulling variables from text Content targets instead of raw input boxes
+            venue_name: currentVenueName,
+            venue_phone: document.getElementById('venuePhoneText').innerText
         }); 
         setTimeout(() => location.reload(), 2500); 
     }
