@@ -677,7 +677,7 @@
     }
 
     // ==========================================
-    // CLIENT RIDER AUTOMATION ENGINE
+    // CLIENT RIDER AUTOMATION ENGINE - ULTRA NICE EDITION
     // ==========================================
     async function generateClientReminderPDF() {
         const { jsPDF } = window.jspdf;
@@ -772,13 +772,12 @@
         const detectedPrimaryDj = assign.primary || "Your Assigned Fun Squad DJ";
         const plannedArrivalTime = s.setup || "Scheduled Setup Time";
 
-        // CRITICAL AUTOMATION UPDATE: Compute calendar values dynamically for target email optimization metrics
+        // TIME METRIC LOGIC: Compute dynamic Wednesday targets and clean weekday variables
         const showEventDateObj = new Date(s.date + "T12:00:00");
         const targetWeekdayString = showEventDateObj.toLocaleString('en-US', { weekday: 'long' });
         
-        // Calculate the exact Wednesday deadline date preceding the target event timeline signature
         const wednesdayCalculatedObj = new Date(showEventDateObj.getTime());
-        const rawDayIndexNum = showEventDateObj.getDay(); // 0 = Sunday, 1 = Monday, etc.
+        const rawDayIndexNum = showEventDateObj.getDay(); 
         const daysToSubtractToHitWednesday = (rawDayIndexNum >= 3) ? (rawDayIndexNum - 3) : (rawDayIndexNum + 4);
         wednesdayCalculatedObj.setDate(showEventDateObj.getDate() - daysToSubtractToHitWednesday);
         const wednesdayFormattedString = (wednesdayCalculatedObj.getMonth() + 1) + "/" + wednesdayCalculatedObj.getDate();
@@ -858,5 +857,3 @@
 </script>
 </body>
 </html>
-
-
