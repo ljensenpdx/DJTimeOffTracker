@@ -497,6 +497,9 @@
         }
     }
 
+    // ==========================================
+    // DISPATCH / DJ EVENT PLANNER - FONT STYLING RECONCILED
+    // ==========================================
     async function generateEventPDF() {
         const { jsPDF } = window.jspdf;
         if (!jsPDF) return alert("PDF Engine loading. Try again.");
@@ -517,12 +520,21 @@
         } else {
             doc.setFillColor(44, 62, 80);
             doc.rect(0, 0, 210, 40, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(22);
+            doc.setFont(undefined, 'bold');
             doc.text("FUN SQUAD DJs", 105, 20, { align: 'center' });
+            doc.setFontSize(11);
+            doc.setTextColor(241, 196, 15);
+            doc.text("DISPATCH PLAN", 105, 30, { align: 'center' });
             headerBottomY = 46;
         }
 
         doc.setFontSize(9);
-        doc.text(`Event #${s.id}  |  ${stripEmoji(s.type)}`, 200, headerBottomY - 2, { align: 'right' });
+        doc.setTextColor(150);
+        doc.setFont(undefined, 'normal');
+        const eventTypeClean = stripEmoji(s.type);
+        doc.text(`Event #${s.id}  |  ${eventTypeClean}`, 200, headerBottomY - 2, { align: 'right' });
 
         const boxY = headerBottomY + 2;
         const boxW = 58;
@@ -531,17 +543,30 @@
 
         doc.setFillColor(241, 196, 15);
         doc.rect(10, boxY, boxW, boxH, 'F');
+        doc.setFontSize(9);
+        doc.setTextColor(44, 62, 80);
+        doc.setFont(undefined, 'bold');
         doc.text("SETUP", 10 + boxW/2, boxY + 7, { align: 'center' });
+        doc.setFontSize(22);
+        doc.setTextColor(0, 0, 0);
         doc.text(s.setup, 10 + boxW/2, boxY + 21, { align: 'center' });
 
         doc.setFillColor(39, 174, 96);
         doc.rect(10 + boxW + gap, boxY, boxW, boxH, 'F');
+        doc.setFontSize(9);
+        doc.setTextColor(255, 255, 255);
+        doc.setFont(undefined, 'bold');
         doc.text("START", 10 + boxW + gap + boxW/2, boxY + 7, { align: 'center' });
+        doc.setFontSize(16);
         doc.text(s.showStart, 10 + boxW + gap + boxW/2, boxY + 21, { align: 'center' });
 
         doc.setFillColor(192, 57, 43);
         doc.rect(10 + (boxW + gap)*2, boxY, boxW, boxH, 'F');
+        doc.setFontSize(9);
+        doc.setTextColor(255, 255, 255);
+        doc.setFont(undefined, 'bold');
         doc.text("END", 10 + (boxW + gap)*2 + boxW/2, boxY + 7, { align: 'center' });
+        doc.setFontSize(16);
         doc.text(s.end, 10 + (boxW + gap)*2 + boxW/2, boxY + 21, { align: 'center' });
 
         const d = new Date(s.date + "T12:00:00");
@@ -551,23 +576,77 @@
 
         doc.setFillColor(173, 216, 230);
         doc.rect(10, dateBannerY, 190, 16, 'F');
+        doc.setFontSize(16);
+        doc.setTextColor(0, 51, 102);
+        doc.setFont(undefined, 'bold');
         doc.text(`${dateStr}  -  ${dayName}`, 105, dateBannerY + 11, { align: 'center' });
 
         let y = dateBannerY + 26;
-        doc.line(10, y, 200, y); y += 10;
-        doc.text("DJ ASSIGNMENT", 10, y); y += 10;
+        doc.setDrawColor(200);
+        doc.line(10, y, 200, y);
+        y += 10;
+
+        doc.setFontSize(14);
+        doc.setTextColor(44, 62, 80);
+        doc.setFont(undefined, 'bold');
+        doc.text("DJ ASSIGNMENT", 10, y);
+        doc.setDrawColor(44, 62, 80);
+        doc.line(10, y + 2, 200, y + 2);
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(11);
+        y += 10;
         doc.text(`Primary: ${primary}`, 10, y); y += 7;
         if (secondary) { doc.text(`Secondary: ${secondary}`, 10, y); y += 7; }
 
         y += 5;
-        doc.text("EVENT DETAILS", 10, y); y += 10;
+        doc.setFontSize(14);
+        doc.setFont(undefined, 'bold');
+        doc.text("EVENT DETAILS", 10, y);
+        doc.setDrawColor(44, 62, 80);
+        doc.line(10, y + 2, 200, y + 2);
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(11);
+        y += 10;
 
         const currentSavedVenueName = assign.venue_name || currentVenueName;
-        if (currentSavedVenueName) { doc.text(stripEmoji(currentSavedVenueName), 10, y); y += 7; }
-        doc.text(stripEmoji(s.loc), 10, y); y += 7;
+        if (currentSavedVenueName) {
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(39, 174, 96);
+            doc.text(stripEmoji(currentSavedVenueName), 10, y);
+            doc.setTextColor(44, 62, 80);
+            doc.setFont(undefined, 'normal');
+            y += 7;
+        }
+
+        const currentSavedVenuePhone = assign.venue_phone || document.getElementById('venuePhoneText').innerText;
+        if (currentSavedVenuePhone && currentSavedVenuePhone !== "N/A" && currentSavedVenuePhone !== "--") {
+            doc.text(`Phone: ${currentSavedVenuePhone}`, 10, y);
+            y += 7;
+        }
+
+        const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.loc)}`;
+        const addrLine = stripEmoji(s.loc);
+        doc.setTextColor(0, 102, 204);
+        doc.text(addrLine, 10, y);
+        const addrW = doc.getTextWidth(addrLine);
+        doc.setDrawColor(0, 102, 204);
+        doc.line(10, y + 1, 10 + addrW, y + 1);
+        doc.link(10, y - 4, addrW, 6, { url: mapsUrl });
+        doc.setTextColor(44, 62, 80);
+        doc.setDrawColor(200);
+        y += 7;
+
         doc.text(`Date: ${dateStr} (${dayName})`, 10, y); y += 12;
 
-        doc.text("EQUIPMENT & SERVICES", 10, y); y += 10;
+        doc.setFontSize(14);
+        doc.setFont(undefined, 'bold');
+        doc.text("EQUIPMENT & SERVICES", 10, y);
+        doc.setDrawColor(44, 62, 80);
+        doc.line(10, y + 2, 200, y + 2);
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(11);
+        y += 10;
+
         const items = [
             assign.ceremony ? 'Ceremony System' : null,
             assign.reception ? 'Reception System' : null,
@@ -578,14 +657,30 @@
             (assign.uplights || 0) > 0 ? `Up Lights x${assign.uplights}` : null
         ].filter(Boolean);
 
-        if (items.length === 0) { doc.text("No equipment assigned for this event.", 14, y); y += 7; } 
-        else { items.forEach(label => { doc.text(`- ${label}`, 14, y); y += 7; }); }
+        if (items.length === 0) {
+            doc.setTextColor(150);
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'italic');
+            doc.text("No equipment assigned for this event.", 14, y);
+            doc.setFont(undefined, 'normal');
+            doc.setTextColor(44, 62, 80);
+            y += 7;
+        } else {
+            items.forEach(label => {
+                doc.text(`- ${label}`, 14, y);
+                y += 7;
+            });
+        }
+
+        doc.setFontSize(8);
+        doc.setTextColor(180);
+        doc.text("Generated by Fun Squad DJs Master Planner", 105, 285, { align: 'center' });
 
         doc.save(`Event-${s.id}-${primary}.pdf`);
     }
 
     // ==========================================
-    // CLIENT RIDER AUTOMATION ENGINE - COMPREHENSIVE TEXT FLOW REVISION
+    // CLIENT RIDER AUTOMATION ENGINE - PINK WRAPPING EDITION
     // ==========================================
     async function generateClientReminderPDF() {
         const { jsPDF } = window.jspdf;
@@ -739,7 +834,6 @@
         let writeReachoutTextY = y + 4.5;
         wrapReachoutLines.forEach(line => {
             doc.text(line, 23, writeReachoutTextY);
-            // Interactive Link Overlay Logic for the last line containing the Cal link
             if (line.includes("https://cal.com/djlane/15min")) {
                 const targetTextStringWidth = doc.getTextWidth(line);
                 doc.link(23, writeReachoutTextY - 3, targetTextStringWidth, 4, { url: "https://cal.com/djlane/15min" });
@@ -808,7 +902,7 @@
     function submitHiddenForm(data) { const f = document.getElementById('cors_bypass_form'); f.action = scriptURL; f.innerHTML = ''; for (const k in data) { const i = document.createElement('input'); i.type = 'hidden'; i.name = k; i.value = typeof data[k] === 'object' ? JSON.stringify(data[k]) : data[k]; f.appendChild(i); } f.submit(); }
     function addNewDj() { submitHiddenForm({ action: 'addDJ', name: document.getElementById('newDjName').value, color: document.getElementById('newDjColor').value }); setTimeout(() => location.reload(), 2500); }
     function saveAllColors() { const updates = Array.from(document.querySelectorAll('.dj-edit-row')).filter(r => r.dataset.name).map(row => ({ name: row.dataset.name, color: row.querySelector('input[type="color"]').value })); submitHiddenForm({ action: 'saveColors', updates: updates }); setTimeout(() => location.reload(), 2000); }
-    function handleIcsUpload() { const fI = document.getElementById('icsInput'); if (!fI.files[0]) return alert("Select file"); let token = localStorage.getItem('gh_token'); if (!token) { token = prompt("Enter Token:"); if (token) localStorage.setItem('gh_token', token); } if (!token) return; const btn = document.getElementById('uploadBtn'); btn.innerText = "UPLOADING..."; btn.disabled = true; fI.files[0].text().then(c => { const b64 = btoa(unescape(encodeURIComponent(c))); fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/events.ics`, { headers: { 'Authorization': `token ${token}` } }).then(res => res.json()).then(data => { return fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/events.ics`, { method: 'PUT', headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ message: `Update ICS`, content: b64, sha: data.sha }) }); }).then(res => { if (res.ok) { alert("Success!"); location.reload(); } else { throw new Error(); } }).catch(() => { alert("Failed."); localStorage.removeItem('gh_token'); btn.innerText = "UPLOAD"; btn.disabled = false; }); }); }
+    function handleIcsUpload() { const fI = document.getElementById('icsInput'); if (!fI.files[0]) return alert("Select file"); let token = localStorage.getItem('gh_token'); if (!token) { token = prompt("Enter Token:"); if (token) localStorage.setItem('gh_token', token); } if (!token) return; const btn = document.getElementById('uploadBtn'); btn.innerText = "UPLOADING..."; btn.disabled = true; fI.files[0].text().then(c => { const b64 = btoa(unescape(encodeURIComponent(c))); fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/events.ics`, { headers: { 'Authorization': `token ${token}` } }).then(res => { return res.json(); }).then(data => { return fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/events.ics`, { method: 'PUT', headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ message: `Update ICS`, content: b64, sha: data.sha }) }); }).then(res => { if (res.ok) { alert("Success!"); location.reload(); } else { throw new Error(); } }).catch(() => { alert("Failed."); localStorage.removeItem('gh_token'); btn.innerText = "UPLOAD"; btn.disabled = false; }); }); }
     function changeMonth(dir) { viewDate.setDate(1); viewDate.setMonth(viewDate.getMonth() + dir); render(); }
     function goToToday() { viewDate = new Date(); render(); }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
