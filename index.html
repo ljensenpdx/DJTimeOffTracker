@@ -77,7 +77,6 @@
         <p id="assignDetails" style="color:#666; font-size:0.8rem; margin-bottom: 2px;"></p>
         <div id="assignAddress" style="margin-bottom: 14px;"></div>
         
-        <!-- Field addition: Client Contact Email Address Field Box -->
         <label>Client Email:</label>
         <input type="email" id="clientEmailInput" placeholder="client@example.com">
 
@@ -687,6 +686,9 @@
         const assign = assignments.find(a => String(a.id) === String(currentEventId)) || {};
         if (!s) return;
 
+        // CRITICAL UPDATE: Detect Wedding Type context to shift copy guidelines seamlessly
+        const isWedding = s.type && s.type.toLowerCase().includes("wedding");
+
         const doc = new jsPDF();
         await ensureLogo();
 
@@ -704,10 +706,12 @@
             y = 50;
         }
 
-        doc.setFontSize(18);
+        doc.setFontSize(16);
         doc.setTextColor(44, 62, 80);
         doc.setFont(undefined, 'bold');
-        doc.text("EVENT PRODUCTION REQUIREMENT REMINDER", 105, y, { align: 'center' });
+        
+        const headerText = isWedding ? "YOUR WEDDING DAY MUSIC DETAILS & CHECKLIST" : "EVENT PRODUCTION REQUIREMENT REMINDER";
+        doc.text(headerText, 105, y, { align: 'center' });
         doc.setDrawColor(44, 62, 80);
         doc.setLineWidth(1);
         doc.line(20, y + 3, 190, y + 3);
@@ -717,17 +721,26 @@
         doc.setTextColor(60);
         doc.setFont(undefined, 'normal');
         doc.text(`Hello ${stripEmoji(s.client)},`, 20, y); y += 8;
-        doc.text("To ensure a smooth setup and crisp, uninterrupted performance during your timeline, please review and confirm that the venue arrangements accommodate the standard performance rider items detailed below:", 20, y, { maxWidth: 170 });
+
+        const introParagraph = isWedding 
+            ? "We are so honored to celebrate with you next week on your big day! To help make sure everything runs completely smoothly and sounds absolutely beautiful, please review this quick final confirmation list for your venue arrangements:"
+            : "To ensure a smooth setup and crisp, uninterrupted performance during your timeline, please review and confirm that the venue arrangements accommodate the standard performance rider items detailed below:";
+        
+        doc.text(introParagraph, 20, y, { maxWidth: 170 });
         y += 18;
 
-        // FIX: Replaced emoji characters causing encoding box breaks inside the engine context window
+        const smokeZoneTitle = isWedding ? "[-] Fresh Air Environment Zone" : "[-] Substance Controlled Airspace Zone";
+        const smokeZoneDesc = isWedding 
+            ? "To protect our gear and ensure a healthy performance space for everyone, we kindly ask that any designated guest smoking or marijuana spaces be situated a comfortable distance away from the sound system and performance booth areas."
+            : "To preserve equipment integrity and operator health, all active combustion vectors—including marijuana smoking or localized vapor product use—must be situated at the maximum possible physical distance away from the sound layout sector.";
+
         const riders = [
             { title: "[-] Overhead Protection and Shade", desc: "Sufficient overhead shade/canopy coverage must be provided for the DJ console workspace and structural staging areas to completely shelter precision audio electronics from active direct sunlight or moisture exposure." },
             { title: "[-] Console Table Footprint", desc: "Provision of one solid, heavy-duty 6-foot rectangular presentation layout table to function as the primary performance workspace footprint." },
             { title: "[-] Crew Seating Configuration", desc: "Provision of one standard commercial chair situated immediately directly behind or near the central production booth sector." },
             { title: "[-] Ceremony Sector Power Link", desc: "Dedicated, grounded electrical outlet connectivity located within a clean 30-foot spatial cable run radius of the target ceremony presentation space." },
             { title: "[-] Reception Sector Power Link", desc: "Dedicated, grounded electrical outlet connectivity located within a clean 30-foot spatial cable run radius of the target reception setup space." },
-            { title: "[-] Substance Controlled Airspace Zone", desc: "To preserve equipment integrity and operator health, all active combustion vectors—including marijuana smoking or localized vapor product use—must be situated at the maximum possible physical distance away from the sound layout sector." }
+            { title: smokeZoneTitle, desc: smokeZoneDesc }
         ];
 
         riders.forEach(item => {
@@ -748,7 +761,11 @@
         doc.setFont(undefined, 'bold');
         doc.setFontSize(11);
         doc.setTextColor(39, 174, 96);
-        doc.text("Thank you for partnering with us to build a flawless event production environment!", 20, y, { maxWidth: 170 });
+        
+        const closingTag = isWedding 
+            ? "We are so excited to dance with you soon! Thank you for helping us create the perfect day!" 
+            : "Thank you for partnering with us to build a flawless event production environment!";
+        doc.text(closingTag, 20, y, { maxWidth: 170 });
 
         doc.setFontSize(8);
         doc.setTextColor(180);
@@ -757,16 +774,23 @@
         const fileName = `Fun-Squad-DJs-Reminder-${s.id}.pdf`;
         doc.save(fileName);
 
-        // Target Integration Update: Capture values for custom email addresses, Primary DJ, and setup times
         const destinationClientEmail = document.getElementById('clientEmailInput').value.trim();
         const detectedPrimaryDj = assign.primary || "Your Assigned Fun Squad DJ";
         const plannedArrivalTime = s.setup || "Scheduled Setup Time";
 
-        const emailBodyText = `Hi ${s.client},\n\nAttached is your Event Production Requirement Checklist for your upcoming celebration on ${s.date}.\n\nWe are excited to let you know that your performer for the day will be ${detectedPrimaryDj}! They will be arriving at the venue for setup and soundchecks at ${plannedArrivalTime}.\n\nPlease ensure your venue staff is aware of the key setup metrics outlined in the document (including canvas workspace shade, table footprints, localized 30ft power link feeds, and keeping any active marijuana smoking zones as far away from the audio gear sector as possible).\n\nIf you have any questions, reply directly to this thread!\n\nBest regards,\n\nLane E. Jensen\nFun Squad DJs\nlane@funsquaddjs.com`;
+        // CRITICAL UPDATE: Build localized, celebratory copy fields specifically for bridal client scopes
+        let emailSubject = `Important Setup Checklist Reminder - Fun Squad DJs - Show #${s.id}`;
+        let emailBodyText = "";
+
+        if (isWedding) {
+            emailSubject = `🎵 Your Big Day is Next Week! Final Details & Checklist - Show #${s.id}`;
+            emailBodyText = `Hi ${s.client},\n\nWe are getting so close to your big day! We are thrilled to be a part of your wedding celebration next week on ${s.date}.\n\nWe are excited to let you know that your performer for the day will be ${detectedPrimaryDj}! They will be arriving at the venue for setup and soundchecks at ${plannedArrivalTime}, well before your guests arrive, to ensure everything sounds absolutely perfect.\n\nAttached is your final Event Production Checklist. Please share this with your coordinator or venue staff to help confirm that our setup space is ready (including overhead shade, table footprints, localized 30ft power link feeds, and keeping any guest marijuana smoking zones safely clear of the sound gear).\n\nIf you have any questions or need to make last-minute timeline shifts, reply directly to this thread. We are here to help make this day flawless!\n\nBest regards,\n\nLane E. Jensen\nFun Squad DJs\nlane@funsquaddjs.com`;
+        } else {
+            emailBodyText = `Hi ${s.client},\n\nAttached is your Event Production Requirement Checklist for your upcoming celebration on ${s.date}.\n\nWe are excited to let you know that your performer for the day will be ${detectedPrimaryDj}! They will be arriving at the venue for setup and soundchecks at ${plannedArrivalTime}.\n\nPlease ensure your venue staff is aware of the key setup metrics outlined in the document (including canvas workspace shade, table footprints, localized 30ft power link feeds, and keeping any active marijuana smoking zones as far away from the audio gear sector as possible).\n\nIf you have any questions, reply directly to this thread!\n\nBest regards,\n\nLane E. Jensen\nFun Squad DJs\nlane@funsquaddjs.com`;
+        }
         
         navigator.clipboard.writeText(emailBodyText).then(() => {
-            // FIX: Map out explicit CC parameter fields inside the standard mailto execution string
-            const mailtoUrl = `mailto:${destinationClientEmail}?cc=ariel@funsquaddjs.com&subject=${encodeURIComponent("Important Setup Checklist Reminder - Fun Squad DJs - Show #" + s.id)}&body=${encodeURIComponent("=== EMAIL BODY COPIED TO CLIPBOARD - PRESS CTRL+V TO PASTE ===\n\n[Please hit paste to populate body copy message text and manually attach: " + fileName + "]")}`;
+            const mailtoUrl = `mailto:${destinationClientEmail}?cc=ariel@funsquaddjs.com&subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent("=== EMAIL BODY COPIED TO CLIPBOARD - PRESS CTRL+V TO PASTE ===\n\n[Please hit paste to populate body copy message text and manually attach: " + fileName + "]")}`;
             window.location.href = mailtoUrl;
             alert(`🎉 PDF Generated!\n\n1. Check your downloads for the requirement PDF.\n2. Outlook has been triggered.\n3. The email text is on your clipboard—simply press Ctrl+V to paste the body copy and drag the PDF inside!`);
         });
