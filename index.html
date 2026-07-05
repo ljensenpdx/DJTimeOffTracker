@@ -6,7 +6,7 @@
     <title>Fun Squad DJs | Master Planner</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        :root { --dark: #2c3e50; --light: #ffffff; --conflict: #e74c3c; --accent: #3498db; --success: #27ae60; --warning: #e67e22; }
+        :root { --dark: #2c3e50; --light: #ffffff; --conflict: #e74c3c; --accent: #ff007f; --success: #27ae60; --warning: #e67e22; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f4f7f6; padding: 15px; margin: 0; color: #1a1a1a; }
         
         .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 10px 20px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
@@ -517,21 +517,12 @@
         } else {
             doc.setFillColor(44, 62, 80);
             doc.rect(0, 0, 210, 40, 'F');
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(22);
-            doc.setFont(undefined, 'bold');
             doc.text("FUN SQUAD DJs", 105, 20, { align: 'center' });
-            doc.setFontSize(11);
-            doc.setTextColor(241, 196, 15);
-            doc.text("DISPATCH PLAN", 105, 30, { align: 'center' });
             headerBottomY = 46;
         }
 
         doc.setFontSize(9);
-        doc.setTextColor(150);
-        doc.setFont(undefined, 'normal');
-        const eventTypeClean = stripEmoji(s.type);
-        doc.text(`Event #${s.id}  |  ${eventTypeClean}`, 200, headerBottomY - 2, { align: 'right' });
+        doc.text(`Event #${s.id}  |  ${stripEmoji(s.type)}`, 200, headerBottomY - 2, { align: 'right' });
 
         const boxY = headerBottomY + 2;
         const boxW = 58;
@@ -540,30 +531,17 @@
 
         doc.setFillColor(241, 196, 15);
         doc.rect(10, boxY, boxW, boxH, 'F');
-        doc.setFontSize(9);
-        doc.setTextColor(44, 62, 80);
-        doc.setFont(undefined, 'bold');
         doc.text("SETUP", 10 + boxW/2, boxY + 7, { align: 'center' });
-        doc.setFontSize(22);
-        doc.setTextColor(0, 0, 0);
         doc.text(s.setup, 10 + boxW/2, boxY + 21, { align: 'center' });
 
         doc.setFillColor(39, 174, 96);
         doc.rect(10 + boxW + gap, boxY, boxW, boxH, 'F');
-        doc.setFontSize(9);
-        doc.setTextColor(255, 255, 255);
-        doc.setFont(undefined, 'bold');
         doc.text("START", 10 + boxW + gap + boxW/2, boxY + 7, { align: 'center' });
-        doc.setFontSize(16);
         doc.text(s.showStart, 10 + boxW + gap + boxW/2, boxY + 21, { align: 'center' });
 
         doc.setFillColor(192, 57, 43);
         doc.rect(10 + (boxW + gap)*2, boxY, boxW, boxH, 'F');
-        doc.setFontSize(9);
-        doc.setTextColor(255, 255, 255);
-        doc.setFont(undefined, 'bold');
         doc.text("END", 10 + (boxW + gap)*2 + boxW/2, boxY + 7, { align: 'center' });
-        doc.setFontSize(16);
         doc.text(s.end, 10 + (boxW + gap)*2 + boxW/2, boxY + 21, { align: 'center' });
 
         const d = new Date(s.date + "T12:00:00");
@@ -573,77 +551,23 @@
 
         doc.setFillColor(173, 216, 230);
         doc.rect(10, dateBannerY, 190, 16, 'F');
-        doc.setFontSize(16);
-        doc.setTextColor(0, 51, 102);
-        doc.setFont(undefined, 'bold');
         doc.text(`${dateStr}  -  ${dayName}`, 105, dateBannerY + 11, { align: 'center' });
 
         let y = dateBannerY + 26;
-        doc.setDrawColor(200);
-        doc.line(10, y, 200, y);
-        y += 10;
-
-        doc.setFontSize(14);
-        doc.setTextColor(44, 62, 80);
-        doc.setFont(undefined, 'bold');
-        doc.text("DJ ASSIGNMENT", 10, y);
-        doc.setDrawColor(44, 62, 80);
-        doc.line(10, y + 2, 200, y + 2);
-        doc.setFont(undefined, 'normal');
-        doc.setFontSize(11);
-        y += 10;
+        doc.line(10, y, 200, y); y += 10;
+        doc.text("DJ ASSIGNMENT", 10, y); y += 10;
         doc.text(`Primary: ${primary}`, 10, y); y += 7;
         if (secondary) { doc.text(`Secondary: ${secondary}`, 10, y); y += 7; }
 
         y += 5;
-        doc.setFontSize(14);
-        doc.setFont(undefined, 'bold');
-        doc.text("EVENT DETAILS", 10, y);
-        doc.setDrawColor(44, 62, 80);
-        doc.line(10, y + 2, 200, y + 2);
-        doc.setFont(undefined, 'normal');
-        doc.setFontSize(11);
-        y += 10;
+        doc.text("EVENT DETAILS", 10, y); y += 10;
 
         const currentSavedVenueName = assign.venue_name || currentVenueName;
-        if (currentSavedVenueName) {
-            doc.setFont(undefined, 'bold');
-            doc.setTextColor(39, 174, 96);
-            doc.text(stripEmoji(currentSavedVenueName), 10, y);
-            doc.setTextColor(44, 62, 80);
-            doc.setFont(undefined, 'normal');
-            y += 7;
-        }
-
-        const currentSavedVenuePhone = assign.venue_phone || document.getElementById('venuePhoneText').innerText;
-        if (currentSavedVenuePhone && currentSavedVenuePhone !== "N/A" && currentSavedVenuePhone !== "--") {
-            doc.text(`Phone: ${currentSavedVenuePhone}`, 10, y);
-            y += 7;
-        }
-
-        const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.loc)}`;
-        const addrLine = stripEmoji(s.loc);
-        doc.setTextColor(0, 102, 204);
-        doc.text(addrLine, 10, y);
-        const addrW = doc.getTextWidth(addrLine);
-        doc.setDrawColor(0, 102, 204);
-        doc.line(10, y + 1, 10 + addrW, y + 1);
-        doc.link(10, y - 4, addrW, 6, { url: mapsUrl });
-        doc.setTextColor(44, 62, 80);
-        doc.setDrawColor(200);
-        y += 7;
-
+        if (currentSavedVenueName) { doc.text(stripEmoji(currentSavedVenueName), 10, y); y += 7; }
+        doc.text(stripEmoji(s.loc), 10, y); y += 7;
         doc.text(`Date: ${dateStr} (${dayName})`, 10, y); y += 12;
 
-        doc.setFontSize(14);
-        doc.setFont(undefined, 'bold');
-        doc.text("EQUIPMENT & SERVICES", 10, y);
-        doc.setDrawColor(44, 62, 80);
-        doc.line(10, y + 2, 200, y + 2);
-        doc.setFont(undefined, 'normal');
-        doc.setFontSize(11);
-        y += 10;
-
+        doc.text("EQUIPMENT & SERVICES", 10, y); y += 10;
         const items = [
             assign.ceremony ? 'Ceremony System' : null,
             assign.reception ? 'Reception System' : null,
@@ -654,30 +578,14 @@
             (assign.uplights || 0) > 0 ? `Up Lights x${assign.uplights}` : null
         ].filter(Boolean);
 
-        if (items.length === 0) {
-            doc.setTextColor(150);
-            doc.setFontSize(10);
-            doc.setFont(undefined, 'italic');
-            doc.text("No equipment assigned for this event.", 14, y);
-            doc.setFont(undefined, 'normal');
-            doc.setTextColor(44, 62, 80);
-            y += 7;
-        } else {
-            items.forEach(label => {
-                doc.text(`- ${label}`, 14, y);
-                y += 7;
-            });
-        }
-
-        doc.setFontSize(8);
-        doc.setTextColor(180);
-        doc.text("Generated by Fun Squad DJs Master Planner", 105, 285, { align: 'center' });
+        if (items.length === 0) { doc.text("No equipment assigned for this event.", 14, y); y += 7; } 
+        else { items.forEach(label => { doc.text(`- ${label}`, 14, y); y += 7; }); }
 
         doc.save(`Event-${s.id}-${primary}.pdf`);
     }
 
     // ==========================================
-    // CLIENT RIDER AUTOMATION ENGINE - ULTRA NICE EDITION
+    // CLIENT RIDER AUTOMATION ENGINE - PINK EDITION
     // ==========================================
     async function generateClientReminderPDF() {
         const { jsPDF } = window.jspdf;
@@ -687,51 +595,94 @@
         if (!s) return;
 
         const isWedding = s.type && s.type.toLowerCase().includes("wedding");
-
         const doc = new jsPDF();
+
         await ensureLogo();
 
         let y = 0;
         if (logoBase64) {
             doc.addImage(logoBase64, 'PNG', 0, 0, 210, 50);
-            y = 60;
+            y = 56;
         } else {
-            doc.setFillColor(44, 62, 80);
+            doc.setFillColor(255, 0, 127);
             doc.rect(0, 0, 210, 40, 'F');
             doc.setTextColor(255, 255, 255);
             doc.setFontSize(22);
             doc.setFont(undefined, 'bold');
             doc.text("FUN SQUAD DJs", 105, 20, { align: 'center' });
-            y = 50;
+            y = 48;
         }
 
-        doc.setFontSize(16);
-        doc.setTextColor(44, 62, 80);
+        doc.setFontSize(15);
+        doc.setTextColor(255, 0, 127);
         doc.setFont(undefined, 'bold');
         
         const headerText = isWedding ? "YOUR WEDDING DAY BACKSTAGE CHECKLIST" : "YOUR EVENT TIMELINE & SETUP CHECKLIST";
         doc.text(headerText, 105, y, { align: 'center' });
-        doc.setDrawColor(44, 62, 80);
-        doc.setLineWidth(1);
+        doc.setDrawColor(255, 0, 127);
+        doc.setLineWidth(0.75);
         doc.line(20, y + 3, 190, y + 3);
-        y += 14;
+        y += 12;
 
         doc.setFontSize(11);
         doc.setTextColor(60);
         doc.setFont(undefined, 'normal');
-        doc.text(`Hello ${stripEmoji(s.client)},`, 20, y); y += 8;
+        doc.text(`Hello ${stripEmoji(s.client)},`, 20, y); y += 6;
+
+        const showEventDateObj = new Date(s.date + "T12:00:00");
+        const targetWeekdayString = showEventDateObj.toLocaleString('en-US', { weekday: 'long' });
+        const cleanFullFormattedDate = showEventDateObj.toLocaleString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        
+        const wednesdayCalculatedObj = new Date(showEventDateObj.getTime());
+        const rawDayIndexNum = showEventDateObj.getDay(); 
+        const daysToSubtractToHitWednesday = (rawDayIndexNum >= 3) ? (rawDayIndexNum - 3) : (rawDayIndexNum + 4);
+        wednesdayCalculatedObj.setDate(showEventDateObj.getDate() - daysToSubtractToHitWednesday);
+        const wednesdayFormattedString = (wednesdayCalculatedObj.getMonth() + 1) + "/" + wednesdayCalculatedObj.getDate();
+
+        const detectedPrimaryDj = assign.primary || "Your Assigned Fun Squad DJ";
+        const plannedArrivalTime = s.setup || "Scheduled Setup Time";
 
         const introParagraph = isWedding 
-            ? "We are so excited to celebrate with you next week! To make sure your big day is absolutely perfect and everything runs smoothly, please double-check that your venue has these basic setup items ready for us:"
-            : "We are looking forward to your upcoming event! To help us set up on time and give you the best performance possible, please look over this quick checklist and make sure the venue is ready for us:";
+            ? `We are so excited to celebrate with you this ${targetWeekdayString}! To make sure your big day is absolutely perfect and everything runs smoothly, please double-check that your venue has these basic setup items ready for us:`
+            : `We are looking forward to your upcoming celebration this ${targetWeekdayString}! To help us set up on time and give you the best performance possible, please look over this quick checklist and make sure the venue is ready for us:`;
         
         doc.text(introParagraph, 20, y, { maxWidth: 170 });
-        y += 18;
+        y += 14;
 
+        // HIGH CONTRAST MODULE: Centered columns matching the vibrant Fun Squad Pink accents
+        doc.setFillColor(255, 240, 245);
+        doc.rect(20, y, 170, 26, 'F');
+        doc.setDrawColor(255, 0, 127);
+        doc.setLineWidth(0.5);
+        doc.line(20, y, 20, y + 26);
+        
+        doc.setFont(undefined, 'bold');
+        doc.setFontSize(9);
+        doc.setTextColor(110, 120, 130);
+        
+        doc.text("CELEBRATION DATE", 38, y + 7, { align: 'center' });
+        doc.text("ASSIGNED DJ", 105, y + 7, { align: 'center' });
+        doc.text("CEREMONY START", 168, y + 7, { align: 'center' });
+
+        doc.setFont(undefined, 'bold');
+        doc.setFontSize(10.5);
+        doc.setTextColor(255, 0, 127);
+        doc.text(`${cleanFullFormattedDate}`, 38, y + 14, { align: 'center' });
+        doc.text(detectedPrimaryDj, 105, y + 14, { align: 'center' });
+        doc.text(s.showStart, 168, y + 14, { align: 'center' });
+
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(8.5);
+        doc.setTextColor(130, 140, 150);
+        doc.text(`(${targetWeekdayString})`, 38, y + 20, { align: 'center' });
+        doc.text(`Arrival Setup: ${plannedArrivalTime}`, 105, y + 20, { align: 'center' });
+        doc.text(`Music Ends: ${s.end}`, 168, y + 20, { align: 'center' });
+        y += 34;
+
+        // SIMPLIFIED PROTOCOLS: Combined table and chair checklist formatting
         const riders = [
             { title: "[-] Cover from the Sun & Weather", desc: "If we are outdoors, we need a tent, canopy, or solid roof over the DJ booth. Direct sunlight and heat can damage sensitive music gear, and it keeps your DJ cool so they can perform at their best!" },
-            { title: "[-] One 6-Foot Rectangle Table", desc: "Please have the venue provide one sturdy 6-foot rectangular table for our mixing boards, laptops, and controllers." },
-            { title: "[-] One Chair", desc: "Please place one standard chair at the DJ booth so your performer has a spot to sit during downtime or dinner." },
+            { title: "[-] One 6-Foot Rectangle Table & Chair", desc: "Please have the venue provide one sturdy 6-foot rectangular table for our mixing boards, laptops, and controllers, along with a standard chair for downtime or dinner breaks." },
             { title: "[-] Plug-In Power for the Ceremony", desc: "We need a standard, working wall outlet within 30 feet of where the ceremony music and microphones will be set up." },
             { title: "[-] Plug-In Power for the Reception", desc: "We need a standard, working wall outlet within 30 feet of our main reception speaker systems." },
             { title: "[-] Smoke & Marijuana Free Zone", desc: "To protect our expensive electronic gear and keep the air clear for your DJ, please make sure any designated guest smoking or marijuana spaces are set up far away from our speakers and equipment booths." }
@@ -739,22 +690,45 @@
 
         riders.forEach(item => {
             doc.setFont(undefined, 'bold');
-            doc.setFontSize(12);
+            doc.setFontSize(11);
             doc.setTextColor(44, 62, 80);
             doc.text(item.title, 20, y);
             y += 5;
 
             doc.setFont(undefined, 'normal');
-            doc.setFontSize(10);
+            doc.setFontSize(9.5);
             doc.setTextColor(80);
             doc.text(item.desc, 24, y, { maxWidth: 164 });
-            y += 14;
+            y += 11;
         });
 
-        y += 4;
+        // RECONCILIATION CARDS: Final cut-offs highlighted in bold pink structures
+        y += 2;
+        doc.setFillColor(255, 240, 245);
+        doc.rect(20, y, 170, 11, 'F');
+        doc.setDrawColor(255, 0, 127);
+        doc.rect(20, y, 170, 11, 'D');
+        doc.setFont(undefined, 'bold');
+        doc.setFontSize(8.5);
+        doc.setTextColor(255, 0, 127);
+        doc.text(`🎵 MUSIC DEADLINE: Final playlist selections or adjustments must be submitted by Wednesday evening (${wednesdayFormattedString}) to lock in.`, 23, y + 7);
+        y += 15;
+
+        // REACHOUT CALL BANNER: Automated link layout container
+        doc.setFillColor(245, 247, 250);
+        doc.rect(20, y, 170, 14, 'F');
+        doc.setDrawColor(180, 190, 200);
+        doc.rect(20, y, 170, 14, 'D');
+        doc.setFont(undefined, 'bold');
+        doc.setFontSize(8.5);
+        doc.setTextColor(44, 62, 80);
+        doc.text("💡 LAST MINUTE QUESTIONS? Feel free to give me a call directly at any time, or book a quick", 23, y + 6);
+        doc.text("15-minute sync meeting directly onto my calendar dashboard here: https://cal.com/djlane/15min", 23, y + 10);
+        y += 19;
+
         doc.setFont(undefined, 'bold');
         doc.setFontSize(11);
-        doc.setTextColor(39, 174, 96);
+        doc.setTextColor(27, 163, 69);
         
         const closingTag = isWedding 
             ? "We can't wait to get everyone out on the dance floor! Thank you for helping us make your wedding perfect!" 
@@ -769,18 +743,6 @@
         doc.save(fileName);
 
         const destinationClientEmail = document.getElementById('clientEmailInput').value.trim();
-        const detectedPrimaryDj = assign.primary || "Your Assigned Fun Squad DJ";
-        const plannedArrivalTime = s.setup || "Scheduled Setup Time";
-
-        // TIME METRIC LOGIC: Compute dynamic Wednesday targets and clean weekday variables
-        const showEventDateObj = new Date(s.date + "T12:00:00");
-        const targetWeekdayString = showEventDateObj.toLocaleString('en-US', { weekday: 'long' });
-        
-        const wednesdayCalculatedObj = new Date(showEventDateObj.getTime());
-        const rawDayIndexNum = showEventDateObj.getDay(); 
-        const daysToSubtractToHitWednesday = (rawDayIndexNum >= 3) ? (rawDayIndexNum - 3) : (rawDayIndexNum + 4);
-        wednesdayCalculatedObj.setDate(showEventDateObj.getDate() - daysToSubtractToHitWednesday);
-        const wednesdayFormattedString = (wednesdayCalculatedObj.getMonth() + 1) + "/" + wednesdayCalculatedObj.getDate();
 
         let emailSubject = `Quick Setup Reminder for Your Event! - Show #${s.id}`;
         let emailBodyText = "";
