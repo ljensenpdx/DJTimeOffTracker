@@ -77,7 +77,6 @@
         <p id="assignDetails" style="color:#666; font-size:0.8rem; margin-bottom: 2px;"></p>
         <div id="assignAddress" style="margin-bottom: 14px;"></div>
         
-        <!-- Changes: Text box inputs replaced with stylized clean view prose text lines -->
         <div id="venueNameWrap" style="display:none;">
             <span class="venue-label">Venue Name</span>
             <span id="venueNameText" class="venue-display-text">--</span>
@@ -103,13 +102,15 @@
         <div style="font-weight: bold; margin-bottom: 8px;"><input type="checkbox" id="checkCeremony"> Ceremony System (🔈)</div>
         <div style="font-weight: bold; margin-bottom: 8px;"><input type="checkbox" id="checkReception"> Reception System (🔊)</div>
         <div style="font-weight: bold; margin-bottom: 8px;"><input type="checkbox" id="checkBooth"> Photo Booth (📷)</div>
-        <div style="font-weight: bold; margin-bottom: 8px;"><input type="checkbox" id="checkPrints"> On Site Prints (🖨️)</div>
+        <div style="font-weight: bold; margin-bottom: 8px;"><input type="checkbox" id="checkPrints"> On Site Prints (𖨾)</div>
         <div style="font-weight: bold; margin-bottom: 8px;"><input type="checkbox" id="checkGuestbook"> Audio Guestbook (☎️)</div>
         <div style="font-weight: bold; margin-bottom: 8px;"><input type="checkbox" id="checkKaraoke"> Karaoke (🎤) <small style="color:red">*Forces Lane</small></div>
         <div style="font-weight: bold; margin-bottom: 8px;">Up Lights (💡): <select id="uplightSelect" style="width:70px; margin-left:10px; display:inline-block;"><option value="0">0</option><option value="4">4</option><option value="8">8</option><option value="12">12</option><option value="16">16</option></select></div>
 
         <button style="background:var(--success); width:100%; margin-top:10px;" onclick="submitAssignment()">SAVE DETAILS</button><br><br>
         <button style="background:#8e44ad; width:100%; margin-bottom:10px;" onclick="generateEventPDF()">📄 GENERATE EVENT PDF</button>
+        <!-- Added Target Component Module: Rider Dispatch Client Sync -->
+        <button style="background:#e67e22; width:100%; margin-bottom:10px;" onclick="generateClientReminderPDF()">📧 EMAIL CLIENT REMINDER</button>
         <button onclick="closeModal('assignModal')" style="background:#95a5a6; width:100%;">Cancel</button>
     </div>
 </div>
@@ -447,11 +448,9 @@
                     if (!venueMatch) venueMatch = results.find(r => !/^\d+\s+[A-Za-z]/.test(r.name));
                     
                     if (venueMatch && venueMatch.name) {
-                        // CRITICAL ADDITION: Extract the street number from the query address to verify residence status
                         const initialStreetNumStr = (cleanAddr.match(/^\d+/) || [""])[0];
                         const checkedFormattedAddress = venueMatch.formatted_address || "";
                         
-                        // Strict Verification: If a street number is present but doesn't exist within the result, mark Private Residence
                         if (initialStreetNumStr && !checkedFormattedAddress.includes(initialStreetNumStr)) {
                             currentVenueName = "Private Residence";
                             nameText.innerText = "Private Residence";
@@ -474,7 +473,6 @@
                             });
                         }
                     } else {
-                        // Fallback handling to ensure empty business matches become Private Residence markers
                         currentVenueName = "Private Residence";
                         nameText.innerText = "Private Residence";
                         phoneText.innerText = "N/A";
@@ -671,6 +669,95 @@
         doc.save(`Event-${s.id}-${primary}.pdf`);
     }
 
+    // ==========================================
+    // CLIENT RIDER AUTOMATION ENGINE
+    // ==========================================
+    async function generateClientReminderPDF() {
+        const { jsPDF } = window.jspdf;
+        if (!jsPDF) return alert("PDF Engine loading. Try again.");
+        const s = showData.find(ev => String(ev.id) === String(currentEventId));
+        if (!s) return;
+
+        const doc = new jsPDF();
+        await ensureLogo();
+
+        let y = 0;
+        if (logoBase64) {
+            doc.addImage(logoBase64, 'PNG', 0, 0, 210, 50);
+            y = 60;
+        } else {
+            doc.setFillColor(44, 62, 80);
+            doc.rect(0, 0, 210, 40, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(22);
+            doc.setFont(undefined, 'bold');
+            doc.text("FUN SQUAD DJs", 105, 20, { align: 'center' });
+            y = 50;
+        }
+
+        doc.setFontSize(18);
+        doc.setTextColor(44, 62, 80);
+        doc.setFont(undefined, 'bold');
+        doc.text("EVENT PRODUCTION REQUIREMENT REMINDER", 105, y, { align: 'center' });
+        doc.setDrawColor(44, 62, 80);
+        doc.setLineWidth(1);
+        doc.line(20, y + 3, 190, y + 3);
+        y += 14;
+
+        doc.setFontSize(11);
+        doc.setTextColor(60);
+        doc.setFont(undefined, 'normal');
+        doc.text(`Hello ${stripEmoji(s.client)},`, 20, y); y += 8;
+        doc.text("To ensure a smooth setup and crisp, uninterrupted performance during your timeline, please review and confirm that the venue arrangements accommodate the standard performance rider items detailed below:", 20, y, { maxWidth: 170 });
+        y += 18;
+
+        const riders = [
+            { title: "☀️ Overhead Protection & Shade", desc: "Sufficient overhead shade/canopy coverage must be provided for the DJ console workspace and structural staging areas to completely shelter precision audio electronics from active direct sunlight or moisture exposure." },
+            { title: "📐 Console Table Footprint", desc: "Provision of one solid, heavy-duty 6-foot rectangular presentation layout table to function as the primary performance workspace footprint." },
+            { title: "🪑 Crew Seating Configuration", desc: "Provision of one standard commercial chair situated immediately directly behind or near the central production booth sector." },
+            { title: "🔌 Ceremony Sector Power Link", desc: "Dedicated, grounded electrical outlet connectivity located within a clean 30-foot spatial cable run radius of the target ceremony presentation space." },
+            { title: "🔌 Reception Sector Power Link", desc: "Dedicated, grounded electrical outlet connectivity located within a clean 30-foot spatial cable run radius of the target reception setup space." },
+            { title: "🚭 Substance Controlled Airspace Zone", desc: "To preserve equipment integrity and operator health, all active combustion vectors—including marijuana smoking or localized vapor product use—must be situated at the maximum possible physical distance away from the sound layout sector." }
+        ];
+
+        riders.forEach(item => {
+            doc.setFont(undefined, 'bold');
+            doc.setFontSize(12);
+            doc.setTextColor(44, 62, 80);
+            doc.text(item.title, 20, y);
+            y += 5;
+
+            doc.setFont(undefined, 'normal');
+            doc.setFontSize(10);
+            doc.setTextColor(80);
+            doc.text(item.desc, 24, y, { maxWidth: 164 });
+            y += 14;
+        });
+
+        y += 4;
+        doc.setFont(undefined, 'bold');
+        doc.setFontSize(11);
+        doc.setTextColor(39, 174, 96);
+        doc.text("Thank you for partnering with us to build a flawless event production environment!", 20, y, { maxWidth: 170 });
+
+        doc.setFontSize(8);
+        doc.setTextColor(180);
+        doc.text("Fun Squad DJs  |  lane@funsquaddjs.com", 105, 285, { align: 'center' });
+
+        const fileName = `Fun-Squad-DJs-Reminder-${s.id}.pdf`;
+        doc.save(fileName);
+
+        // Copy professionally wrapped body summary directly over onto clipboard layout stack
+        const emailBodyText = `Hi ${s.client},\n\nAttached is your Event Production Requirement Checklist for your upcoming celebration on ${s.date}.\n\nPlease ensure your venue staff is aware of the key requirements checklist outlined in the document (including shade, table footprint, localized power links, and maintaining a smoke-free workspace).\n\nIf you have any questions, reply directly to this thread!\n\nBest regards,\n\nLane E. Jensen\nFun Squad DJs\nlane@funsquaddjs.com`;
+        
+        navigator.clipboard.writeText(emailBodyText).then(() => {
+            // Trigger customized local desktop execution path wrap via standard mailto shortcut
+            const mailtoUrl = `mailto:?to=&subject=${encodeURIComponent("Important Setup Checklist Reminder - Fun Squad DJs - Show #" + s.id)}&body=${encodeURIComponent("=== EMAIL BODY COPIED TO CLIPBOARD - PRESS CTRL+V TO PASTE ===\n\n[Please hit paste to populate body copy message text and manually attach: " + fileName + "]")}`;
+            window.location.href = mailtoUrl;
+            alert(`🎉 PDF Generated!\n\n1. Check your downloads for the requirement PDF.\n2. Outlook has been triggered.\n3. The email text is on your clipboard—simply press Ctrl+V to paste the body copy and drag the PDF inside!`);
+        });
+    }
+
     function submitAssignment() { 
         submitHiddenForm({ 
             action: 'assignDJ', 
@@ -685,7 +772,6 @@
             guestbook: document.getElementById('checkGuestbook').checked, 
             uplights: document.getElementById('uplightSelect').value, 
             karaoke: document.getElementById('checkKaraoke').checked,
-            // Modified: pulling variables from text Content targets instead of raw input boxes
             venue_name: currentVenueName,
             venue_phone: document.getElementById('venuePhoneText').innerText
         }); 
