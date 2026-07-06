@@ -680,7 +680,7 @@
     }
 
     // ==========================================
-    // CLIENT RIDER AUTOMATION ENGINE - FULL LOCATION CARD
+    // CLIENT RIDER AUTOMATION ENGINE - WORD-WRAPPED CARD
     // ==========================================
     async function generateClientReminderPDF() {
         const { jsPDF } = window.jspdf;
@@ -746,46 +746,80 @@
         doc.text(introParagraph, 20, y, { maxWidth: 170 });
         y += 14;
 
-        // HIGH CONTRAST MODULE: Centered columns matching the vibrant Fun Squad Pink accents
+        // Pre-calculate wrapped lines for the flexible center column (Max column width: 62mm)
+        doc.setFont(undefined, 'bold');
+        doc.setFontSize(10.5);
+        const determinedSavedVenueName = assign.venue_name || currentVenueName;
+        const processedDisplayVenueString = (determinedSavedVenueName && determinedSavedVenueName !== "Private Residence") ? determinedSavedVenueName : "Private Residence";
+        const wrappedVenueLines = doc.splitTextToSize(processedDisplayVenueString, 62);
+
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(8.5);
+        const fullCleanedStreetAddress = stripEmoji(s.loc).trim();
+        const wrappedAddressLines = doc.splitTextToSize(fullCleanedStreetAddress, 62);
+
+        // Dynamically compute the column block card layout height based on total generated text lines
+        const totalLinesCount = wrappedVenueLines.length + wrappedAddressLines.length;
+        const totalBlockHeight = Math.max(26, (totalLinesCount * 4) + 12);
+
+        // Render HIGH CONTRAST MODULE background card container
         doc.setFillColor(255, 240, 245);
-        doc.rect(20, y, 170, 26, 'F');
+        doc.rect(20, y, 170, totalBlockHeight, 'F');
         doc.setDrawColor(255, 0, 127);
         doc.setLineWidth(0.5);
-        doc.line(20, y, 20, y + 26);
+        doc.line(20, y, 20, y + totalBlockHeight);
         
+        // Static Header Labels
         doc.setFont(undefined, 'bold');
         doc.setFontSize(9);
         doc.setTextColor(110, 120, 130);
-        
-        doc.text("CELEBRATION DATE", 38, y + 7, { align: 'center' });
+        doc.text("CELEBRATION DATE", 42, y + 7, { align: 'center' });
         doc.text("VENUE & LOCATION", 105, y + 7, { align: 'center' });
         doc.text("CEREMONY START", 168, y + 7, { align: 'center' });
 
+        // Left Column Data (Date Strings)
         doc.setFont(undefined, 'bold');
         doc.setFontSize(10.5);
         doc.setTextColor(255, 0, 127);
-        doc.text(`${cleanFullFormattedDate}`, 38, y + 14, { align: 'center' });
-        
-        // Processing Place Name Logic
-        const determinedSavedVenueName = assign.venue_name || currentVenueName;
-        const processedDisplayVenueString = (determinedSavedVenueName && determinedSavedVenueName !== "Private Residence") ? determinedSavedVenueName : "Private Residence";
-        const truncatedVenueLabelString = processedDisplayVenueString.length > 24 ? processedDisplayVenueString.substring(0, 22) + "..." : processedDisplayVenueString;
-        doc.text(truncatedVenueLabelString, 105, y + 14, { align: 'center' });
-        
+        doc.text(`${cleanFullFormattedDate}`, 42, y + 14, { align: 'center' });
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(8.5);
+        doc.setTextColor(130, 140, 150);
+        doc.text(`(${targetWeekdayString})`, 42, y + 20, { align: 'center' });
+
+        // Right Column Data (Timing Schedules)
+        doc.setFont(undefined, 'bold');
+        doc.setFontSize(10.5);
+        doc.setTextColor(255, 0, 127);
         doc.text(s.showStart, 168, y + 14, { align: 'center' });
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(8.5);
+        doc.setTextColor(130, 140, 150);
+        doc.text(`Music Ends: ${s.end}`, 168, y + 20, { align: 'center' });
+
+        // Center Column Data Loop (Auto Word-Wrapped Venue & Address Stack)
+        let centerColumnTextCursorY = y + 14;
+        
+        doc.setFont(undefined, 'bold');
+        doc.setFontSize(10.5);
+        doc.setTextColor(255, 0, 127);
+        wrappedVenueLines.forEach(line => {
+            doc.text(line, 105, centerColumnTextCursorY, { align: 'center' });
+            centerColumnTextCursorY += 4.5;
+        });
+
+        centerColumnTextCursorY += 0.5; // Micro spacing gap between name and street lines
 
         doc.setFont(undefined, 'normal');
         doc.setFontSize(8.5);
         doc.setTextColor(130, 140, 150);
-        doc.text(`(${targetWeekdayString})`, 38, y + 20, { align: 'center' });
-        
-        // Injecting Full Raw Calendar Address
-        const fullCleanedStreetAddress = stripEmoji(s.loc).trim();
-        const truncatedFullAddressString = fullCleanedStreetAddress.length > 34 ? fullCleanedStreetAddress.substring(0, 32) + "..." : fullCleanedStreetAddress;
-        doc.text(truncatedFullAddressString, 105, y + 20, { align: 'center' });
-        
-        doc.text(`Music Ends: ${s.end}`, 168, y + 20, { align: 'center' });
-        y += 34;
+        wrappedAddressLines.forEach(line => {
+            doc.text(line, 105, centerColumnTextCursorY, { align: 'center' });
+            centerColumnTextCursorY += 3.8;
+        });
+
+        // Offset layout tracking coordinate engine to clean boundaries below the flexible card
+        y += totalBlockHeight + 8;
 
         const riders = [
             { title: "- Cover from the Sun & Weather", desc: "If we are outdoors, we need a tent, canopy, or solid roof over the DJ booth. Direct sunlight and heat can damage sensitive music gear, and it keeps your DJ cool so they can perform at their best!" },
