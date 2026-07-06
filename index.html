@@ -340,7 +340,7 @@
 
     function populateFilterDropdown() {
         const f = document.getElementById('djFilter'); f.innerHTML = '<option value="all">Filter by DJ: ALL</option><option value="unassigned">UNASSIGNED ONLY</option>';
-        djSettings.forEach(dj => { f.innerHTML += `<option value="${dj.name}">${dj.name}</option>`; });
+        djSettings.forEach(dj => { f.innerHTML += `<option value="${dj.name}">${dj.name}</option>'; });
     }
 
     function togglePrices() { hidePrices = !hidePrices; const btn = document.getElementById('priceToggle'); btn.innerText = hidePrices ? "HIDE PRICES" : "SHOW PRICES"; btn.classList.toggle('active'); render(); }
@@ -427,7 +427,7 @@
 
         const pSel = document.getElementById('primarySelect'), sSel = document.getElementById('secondarySelect');
         pSel.innerHTML = sSel.innerHTML = '<option value="">None</option>';
-        djSettings.forEach(dj => { pSel.innerHTML += `<option value="${dj.name}">${dj.name}</option>`; sSel.innerHTML += `<option value="${dj.name}">${dj.name}</option>`; });
+        djSettings.forEach(dj => { pSel.innerHTML += `<option value="${dj.name}">${dj.name}</option>'; sSel.innerHTML += `<option value="${dj.name}">${dj.name}</option>'; });
         pSel.value = curr.primary || ""; sSel.value = curr.secondary || "";
         document.getElementById('priceInput').value = curr.price || "";
         document.getElementById('checkCeremony').checked = !!curr.ceremony; document.getElementById('checkReception').checked = !!curr.reception; document.getElementById('checkBooth').checked = !!curr.booth; document.getElementById('checkPrints').checked = !!curr.prints; document.getElementById('checkGuestbook').checked = !!curr.guestbook; document.getElementById('checkKaraoke').checked = !!curr.karaoke; document.getElementById('uplightSelect').value = curr.uplights || "0";
@@ -766,11 +766,11 @@
         doc.setTextColor(255, 0, 127);
         doc.text(`${cleanFullFormattedDate}`, 38, y + 14, { align: 'center' });
         
-        // Processing Place Name Logic[cite: 1]
-        const determinedSavedVenueName = assign.venue_name || currentVenueName;[cite: 1]
-        const processedDisplayVenueString = (determinedSavedVenueName && determinedSavedVenueName !== "Private Residence") ? determinedSavedVenueName : "Private Residence";[cite: 1]
-        const truncatedVenueLabelString = processedDisplayVenueString.length > 24 ? processedDisplayVenueString.substring(0, 22) + "..." : processedDisplayVenueString;[cite: 1]
-        doc.text(truncatedVenueLabelString, 105, y + 14, { align: 'center' });[cite: 1]
+        // Processing Place Name Logic
+        const determinedSavedVenueName = assign.venue_name || currentVenueName;
+        const processedDisplayVenueString = (determinedSavedVenueName && determinedSavedVenueName !== "Private Residence") ? determinedSavedVenueName : "Private Residence";
+        const truncatedVenueLabelString = processedDisplayVenueString.length > 24 ? processedDisplayVenueString.substring(0, 22) + "..." : processedDisplayVenueString;
+        doc.text(truncatedVenueLabelString, 105, y + 14, { align: 'center' });
         
         doc.text(s.showStart, 168, y + 14, { align: 'center' });
 
@@ -779,10 +779,10 @@
         doc.setTextColor(130, 140, 150);
         doc.text(`(${targetWeekdayString})`, 38, y + 20, { align: 'center' });
         
-        // Injecting Full Raw Calendar Address[cite: 1]
-        const fullCleanedStreetAddress = stripEmoji(s.loc).trim();[cite: 1]
-        const truncatedFullAddressString = fullCleanedStreetAddress.length > 34 ? fullCleanedStreetAddress.substring(0, 32) + "..." : fullCleanedStreetAddress;[cite: 1]
-        doc.text(truncatedFullAddressString, 105, y + 20, { align: 'center' });[cite: 1]
+        // Injecting Full Raw Calendar Address
+        const fullCleanedStreetAddress = stripEmoji(s.loc).trim();
+        const truncatedFullAddressString = fullCleanedStreetAddress.length > 34 ? fullCleanedStreetAddress.substring(0, 32) + "..." : fullCleanedStreetAddress;
+        doc.text(truncatedFullAddressString, 105, y + 20, { align: 'center' });
         
         doc.text(`Music Ends: ${s.end}`, 168, y + 20, { align: 'center' });
         y += 34;
