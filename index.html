@@ -498,7 +498,7 @@
     }
 
     // ==========================================
-    // DISPATCH / DJ EVENT PLANNER - COOPERATIVE FIX
+    // DISPATCH / DJ EVENT PLANNER - PORTRAIT CORE
     // ==========================================
     async function generateEventPDF() {
         const { jsPDF } = window.jspdf;
@@ -680,16 +680,20 @@
     }
 
     // ==========================================
-    // CLIENT RIDER AUTOMATION ENGINE - FINAL PINK WRAPPING EDITION
+    // CLIENT RIDER AUTOMATION ENGINE - EVENT TYPE DYNAMIC STRINGS
     // ==========================================
     async function generateClientReminderPDF() {
         const { jsPDF } = window.jspdf;
         if (!jsPDF) return alert("PDF Engine loading. Try again.");
         const s = showData.find(ev => String(ev.id) === String(currentEventId));
-        const assign = assignments.find(a => String(a.id) === String(currentEventId)) || {};
         if (!s) return;
 
         const isWedding = s.type && s.type.toLowerCase().includes("wedding");
+        
+        // Dynamically structure the text title casing to read "Wedding DJ", "Corporate DJ", etc.
+        const cleanedEventLabelName = stripEmoji(s.type).trim();
+        const formattedTitleCaseEventLabel = cleanedEventLabelName.charAt(0).toUpperCase() + cleanedEventLabelName.slice(1).toLowerCase();
+        
         const doc = new jsPDF();
 
         await ensureLogo();
@@ -734,7 +738,6 @@
         wednesdayCalculatedObj.setDate(showEventDateObj.getDate() - daysToSubtractToHitWednesday);
         const wednesdayFormattedString = (wednesdayCalculatedObj.getMonth() + 1) + "/" + wednesdayCalculatedObj.getDate();
 
-        const detectedPrimaryDj = assign.primary || "Your Assigned Fun Squad DJ";
         const plannedArrivalTime = s.setup || "Scheduled Setup Time";
 
         const introParagraph = isWedding 
@@ -763,7 +766,7 @@
         doc.setFontSize(10.5);
         doc.setTextColor(255, 0, 127);
         doc.text(`${cleanFullFormattedDate}`, 38, y + 14, { align: 'center' });
-        doc.text(detectedPrimaryDj, 105, y + 14, { align: 'center' });
+        doc.text(`Fun Squad ${formattedTitleCaseEventLabel} DJ`, 105, y + 14, { align: 'center' });
         doc.text(s.showStart, 168, y + 14, { align: 'center' });
 
         doc.setFont(undefined, 'normal');
@@ -774,7 +777,6 @@
         doc.text(`Music Ends: ${s.end}`, 168, y + 20, { align: 'center' });
         y += 34;
 
-        // SIMPLIFIED PROTOCOLS: Combined table and chair checklist formatting
         const riders = [
             { title: "- Cover from the Sun & Weather", desc: "If we are outdoors, we need a tent, canopy, or solid roof over the DJ booth. Direct sunlight and heat can damage sensitive music gear, and it keeps your DJ cool so they can perform at their best!" },
             { title: "- One 6-Foot Rectangle Table & Chair", desc: "Please have the venue provide one sturdy 6-foot rectangular table for our mixing boards, laptops, and controllers, along with a standard chair for downtime or dinner breaks." },
@@ -797,7 +799,6 @@
             y += 11;
         });
 
-        // RECONCILIATION CARDS: Dynamic text block parsing with safety split rules to prevent clipping
         y += 2;
         const rawDeadlineString = `MUSIC DEADLINE: Final playlist selections or adjustments must be submitted by Wednesday evening (${wednesdayFormattedString}) to lock in for the event.`;
         const wrapDeadlineLines = doc.splitTextToSize(rawDeadlineString, 164);
@@ -818,7 +819,6 @@
         });
         y += calculateDeadlineBoxHeight + 4;
 
-        // REACHOUT CALL BANNER: Word wrapping block with dynamic dimensions and interactive URL bindings
         const rawReachoutString = "QUESTIONS OR CHANGES? If you have last-minute questions or want to review your timeline, feel free to give me a call directly or book a quick 15-minute meeting directly onto my calendar dashboard link here: https://cal.com/djlane/15min";
         const wrapReachoutLines = doc.splitTextToSize(rawReachoutString, 164);
         const calculateReachoutBoxHeight = (wrapReachoutLines.length * 4) + 6;
@@ -865,9 +865,9 @@
 
         if (isWedding) {
             emailSubject = `🎵 Your Wedding Day is This ${targetWeekdayString}! Final Details & Checklist - Show #${s.id}`;
-            emailBodyText = `Hi ${s.client},\n\nWe are getting so close! We are absolutely thrilled and looking forward to celebrating with you this ${targetWeekdayString} on your big day!\n\nYour assigned DJ for the wedding is ${detectedPrimaryDj}! They will be arriving at your venue at ${plannedArrivalTime} to get completely set up and run soundchecks long before your first guests walk through the door so that everything goes flawlessly.\n\nPlease take just a brief moment to look over the attached one-page setup checklist. Could you please forward it to your wedding coordinator or venue manager? It just ensures they have our workspace ready (including a shaded spot out of the sun, a 6-foot table, working outlets within 30 feet, and keeping guest smoking spaces safely clear of the sound equipment).\n\nTo make sure your celebration is completely perfect, we also want to remind you that any final music choices or timeline adjustments need to be submitted by Wednesday evening (${wednesdayFormattedString}) to guarantee those changes can be made for your event.\n\nIf you have any last-minute questions or want to go over any of the finer details together, please feel free to give me a call directly or schedule a quick 15-minute chat with me right here: https://cal.com/djlane/15min\n\nWe are here for you every step of the way to ensure your day is absolutely perfect!`;
+            emailBodyText = `Hi ${s.client},\n\nWe are getting so close! We are absolutely thrilled and looking forward to celebrating with you this ${targetWeekdayString} on your big day!\n\nOne of our highly talented wedding DJs will be arriving at your venue at ${plannedArrivalTime} to get completely set up and run soundchecks long before your first guests walk through the door so that everything goes flawlessly and your wedding is absolutely perfect.\n\nPlease take just a brief moment to look over the attached one-page setup checklist. Could you please forward it to your wedding coordinator or venue manager? It just ensures they have our workspace ready (including a shaded spot out of the sun, a 6-foot table, working outlets within 30 feet, and keeping guest smoking spaces safely clear of the sound equipment).\n\nTo make sure your celebration is completely perfect, we also want to remind you that any final music choices or timeline adjustments need to be submitted by Wednesday evening (${wednesdayFormattedString}) to guarantee those changes can be made for your event.\n\nIf you have any last-minute questions or want to go over any of the finer details together, please feel free to give me a call directly or schedule a quick 15-minute chat with me right here: https://cal.com/djlane/15min\n\nWe are here for you every step of the way to ensure your day is absolutely perfect!`;
         } else {
-            emailBodyText = `Hi ${s.client},\n\nWe are looking forward to celebrating with you this ${targetWeekdayString} for your upcoming event!\n\nYour assigned DJ for the night will be ${detectedPrimaryDj}! They will arrive at the venue for setup and soundchecks at ${plannedArrivalTime}.\n\nPlease take a brief moment to look over the attached one-page setup checklist and forward it to your venue manager or coordinator to make sure they have our workspace ready (including a shaded spot out of the sun, a 6-foot table, power outlets within 30 feet, and keeping guest smoking or marijuana areas clear of the audio gear).\n\nAlso, a quick reminder that any final music or timeline changes need to be submitted by Wednesday evening (${wednesdayFormattedString}) to guarantee those adjustments are locked in for your event.\n\nIf you have any questions or want to review your timeline, feel free to give me a call or schedule a quick meeting with me here: https://cal.com/djlane/15min`;
+            emailBodyText = `Hi ${s.client},\n\nWe are looking forward to celebrating with you this ${targetWeekdayString} for your upcoming event!\n\nOne of our highly talented ${formattedTitleCaseEventLabel.toLowerCase()} DJs will be arriving at your venue at ${plannedArrivalTime} to handle setup and soundchecks long before your event begins.\n\nPlease take a brief moment to look over the attached one-page setup checklist and forward it to your venue manager or coordinator to make sure they have our workspace ready (including a shaded spot out of the sun, a 6-foot table, power outlets within 30 feet, and keeping guest smoking or marijuana areas clear of the audio gear).\n\nAlso, a quick reminder that any final music or timeline changes need to be submitted by Wednesday evening (${wednesdayFormattedString}) to guarantee those adjustments are locked in for your event.\n\nIf you have any questions or want to review your timeline, feel free to give me a call or schedule a quick meeting with me here: https://cal.com/djlane/15min`;
         }
         
         navigator.clipboard.writeText(emailBodyText).then(() => {
