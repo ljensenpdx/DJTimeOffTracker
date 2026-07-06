@@ -680,17 +680,16 @@
     }
 
     // ==========================================
-    // CLIENT RIDER AUTOMATION ENGINE - EVENT TYPE DYNAMIC STRINGS
+    // CLIENT RIDER AUTOMATION ENGINE - FULL LOCATION CARD
     // ==========================================
     async function generateClientReminderPDF() {
         const { jsPDF } = window.jspdf;
         if (!jsPDF) return alert("PDF Engine loading. Try again.");
         const s = showData.find(ev => String(ev.id) === String(currentEventId));
+        const assign = assignments.find(a => String(a.id) === String(currentEventId)) || {};
         if (!s) return;
 
         const isWedding = s.type && s.type.toLowerCase().includes("wedding");
-        
-        // Dynamically structure the text title casing to read "Wedding DJ", "Corporate DJ", etc.
         const cleanedEventLabelName = stripEmoji(s.type).trim();
         const formattedTitleCaseEventLabel = cleanedEventLabelName.charAt(0).toUpperCase() + cleanedEventLabelName.slice(1).toLowerCase();
         
@@ -759,21 +758,32 @@
         doc.setTextColor(110, 120, 130);
         
         doc.text("CELEBRATION DATE", 38, y + 7, { align: 'center' });
-        doc.text("ASSIGNED DJ", 105, y + 7, { align: 'center' });
+        doc.text("VENUE & LOCATION", 105, y + 7, { align: 'center' });
         doc.text("CEREMONY START", 168, y + 7, { align: 'center' });
 
         doc.setFont(undefined, 'bold');
         doc.setFontSize(10.5);
         doc.setTextColor(255, 0, 127);
         doc.text(`${cleanFullFormattedDate}`, 38, y + 14, { align: 'center' });
-        doc.text(`Fun Squad ${formattedTitleCaseEventLabel} DJ`, 105, y + 14, { align: 'center' });
+        
+        // Processing Place Name Logic[cite: 1]
+        const determinedSavedVenueName = assign.venue_name || currentVenueName;[cite: 1]
+        const processedDisplayVenueString = (determinedSavedVenueName && determinedSavedVenueName !== "Private Residence") ? determinedSavedVenueName : "Private Residence";[cite: 1]
+        const truncatedVenueLabelString = processedDisplayVenueString.length > 24 ? processedDisplayVenueString.substring(0, 22) + "..." : processedDisplayVenueString;[cite: 1]
+        doc.text(truncatedVenueLabelString, 105, y + 14, { align: 'center' });[cite: 1]
+        
         doc.text(s.showStart, 168, y + 14, { align: 'center' });
 
         doc.setFont(undefined, 'normal');
         doc.setFontSize(8.5);
         doc.setTextColor(130, 140, 150);
         doc.text(`(${targetWeekdayString})`, 38, y + 20, { align: 'center' });
-        doc.text(`Arrival Setup: ${plannedArrivalTime}`, 105, y + 20, { align: 'center' });
+        
+        // Injecting Full Raw Calendar Address[cite: 1]
+        const fullCleanedStreetAddress = stripEmoji(s.loc).trim();[cite: 1]
+        const truncatedFullAddressString = fullCleanedStreetAddress.length > 34 ? fullCleanedStreetAddress.substring(0, 32) + "..." : fullCleanedStreetAddress;[cite: 1]
+        doc.text(truncatedFullAddressString, 105, y + 20, { align: 'center' });[cite: 1]
+        
         doc.text(`Music Ends: ${s.end}`, 168, y + 20, { align: 'center' });
         y += 34;
 
