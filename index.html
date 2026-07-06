@@ -340,7 +340,7 @@
 
     function populateFilterDropdown() {
         const f = document.getElementById('djFilter'); f.innerHTML = '<option value="all">Filter by DJ: ALL</option><option value="unassigned">UNASSIGNED ONLY</option>';
-        djSettings.forEach(dj => { f.innerHTML += `<option value="${dj.name}">${dj.name}</option>'; });
+        djSettings.forEach(dj => { f.innerHTML += `<option value="${dj.name}">${dj.name}</option>`; });
     }
 
     function togglePrices() { hidePrices = !hidePrices; const btn = document.getElementById('priceToggle'); btn.innerText = hidePrices ? "HIDE PRICES" : "SHOW PRICES"; btn.classList.toggle('active'); render(); }
@@ -427,7 +427,7 @@
 
         const pSel = document.getElementById('primarySelect'), sSel = document.getElementById('secondarySelect');
         pSel.innerHTML = sSel.innerHTML = '<option value="">None</option>';
-        djSettings.forEach(dj => { pSel.innerHTML += `<option value="${dj.name}">${dj.name}</option>'; sSel.innerHTML += `<option value="${dj.name}">${dj.name}</option>'; });
+        djSettings.forEach(dj => { pSel.innerHTML += `<option value="${dj.name}">${dj.name}</option>`; sSel.innerHTML += `<option value="${dj.name}">${dj.name}</option>`; });
         pSel.value = curr.primary || ""; sSel.value = curr.secondary || "";
         document.getElementById('priceInput').value = curr.price || "";
         document.getElementById('checkCeremony').checked = !!curr.ceremony; document.getElementById('checkReception').checked = !!curr.reception; document.getElementById('checkBooth').checked = !!curr.booth; document.getElementById('checkPrints').checked = !!curr.prints; document.getElementById('checkGuestbook').checked = !!curr.guestbook; document.getElementById('checkKaraoke').checked = !!curr.karaoke; document.getElementById('uplightSelect').value = curr.uplights || "0";
