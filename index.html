@@ -291,7 +291,7 @@
         navigator.clipboard.writeText(scheduleText).then(() => alert(`Schedule copied!`));
     };
 
-    // --- UPDATED PARSER FUNCTION HERE ---
+    // --- REBUILT ICS PARSER FOR START/END AND CLEAN NAMES ---
     async function loadIcalData() {
         try {
             const res = await fetch('events.ics?t=' + new Date().getTime());
@@ -300,42 +300,67 @@
             const events = [];
             const blocks = text.split("BEGIN:VEVENT");
             blocks.shift(); 
+            
             blocks.forEach(block => {
-                const startRaw = block.match(/DTSTART:(\d{8}T\d{6})/)?.[1];
-                const summary = clean(block.match(/SUMMARY:(.*)/)?.[1]);
+                const startRaw = block.match(/DTSTART:(\d{8}T(\d{6}))/);
+                const endRaw = block.match(/DTEND:(\d{8}T(\d{6}))/);
+                const summary = clean(block.match(/SUMMARY:(.*)/)?.[1] || "");
                 const rawDesc = block.match(/DESCRIPTION:(.*)/)?.[1] || "";
+                
                 const idMatch = (summary + rawDesc).match(/(?:ID:\s*|#)(\d{4,})|(\d{4,})/);
                 const typeMatch = rawDesc.match(/Type:\s*(.*?)(?:\\n|$)/i);
                 const statusMatch = rawDesc.match(/Status:\s*(.*?)(?:\\n|$)/i);
-                const fullLoc = clean(block.match(/LOCATION:(.*)/)?.[1]).replace(/\(On Site Location:[^)]*\)/gi, '').trim();
+                const fullLoc = clean(block.match(/LOCATION:(.*)/)?.[1] || "").replace(/\(On Site Location:[^)]*\)/gi, '').trim();
                 
                 let pS = "---", pSt = "---", pE = "---";
                 
-                // Clean out HTML/Escaped characters to safely extract times
-                const cleanDesc = rawDesc.replace(/\\/g, '').replace(/<[^>]*>/g, ' ');
-                const tL = cleanDesc.match(/From\s*(\d{1,2}:\d{2}\s*[APM]{2})\s*to\s*(\d{1,2}:\d{2}\s*[APM]{2})\s*\(Setup\s*at\s*(\d{1,2}:\d{2}\s*[APM]{2})\)/i);
-                
-                if (tL) { 
-                    pSt = tL[1].replace(/\s+/g, ''); 
-                    pE = tL[2].replace(/\s+/g, ''); 
-                    pS = tL[3].replace(/\s+/g, ''); 
+                // Helper to convert ICS '143000' format to '2:30 PM'
+                const formatTime = (timeStr) => {
+                    if (!timeStr) return "---";
+                    let h = parseInt(timeStr.substring(0, 2), 10);
+                    let m = timeStr.substring(2, 4);
+                    let ampm = h >= 12 ? 'PM' : 'AM';
+                    h = h % 12 || 12;
+                    return `${h}:${m} ${ampm}`;
+                };
+
+                // 1. Set Start & End from the actual ICS tags
+                if (startRaw && startRaw[2]) pSt = formatTime(startRaw[2]);
+                if (endRaw && endRaw[2]) pE = formatTime(endRaw[2]);
+
+                // 2. Set Setup Time from the clean description text
+                const setupMatch = rawDesc.match(/Setup Time:\s*(\d{1,2}:\d{2}\s*[APM]{2})/i);
+                if (setupMatch) {
+                    pS = setupMatch[1].replace(/\s+/g, ' ');
+                } else {
+                    // Fallback just in case you ever use the raw HTML RSS format again
+                    const cleanDesc = rawDesc.replace(/\\/g, '').replace(/<[^>]*>/g, ' ');
+                    const tL = cleanDesc.match(/From\s*(\d{1,2}:\d{2}\s*[APM]{2})\s*to\s*(\d{1,2}:\d{2}\s*[APM]{2})\s*\(Setup\s*at\s*(\d{1,2}:\d{2}\s*[APM]{2})\)/i);
+                    if (tL) { 
+                        pSt = tL[1].replace(/\s+/g, ' '); 
+                        pE = tL[2].replace(/\s+/g, ' '); 
+                        pS = tL[3].replace(/\s+/g, ' '); 
+                    }
                 }
                 
-                if (startRaw) {
+                // 3. Strip "(Wedding)" or any other parenthesis from the client's name
+                let clientName = summary.replace(/DJ Event for /gi, "").replace(/\s*\([^)]*\)/g, "").trim();
+
+                if (startRaw && startRaw[1]) {
                     events.push({
                         id: idMatch ? String(idMatch[1] || idMatch[2]) : "??",
-                        date: `${startRaw.substring(0, 4)}-${startRaw.substring(4, 6)}-${startRaw.substring(6, 8)}`,
+                        date: `${startRaw[1].substring(0, 4)}-${startRaw[1].substring(4, 6)}-${startRaw[1].substring(6, 8)}`,
                         setup: pS, showStart: pSt, end: pE, 
                         type: (typeMatch ? typeMatch[1].trim() : "EVENT").replace(/\(On Site Location:[^)]*\)/gi, '').trim(),
                         status: statusMatch ? statusMatch[1].trim() : "UNKNOWN",
-                        client: summary.replace("DJ Event for ", ""), loc: fullLoc
+                        client: clientName, loc: fullLoc
                     });
                 }
             });
             return events;
         } catch (e) { return []; }
     }
-    // ------------------------------------
+    // --------------------------------------------------------
 
     async function init() {
         document.getElementById('loading-overlay').style.display = 'flex';
