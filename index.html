@@ -291,6 +291,7 @@
         navigator.clipboard.writeText(scheduleText).then(() => alert(`Schedule copied!`));
     };
 
+    // --- UPDATED PARSER FUNCTION HERE ---
     async function loadIcalData() {
         try {
             const res = await fetch('events.ics?t=' + new Date().getTime());
@@ -307,9 +308,19 @@
                 const typeMatch = rawDesc.match(/Type:\s*(.*?)(?:\\n|$)/i);
                 const statusMatch = rawDesc.match(/Status:\s*(.*?)(?:\\n|$)/i);
                 const fullLoc = clean(block.match(/LOCATION:(.*)/)?.[1]).replace(/\(On Site Location:[^)]*\)/gi, '').trim();
+                
                 let pS = "---", pSt = "---", pE = "---";
-                const tL = rawDesc.match(/From\s*(\d{1,2}:\d{2}\s*[APM]{2})\s*to\s*(\d{1,2}:\d{2}\s*[APM]{2})\s*\(Setup\s*at\s*(\d{1,2}:\d{2}\s*[APM]{2})\)/i);
-                if (tL) { pSt = tL[1].replace(/\s+/g, ''); pE = tL[2].replace(/\s+/g, ''); pS = tL[3].replace(/\s+/g, ''); }
+                
+                // Clean out HTML/Escaped characters to safely extract times
+                const cleanDesc = rawDesc.replace(/\\/g, '').replace(/<[^>]*>/g, ' ');
+                const tL = cleanDesc.match(/From\s*(\d{1,2}:\d{2}\s*[APM]{2})\s*to\s*(\d{1,2}:\d{2}\s*[APM]{2})\s*\(Setup\s*at\s*(\d{1,2}:\d{2}\s*[APM]{2})\)/i);
+                
+                if (tL) { 
+                    pSt = tL[1].replace(/\s+/g, ''); 
+                    pE = tL[2].replace(/\s+/g, ''); 
+                    pS = tL[3].replace(/\s+/g, ''); 
+                }
+                
                 if (startRaw) {
                     events.push({
                         id: idMatch ? String(idMatch[1] || idMatch[2]) : "??",
@@ -324,6 +335,7 @@
             return events;
         } catch (e) { return []; }
     }
+    // ------------------------------------
 
     async function init() {
         document.getElementById('loading-overlay').style.display = 'flex';
