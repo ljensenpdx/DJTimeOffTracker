@@ -55,4 +55,348 @@ DTSTART:20260718T163000
 DTEND:20260718T220000
 SUMMARY:Sarah Connolly Kapellakis (Wedding)
 LOCATION:450 Rosemont Rd\, West Linn\, OR 97068
-DESCRIPTION:ID: 2955\nClient: Sarah Connolly Kapellakis\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Thomas, Dominique\nSecond DJ: \nSetup Time: 3:00
+DESCRIPTION:ID: 2955\nClient: Sarah Connolly Kapellakis\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Thomas, Dominique\nSecond DJ: \nSetup Time: 3:00 PM\nWebsite: https://www.oswegohills.com
+END:VEVENT
+BEGIN:VEVENT
+UID:2945@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20260718T163000
+DTEND:20260718T223000
+SUMMARY:Abigail Nieuwstraten (Wedding)
+LOCATION:90795 E Summit Prairie\, Government Camp\, OR 97028
+DESCRIPTION:ID: 2945\nClient: Abigail Nieuwstraten\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Parker, Jon\nSecond DJ: \nSetup Time: 3:00 PM
+END:VEVENT
+BEGIN:VEVENT
+UID:2916@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20260724T160000
+DTEND:20260724T213000
+SUMMARY:Abbey Simmons (Wedding)
+LOCATION:14040 OR-35\, Mt. Hood\, OR 97041
+DESCRIPTION:ID: 2916\nClient: Abbey Simmons\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Browning, Jacob\nSecond DJ: Jensen, Lane\nSetup Time: 2:30 PM\nWebsite: https://www.skihood.com
+END:VEVENT
+BEGIN:VEVENT
+UID:2840@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20260725T160000
+DTEND:20260725T220000
+SUMMARY:Kerri Kultala (Wedding)
+LOCATION:21191 S Jubb Rd Estacada Oregon 97023\, Estacada\, OR 97023
+DESCRIPTION:ID: 2840\nClient: Kerri Kultala\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Jensen, Lane\nSecond DJ: \nSetup Time: 2:30 PM\nWebsite: http://www.meadowandpines.com
+END:VEVENT
+BEGIN:VEVENT
+UID:2949@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20260801T150000
+DTEND:20260801T210000
+SUMMARY:Brooklyn Grubbs (Wedding)
+LOCATION:750 Anderson St\, Vancouver\, WA 98661
+DESCRIPTION:ID: 2949\nClient: Brooklyn Grubbs\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Jensen, Lane\nSecond DJ: \nSetup Time: 1:30 PM\nContact: Brooklyn Grubbs (Bride)/Kim Grubbs (Mother of Bride)\nWebsite: https://www.historictrustproperties.org/property/howard-house/
+END:VEVENT
+BEGIN:VEVENT
+UID:2934@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20260808T160000
+DTEND:20260808T220000
+SUMMARY:Eugenia Vancleave (Wedding)
+LOCATION:19233 S Fernwood Rd\, Molalla\, OR 97038
+DESCRIPTION:ID: 2934\nClient: Eugenia Vancleave\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Parker, Jon\nSecond DJ: Jensen, Lane\nSetup Time: 2:30 PM\nWebsite: https://www.veellesidyllicpark.com
+END:VEVENT
+BEGIN:VEVENT
+UID:2960@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20260808T150000
+DTEND:20260808T210000
+SUMMARY:Kristy Frye (Wedding)
+LOCATION:1550 Pacific Ave\, Tillamook\, OR 97141
+DESCRIPTION:ID: 2960\nClient: Kristy Frye\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Thomas, Dominique\nSecond DJ: Jensen, Lane\nSetup Time: 1:30 PM\nWebsite: https://www.oceansidehall.com
+END:VEVENT
+BEGIN:VEVENT
+UID:2897@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20260808T160000
+DTEND:20260808T220000
+SUMMARY:Ashlee Gilbertson (Wedding)
+LOCATION:92937 Walluski Loop\, Astoria\, OR 97103
+DESCRIPTION:ID: 2897\nClient: Ashlee Gilbertson\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Jensen, Lane\nSecond DJ: \nSetup Time: 2:30 PM
+END:VEVENT
+BEGIN:VEVENT
+UID:2969@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20260808T163000
+DTEND:20260808T223000
+SUMMARY:Madeline Vinson (Wedding)
+LOCATION:14995 Elkins Rd\, Monmouth\, OR 97361
+DESCRIPTION:ID: 2969\nClient: Madeline Vinson\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Browning, Jacob\nSecond DJ: Jensen, Lane\nSetup Time: 3:00 PM
+END:VEVENT
+BEGIN:VEVENT
+UID:2899@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20260815T160000
+DTEND:20260815T220000
+SUMMARY:John Gerber (Wedding)
+LOCATION:4105 NW Camas Meadows DR.\, Camas\, WA 98607
+DESCRIPTION:ID: 2899\nClient: John Gerber\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Jensen, Lane\nSecond DJ: \nSetup Time: 2:30 PM\nWebsite: http://www.camasmeadows.com
+END:VEVENT
+BEGIN:VEVENT
+UID:2956@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20260815T140000
+DTEND:20260815T220000
+SUMMARY:Ashley Bodkin (Wedding)
+LOCATION:6275 NW Poverty Bend Rd\, McMinnville\, OR 97128
+DESCRIPTION:ID: 2956\nClient: Ashley Bodkin\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Thomas, Dominique\nSecond DJ: Jensen, Lane\nSetup Time: 12:30 PM\nWebsite: https://www.countrygardennursery.com
+END:VEVENT
+BEGIN:VEVENT
+UID:2965@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20260822T150000
+DTEND:20260822T210000
+SUMMARY:Sarah Herbst (Wedding)
+LOCATION:4105 NW Camas Meadows DR.\, Camas\, WA 98607
+DESCRIPTION:ID: 2965\nClient: Sarah Herbst\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Jensen, Lane\nSecond DJ: \nSetup Time: 1:30 PM\nWebsite: http://www.camasmeadows.com
+END:VEVENT
+BEGIN:VEVENT
+UID:2966@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20260828T170000
+DTEND:20260828T230000
+SUMMARY:Jason Richer (Wedding)
+LOCATION:2126 S.W. Halsey St.\, Troutdale\, OR 97060
+DESCRIPTION:ID: 2966\nClient: Jason Richer\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Jensen, Lane\nSecond DJ: \nSetup Time: 3:30 PM\nWebsite: http://www.mcmenamins.com/index.php?loc=3/mainedge.shtml
+END:VEVENT
+BEGIN:VEVENT
+UID:2930@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20260829T160000
+DTEND:20260829T220000
+SUMMARY:Cory Nickel (Wedding)
+LOCATION:23029 NW Flying M Rd.\, Yamhill\, OR 98148
+DESCRIPTION:ID: 2930\nClient: Cory Nickel\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Thomas, Dominique\nSecond DJ: Jensen, Lane\nSetup Time: 2:30 PM\nWebsite: http://www.rebersriverside.com
+END:VEVENT
+BEGIN:VEVENT
+UID:2910@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20260831T160000
+DTEND:20260831T220000
+SUMMARY:Rachel Comstock (Wedding)
+LOCATION:Bridal Veil Lakes\, Bridal Veil\, OR 97010
+DESCRIPTION:ID: 2910\nClient: Rachel Comstock\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Thomas, Dominique\nSecond DJ: \nSetup Time: 2:30 PM\nWebsite: http://www.bridalveillakes.com/
+END:VEVENT
+BEGIN:VEVENT
+UID:2925@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20260905T160000
+DTEND:20260905T220000
+SUMMARY:Brody Beebe (Wedding)
+LOCATION:15 Birddog Rd\, White Salmon\, WA 98672
+DESCRIPTION:ID: 2925\nClient: Brody Beebe\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Jensen, Lane\nSecond DJ: \nSetup Time: 2:30 PM
+END:VEVENT
+BEGIN:VEVENT
+UID:2971@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20260905T170000
+DTEND:20260905T210000
+SUMMARY:Barbara Moreno (Wedding)
+LOCATION:300 R Scenic View Dr\, The Dalles\, OR 97058
+DESCRIPTION:ID: 2971\nClient: Barbara Moreno\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Thomas, Dominique\nSecond DJ: \nSetup Time: 3:30 PM\nWebsite: https://www.nwprd.org/new-page-40
+END:VEVENT
+BEGIN:VEVENT
+UID:2942@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20260906T160000
+DTEND:20260906T210000
+SUMMARY:Laura Ross (Wedding)
+LOCATION:4105 NW Camas Meadows DR.\, Camas\, WA 98607
+DESCRIPTION:ID: 2942\nClient: Laura Ross\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Jensen, Lane\nSecond DJ: \nSetup Time: 2:30 PM\nWebsite: http://www.camasmeadows.com
+END:VEVENT
+BEGIN:VEVENT
+UID:2837@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20260912T150000
+DTEND:20260912T220000
+SUMMARY:Hailey Ziegler (Wedding)
+LOCATION:32881 S Bud Smith Rd\, Molalla\, OR 97038
+DESCRIPTION:ID: 2837\nClient: Hailey Ziegler\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Jensen, Lane\nSecond DJ: \nSetup Time: 1:30 PM\nWebsite: https://homeplacefarmoregon.weebly.com/
+END:VEVENT
+BEGIN:VEVENT
+UID:2884@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20260912T160000
+DTEND:20260912T220000
+SUMMARY:Susan Karkhu (Wedding)
+LOCATION:401 Maple Way Rd.\, Stevenson\, WA 98648
+DESCRIPTION:ID: 2884\nClient: Susan Karkhu\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Parker, Jon\nSecond DJ: Jensen, Lane\nSetup Time: 2:30 PM\nWebsite: http://www.mapleleafevents.com
+END:VEVENT
+BEGIN:VEVENT
+UID:2850@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20260920T150000
+DTEND:20260920T210000
+SUMMARY:Garrett Bauer (Wedding)
+LOCATION:21338 OAK LANE NE\, AURORA\, OR 97002
+DESCRIPTION:ID: 2850\nClient: Garrett Bauer\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Jensen, Lane\nSecond DJ: \nSetup Time: 1:30 PM\nWebsite: http://www.auroracolonyvineyards.com/
+END:VEVENT
+BEGIN:VEVENT
+UID:2947@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20260923T150000
+DTEND:20260923T210000
+SUMMARY:Jenna Mihelich (Wedding)
+LOCATION:23776 SE Highway 224\, Boring\, OR 97009
+DESCRIPTION:ID: 2947\nClient: Jenna Mihelich\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Parker, Jon\nSecond DJ: Jensen, Lane\nSetup Time: 1:30 PM\nWebsite: https://deepcreekfarmstead.com
+END:VEVENT
+BEGIN:VEVENT
+UID:2975@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20260926T170000
+DTEND:20260926T220000
+SUMMARY:Keely McCormick (Wedding)
+LOCATION:8005 SW Grabhorn Road\, Aloha\, OR 97007
+DESCRIPTION:ID: 2975\nClient: Keely McCormick\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Jensen, Lane\nSecond DJ: \nSetup Time: 3:30 PM
+END:VEVENT
+BEGIN:VEVENT
+UID:2951@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20260926T160000
+DTEND:20260926T220000
+SUMMARY:Payden Michael Lightner (Wedding)
+LOCATION:21215 NW Brunswick Canyon Rd.\, North Plains\, OR 97133
+DESCRIPTION:ID: 2951\nClient: Payden Michael Lightner\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Jensen, Lane\nSecond DJ: \nSetup Time: 2:30 PM\nWebsite: http://www.horningshideout.com
+END:VEVENT
+BEGIN:VEVENT
+UID:2976@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20260927T140000
+DTEND:20260927T210000
+SUMMARY:Samantha Smith (Wedding)
+LOCATION:23945 NE North Valley Road\, Newberg\, OR 97132
+DESCRIPTION:ID: 2976\nClient: Samantha Smith\nStatus: CONTRACT SENT - WAITING ON PAYMENT\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Jensen, Lane\nSecond DJ: \nSetup Time: 12:30 PM\nContact: Brand or Erica\nWebsite: http://oldschoolhouse1928.com
+END:VEVENT
+BEGIN:VEVENT
+UID:2978@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20261002T160000
+DTEND:20261002T210000
+SUMMARY:Marian McKone (Wedding)
+LOCATION:4105 NW Camas Meadows DR.\, Camas\, WA 98607
+DESCRIPTION:ID: 2978\nClient: Marian McKone\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Jensen, Lane\nSecond DJ: \nSetup Time: 2:30 PM\nWebsite: http://www.camasmeadows.com
+END:VEVENT
+BEGIN:VEVENT
+UID:2946@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20261004T160000
+DTEND:20261004T220000
+SUMMARY:Hannah Francis (Wedding)
+LOCATION:21215 NW Brunswick Canyon Rd.\, North Plains\, OR 97133
+DESCRIPTION:ID: 2946\nClient: Hannah Francis\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Jensen, Lane\nSecond DJ: \nSetup Time: 2:30 PM\nWebsite: http://www.horningshideout.com
+END:VEVENT
+BEGIN:VEVENT
+UID:2908@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20261010T160000
+DTEND:20261010T220000
+SUMMARY:Missy Simpson (Wedding)
+LOCATION:23100 NW Flying M Rd\, Yamhill\, OR 97148
+DESCRIPTION:ID: 2908\nClient: Missy Simpson\nStatus: CONTRACT SENT - WAITING ON PAYMENT\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Jensen, Lane\nSecond DJ: \nSetup Time: 2:30 PM\nWebsite: https://rebers-riverside.com
+END:VEVENT
+BEGIN:VEVENT
+UID:2890@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20261013T160000
+DTEND:20261013T220000
+SUMMARY:Cassandra Fochtman and Benjamin Simon (Wedding)
+LOCATION:606 15th Street\, Oregon City\, OR 97045
+DESCRIPTION:ID: 2890\nClient: Cassandra Fochtman and Benjamin Simon\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Jacob Browning\nSecond DJ: Jensen, Lane\nSetup Time: 2:30 PM\nWebsite: http://www.abernethycenter.com
+END:VEVENT
+BEGIN:VEVENT
+UID:2883@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20261017T153000
+DTEND:20261017T213000
+SUMMARY:Sky Dilg (Wedding)
+LOCATION:5736 N.E. 33rd Ave.\, Portland\, OR 97211
+DESCRIPTION:ID: 2883\nClient: Sky Dilg\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Jensen, Lane\nSecond DJ: \nSetup Time: 2:00 PM\nWebsite: http://www.kennedyschool.com/
+END:VEVENT
+BEGIN:VEVENT
+UID:2819@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20261024T170000
+DTEND:20261024T230000
+SUMMARY:Bailey Padilla (Wedding)
+LOCATION:34600 Cape Kiwanda Dr\, Pacific City\, OR 97135
+DESCRIPTION:ID: 2819\nClient: Bailey Padilla\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Jensen, Lane\nSecond DJ: \nSetup Time: 3:30 PM\nWebsite: https://kiawanda.com/
+END:VEVENT
+BEGIN:VEVENT
+UID:2959@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20261031T130000
+DTEND:20261031T180000
+SUMMARY:Kearstin Vandyke (Wedding)
+LOCATION:30000 S Camp Colton Dr\, Colton\, OR 97107
+DESCRIPTION:ID: 2959\nClient: Kearstin Vandyke\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Browning, Jacob\nSecond DJ: Jensen, Lane\nSetup Time: 11:30 AM\nWebsite: http://www.campcolton.com
+END:VEVENT
+BEGIN:VEVENT
+UID:2979@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20261227T170000
+DTEND:20261227T230000
+SUMMARY:Ralina Wilson (Wedding)
+LOCATION:200 Commercial St SE\, Salem\, OR 97301
+DESCRIPTION:ID: 2979\nClient: Ralina Wilson\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Jensen, Lane\nSecond DJ: \nSetup Time: 3:30 PM\nWebsite: http://www.salemconventioncenter.org
+END:VEVENT
+BEGIN:VEVENT
+UID:2977@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20270227T160000
+DTEND:20270227T230000
+SUMMARY:Rachelle Naranjo (Wedding)
+LOCATION:27500 E Timberline Rd.\, Timberline Lodge\, OR 97028
+DESCRIPTION:ID: 2977\nClient: Rachelle Naranjo\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Jensen, Lane\nSecond DJ: \nSetup Time: 1:00 PM\nWebsite: http://www.timberlinelodge.com
+END:VEVENT
+BEGIN:VEVENT
+UID:2962@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20270424T173000
+DTEND:20270424T223000
+SUMMARY:Tara Hadnot (Wedding)
+LOCATION:10220 SE Causey Ave\, Happy Valley\, OR 97086
+DESCRIPTION:ID: 2962\nClient: Tara Hadnot\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Jensen, Lane\nSecond DJ: \nSetup Time: 4:00 PM\nContact: Angela Nedelisky\nWebsite: http://theaerieateaglelanding.com
+END:VEVENT
+BEGIN:VEVENT
+UID:2921@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20270815T150000
+DTEND:20270815T220000
+SUMMARY:Jordynn Wammack (Wedding)
+LOCATION:15 Birddog Rd\, White Salmon\, WA 98672
+DESCRIPTION:ID: 2921\nClient: Jordynn Wammack\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Jensen, Lane\nSecond DJ: \nSetup Time: 1:30 PM\nWebsite: https://www.tinroofbarn.com
+END:VEVENT
+BEGIN:VEVENT
+UID:2963@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20270918T153000
+DTEND:20270918T220000
+SUMMARY:Rachel Oester (Wedding)
+LOCATION:21709 NE 154th Way\, Brush Prairie\, WA 98606
+DESCRIPTION:ID: 2963\nClient: Rachel Oester\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Jensen, Lane\nSecond DJ: \nSetup Time: 2:00 PM
+END:VEVENT
+BEGIN:VEVENT
+UID:2974@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20270918T160000
+DTEND:20270918T220000
+SUMMARY:Amanda Fry (Wedding)
+LOCATION:4105 NW Camas Meadows DR.\, Camas\, WA 98607
+DESCRIPTION:ID: 2974\nClient: Amanda Fry\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Jensen, Lane\nSecond DJ: \nSetup Time: 2:30 PM\nWebsite: http://www.camasmeadows.com
+END:VEVENT
+BEGIN:VEVENT
+UID:2874@djreservations.com
+DTSTAMP:20260709T233359Z
+DTSTART:20271016T140000
+DTEND:20271016T220000
+SUMMARY:Arlene Chandra (Wedding)
+LOCATION:2900 NE Century Blvd Ste 100\, Hillsboro\, OR 97124
+DESCRIPTION:ID: 2874\nClient: Arlene Chandra\nStatus: BOOKED AND PAID\nType: WEDDING\nDress Code: ALL BLACK DRESS CODE\nPrimary DJ: Jensen, Lane\nSecond DJ: \nSetup Time: 12:30 PM\nWebsite: https://www.eventnw.com/
+END:VEVENT
+END:VCALENDAR
