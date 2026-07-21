@@ -774,6 +774,12 @@
         wednesdayCalculatedObj.setDate(showEventDateObj.getDate() - daysToSubtractToHitWednesday);
         const wednesdayFormattedString = (wednesdayCalculatedObj.getMonth() + 1) + "/" + wednesdayCalculatedObj.getDate();
 
+        // Calculate the Tuesday IMMEDIATELY FOLLOWING the event
+        const postEventTuesdayObj = new Date(showEventDateObj.getTime());
+        const daysUntilNextTuesday = (2 - rawDayIndexNum + 7) % 7 || 7;
+        postEventTuesdayObj.setDate(showEventDateObj.getDate() + daysUntilNextTuesday);
+        const postTuesdayFormattedString = postEventTuesdayObj.toLocaleString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
         const plannedArrivalTime = s.setup || "Scheduled Setup Time";
 
         const introParagraph = isWedding 
@@ -900,6 +906,39 @@
         });
         y += calculateDeadlineBoxHeight + 4;
 
+        // PHOTO BOOTH & AUDIO GUESTBOOK MEDIA DELIVERY NOTICE
+        const hasBooth = !!assign.booth;
+        const hasGuestbook = !!assign.guestbook;
+        let mediaText = "";
+
+        if (hasBooth && hasGuestbook) {
+            mediaText = `DIGITAL MEDIA DELIVERY: Your online Photo Booth gallery and Audio Guestbook recording links will be delivered directly to your email by Tuesday, ${postTuesdayFormattedString}.`;
+        } else if (hasBooth) {
+            mediaText = `PHOTO BOOTH GALLERY DELIVERY: Your digital Photo Booth gallery link will be delivered directly to your email by Tuesday, ${postTuesdayFormattedString}.`;
+        } else if (hasGuestbook) {
+            mediaText = `AUDIO GUESTBOOK DELIVERY: Your Audio Guestbook audio recordings link will be delivered directly to your email by Tuesday, ${postTuesdayFormattedString}.`;
+        }
+
+        if (mediaText) {
+            const wrapMediaLines = doc.splitTextToSize(mediaText, 164);
+            const calculateMediaBoxHeight = (wrapMediaLines.length * 4) + 6;
+
+            doc.setFillColor(240, 248, 255);
+            doc.rect(20, y, 170, calculateMediaBoxHeight, 'F');
+            doc.setDrawColor(52, 152, 219);
+            doc.rect(20, y, 170, calculateMediaBoxHeight, 'D');
+            doc.setFont(undefined, 'bold');
+            doc.setFontSize(8.5);
+            doc.setTextColor(41, 128, 185);
+
+            let writeMediaTextY = y + 4.5;
+            wrapMediaLines.forEach(line => {
+                doc.text(line, 23, writeMediaTextY);
+                writeMediaTextY += 4;
+            });
+            y += calculateMediaBoxHeight + 4;
+        }
+
         const rawReachoutString = "QUESTIONS OR CHANGES? If you have last-minute questions or want to review your timeline, feel free to give me a call directly or book a quick 15-minute meeting directly onto my calendar dashboard link here: https://cal.com/djlane/15min";
         const wrapReachoutLines = doc.splitTextToSize(rawReachoutString, 164);
         const calculateReachoutBoxHeight = (wrapReachoutLines.length * 4) + 6;
@@ -944,11 +983,20 @@
         let emailSubject = `Quick Setup Reminder for Your Event! - Show #${s.id}`;
         let emailBodyText = "";
 
+        let mediaEmailParagraph = "";
+        if (hasBooth && hasGuestbook) {
+            mediaEmailParagraph = `\n\n📸 🎙️ Digital Media Delivery: Since your package includes our Photo Booth and Audio Guestbook, you will receive email links to access all of your digital photo gallery images and audio recordings by Tuesday, ${postTuesdayFormattedString}!`;
+        } else if (hasBooth) {
+            mediaEmailParagraph = `\n\n📸 Digital Media Delivery: Since your package includes our Photo Booth, you will receive an email link to your complete digital gallery by Tuesday, ${postTuesdayFormattedString}!`;
+        } else if (hasGuestbook) {
+            mediaEmailParagraph = `\n\n🎙️ Digital Media Delivery: Since your package includes our Audio Guestbook, you will receive an email link to listen to all of your guest audio messages by Tuesday, ${postTuesdayFormattedString}!`;
+        }
+
         if (isWedding) {
             emailSubject = `🎵 Your Wedding Day is This ${targetWeekdayString}! Final Details & Checklist - Show #${s.id}`;
-            emailBodyText = `Hi ${s.client},\n\nWe are getting so close! We are absolutely thrilled and looking forward to celebrating with you this ${targetWeekdayString} on your big day!\n\nOne of our highly talented wedding DJs will be arriving at your venue at ${plannedArrivalTime} to get completely set up and run soundchecks long before your first guests walk through the door so that everything goes flawlessly and your wedding is absolutely perfect.\n\nPlease take just a brief moment to look over the attached one-page setup checklist. Could you please forward it to your wedding coordinator or venue manager? It just ensures they have our workspace ready (including a shaded spot out of the sun, a 6-foot table, working outlets within 30 feet, and keeping guest smoking spaces safely clear of the sound equipment).\n\nTo make sure your celebration is completely perfect, we also want to remind you that any final music choices or timeline adjustments need to be submitted by Wednesday evening (${wednesdayFormattedString}) to guarantee those changes can be made for your event.\n\nIf you have any last-minute questions or want to go over any of the finer details together, please feel free to give me a call directly or schedule a quick 15-minute chat with me right here: https://cal.com/djlane/15min\n\nWe are here for you every step of the way to ensure your day is absolutely perfect!`;
+            emailBodyText = `Hi ${s.client},\n\nWe are getting so close! We are absolutely thrilled and looking forward to celebrating with you this ${targetWeekdayString} on your big day!\n\nOne of our highly talented wedding DJs will be arriving at your venue at ${plannedArrivalTime} to get completely set up and run soundchecks long before your first guests walk through the door so that everything goes flawlessly and your wedding is absolutely perfect.\n\nPlease take just a brief moment to look over the attached one-page setup checklist. Could you please forward it to your wedding coordinator or venue manager? It just ensures they have our workspace ready (including a shaded spot out of the sun, a 6-foot table, working outlets within 30 feet, and keeping guest smoking spaces safely clear of the sound equipment).\n\nTo make sure your celebration is completely perfect, we also want to remind you that any final music choices or timeline adjustments need to be submitted by Wednesday evening (${wednesdayFormattedString}) to guarantee those changes can be made for your event.${mediaEmailParagraph}\n\nIf you have any last-minute questions or want to go over any of the finer details together, please feel free to give me a call directly or schedule a quick 15-minute chat with me right here: https://cal.com/djlane/15min\n\nWe are here for you every step of the way to ensure your day is absolutely perfect!`;
         } else {
-            emailBodyText = `Hi ${s.client},\n\nWe are looking forward to celebrating with you this ${targetWeekdayString} for your upcoming event!\n\nOne of our highly talented ${formattedTitleCaseEventLabel.toLowerCase()} DJs will be arriving at your venue at ${plannedArrivalTime} to handle setup and soundchecks long before your event begins.\n\nPlease take a brief moment to look over the attached one-page setup checklist and forward it to your venue manager or coordinator to make sure they have our workspace ready (including a shaded spot out of the sun, a 6-foot table, power outlets within 30 feet, and keeping guest smoking or marijuana areas clear of the audio gear).\n\nAlso, a quick reminder that any final music or timeline changes need to be submitted by Wednesday evening (${wednesdayFormattedString}) to guarantee those adjustments are locked in for your event.\n\nIf you have any questions or want to review your timeline, feel free to give me a call or schedule a quick meeting with me here: https://cal.com/djlane/15min`;
+            emailBodyText = `Hi ${s.client},\n\nWe are looking forward to celebrating with you this ${targetWeekdayString} for your upcoming event!\n\nOne of our highly talented ${formattedTitleCaseEventLabel.toLowerCase()} DJs will be arriving at your venue at ${plannedArrivalTime} to handle setup and soundchecks long before your event begins.\n\nPlease take a brief moment to look over the attached one-page setup checklist and forward it to your venue manager or coordinator to make sure they have our workspace ready (including a shaded spot out of the sun, a 6-foot table, power outlets within 30 feet, and keeping guest smoking or marijuana areas clear of the audio gear).\n\nAlso, a quick reminder that any final music or timeline changes need to be submitted by Wednesday evening (${wednesdayFormattedString}) to guarantee those adjustments are locked in for your event.${mediaEmailParagraph}\n\nIf you have any questions or want to review your timeline, feel free to give me a call or schedule a quick meeting with me here: https://cal.com/djlane/15min`;
         }
         
         navigator.clipboard.writeText(emailBodyText).then(() => {
