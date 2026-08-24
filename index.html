@@ -137,6 +137,10 @@
             <span class="venue-label">Venue Name</span>
             <span id="venueNameText" class="venue-display-text">--</span>
         </div>
+        <div>
+            <label style="font-size: 0.75rem; font-weight: bold; color: #475569;">Site / Room / Area at Venue:</label>
+            <input type="text" id="siteNameInput" placeholder="e.g. Grand Ballroom, Abigail's Garden, Pavilion, Barn #2">
+        </div>
         <div id="venuePhoneWrap" style="display:none;">
             <span class="venue-label">Venue Phone</span>
             <span id="venuePhoneText" class="venue-display-text">--</span>
@@ -427,11 +431,31 @@
                 const endRaw = block.match(/DTEND:(\d{8}T(\d{6}))/);
                 const summary = clean(block.match(/SUMMARY:(.*)/)?.[1] || "");
                 const rawDesc = block.match(/DESCRIPTION:(.*)/)?.[1] || "";
-                
-                const idMatch = (summary + rawDesc).match(/(?:ID:\s*|#)(\d{4,})|(\d{4,})/);
                 const typeMatch = rawDesc.match(/Type:\s*(.*?)(?:\\n|$)/i);
                 const statusMatch = rawDesc.match(/Status:\s*(.*?)(?:\\n|$)/i);
+                const idMatch = (summary + rawDesc).match(/(?:ID:\s*|#)(\d{4,})|(\d{4,})/);
+                
+                // If the ICS says ON-SITE, do not import it
+                const cleanBlockNoSiteLocation = block.replace(/\(On Site Location:[^)]*\)/gi, '');
+                const isOnSite = 
+                    /\bON[- ]?SITE\b/i.test(summary) || 
+                    /\bONSITE\b/i.test(summary) ||
+                    (typeMatch && (/\bON[- ]?SITE\b/i.test(typeMatch[1]) || /\bONSITE\b/i.test(typeMatch[1]))) ||
+                    (statusMatch && (/\bON[- ]?SITE\b/i.test(statusMatch[1]) || /\bONSITE\b/i.test(statusMatch[1]))) ||
+                    /\bON[- ]?SITE\b/i.test(rawDesc.replace(/\(On Site Location:[^)]*\)/gi, '')) ||
+                    /\bON[- ]?SITE\b/i.test(cleanBlockNoSiteLocation) ||
+                    /\bONSITE\b/i.test(cleanBlockNoSiteLocation);
+
+                if (isOnSite) {
+                    return; // Skip ON-SITE event
+                }
+
                 const fullLoc = clean(block.match(/LOCATION:(.*)/)?.[1] || "").replace(/\(On Site Location:[^)]*\)/gi, '').trim();
+                
+                // Extract on-site location / specific site / room name if provided in ICS
+                const siteMatch = (block.match(/LOCATION:(.*)/)?.[1] || "").match(/\(On Site Location:\s*([^)]+)\)/i)
+                    || rawDesc.match(/(?:Site Name|On Site Location|Room|Specific Location|Area):\s*([^\n\\]+)/i);
+                const extractedSite = siteMatch ? clean(siteMatch[1]) : "";
                 
                 let pS = "---", pSt = "---", pE = "---";
                 
@@ -469,7 +493,8 @@
                         setup: pS, showStart: pSt, end: pE, 
                         type: (typeMatch ? typeMatch[1].trim() : "EVENT").replace(/\(On Site Location:[^)]*\)/gi, '').trim(),
                         status: statusMatch ? statusMatch[1].trim() : "UNKNOWN",
-                        client: clientName, loc: fullLoc
+                        client: clientName, loc: fullLoc,
+                        site_name: extractedSite
                     });
                 }
             });
@@ -584,6 +609,7 @@
 
         const bgStyle = djColor2 ? `linear-gradient(135deg, ${djColor1} 50%, ${djColor2} 50%)` : djColor1;
         const cleanClientEscaped = s.client.replace(/'/g, "\\'");
+        const siteNameText = (assign && assign.site_name) || s.site_name || "";
         
         return `<div class="show-box" style="background:${bgStyle}" onclick="openAssign('${s.id}', '${cleanClientEscaped}', '${s.date}')">
             <div class="box-pad"><div class="top-row"><div class="dj-names-text">${djText}</div>${priceText ? `<div class="price-tag">${priceText}</div>` : ''}</div></div>
@@ -591,7 +617,7 @@
             <div class="box-pad">
                 <b class="client-info">#${s.id} ${s.client}</b>
                 <div class="timing-info">${sIcon} 🛠️ ${s.setup} | 🟢 ${s.showStart} | 🛑 ${s.end}</div>
-                <div class="addr-text">@ ${s.loc.split(',').slice(0, 2).join(', ')}</div>
+                <div class="addr-text">@ ${s.loc.split(',').slice(0, 2).join(', ')}${siteNameText ? ` • 🎪 <b>${siteNameText}</b>` : ''}</div>
             </div>
             ${iconsHtml ? `<div class="icon-tray">${iconsHtml}</div>` : ''}
         </div>`;
@@ -728,6 +754,8 @@
         } else {
             fetchVenueName(s.loc);
         }
+
+        document.getElementById('siteNameInput').value = curr.site_name || s.site_name || "";
 
         const pSel = document.getElementById('primarySelect'), sSel = document.getElementById('secondarySelect');
         pSel.innerHTML = sSel.innerHTML = '<option value="">None</option>';
@@ -928,6 +956,16 @@
             y += 7;
         }
 
+        const currentSavedSiteName = assign.site_name || document.getElementById('siteNameInput').value.trim() || s.site_name || "";
+        if (currentSavedSiteName) {
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(230, 126, 34);
+            doc.text(`On-Site Area / Room: ${stripEmoji(currentSavedSiteName)}`, 10, y);
+            doc.setTextColor(44, 62, 80);
+            doc.setFont(undefined, 'normal');
+            y += 7;
+        }
+
         const currentSavedVenuePhone = assign.venue_phone || document.getElementById('venuePhoneText').innerText;
         if (currentSavedVenuePhone && currentSavedVenuePhone !== "N/A" && currentSavedVenuePhone !== "--") {
             doc.text(`Phone: ${currentSavedVenuePhone}`, 10, y);
@@ -1064,8 +1102,12 @@
 
         doc.setFont(undefined, 'bold');
         doc.setFontSize(10.5);
+        const currentSavedSiteName = assign.site_name || document.getElementById('siteNameInput').value.trim() || s.site_name || "";
         const determinedSavedVenueName = assign.venue_name || currentVenueName;
-        const processedDisplayVenueString = (determinedSavedVenueName && determinedSavedVenueName !== "Private Residence") ? determinedSavedVenueName : "Private Residence";
+        let processedDisplayVenueString = (determinedSavedVenueName && determinedSavedVenueName !== "Private Residence") ? determinedSavedVenueName : "Private Residence";
+        if (currentSavedSiteName) {
+            processedDisplayVenueString += ` (${currentSavedSiteName})`;
+        }
         const wrappedVenueLines = doc.splitTextToSize(processedDisplayVenueString, 62);
 
         doc.setFont(undefined, 'normal');
@@ -1287,6 +1329,7 @@
             uplights: document.getElementById('uplightSelect').value, 
             karaoke: document.getElementById('checkKaraoke').checked,
             venue_name: currentVenueName,
+            site_name: document.getElementById('siteNameInput').value.trim(),
             venue_phone: document.getElementById('venuePhoneText').innerText,
             client_email: document.getElementById('clientEmailInput').value.trim()
         }); 
