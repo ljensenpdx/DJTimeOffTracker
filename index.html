@@ -138,7 +138,7 @@
             <span id="venueNameText" class="venue-display-text">--</span>
         </div>
         <div>
-            <label style="font-size: 0.75rem; font-weight: bold; color: #475569;">Site / Room / Area at Venue:</label>
+            <label style="font-size: 0.75rem; font-weight: bold; color: #475569;">Room / Specific Area:</label>
             <input type="text" id="siteNameInput" placeholder="e.g. Grand Ballroom, Abigail's Garden, Pavilion, Barn #2">
         </div>
         <div id="venuePhoneWrap" style="display:none;">
@@ -172,7 +172,7 @@
         <label class="checkbox-row"><input type="checkbox" id="checkCeremony"> Ceremony System (🔈)</label>
         <label class="checkbox-row"><input type="checkbox" id="checkReception"> Reception System (🔊)</label>
         <label class="checkbox-row"><input type="checkbox" id="checkBooth"> Photo Booth (📷)</label>
-        <label class="checkbox-row"><input type="checkbox" id="checkPrints"> On Site Prints (🖨️)</label>
+        <label class="checkbox-row"><input type="checkbox" id="checkPrints"> Photo Prints (🖨️)</label>
         
         <!-- NEW: DOUBLE PRINTS OPTION -->
         <label class="checkbox-row double-print-row">
@@ -416,6 +416,43 @@
         navigator.clipboard.writeText(scheduleText).then(() => alert(`Schedule copied!`));
     };
 
+    // --- ON-SITE EVENT FILTER & STRIPPER ---
+    function stripOnSiteText(str) {
+        if (!str) return '';
+        return str
+            .replace(/\(On[-_ ]*Site Location:\s*([^)]*)\)/gi, '$1')
+            .replace(/\bON[-_ /]*SITE\b/gi, '')
+            .replace(/\bONSITE\b/gi, '')
+            .replace(/\s{2,}/g, ' ')
+            .trim();
+    }
+
+    const cleanAddressForLookup = (str) => str.replace(/\(On[-_ ]*Site Location:[^)]*\)/gi, '').replace(/\bON[-_ /]*SITE\b/gi, '').trim();
+
+    function isOnSiteEvent(data) {
+        const onSiteRegex = /(?:^|[\s_#(\[/,.:;!?-])(?:ON[-_ /]*SITE|ONSITE)(?:$|[\s_#)\]/,.:;!?-])/i;
+        if (data.type && onSiteRegex.test(data.type)) return true;
+        if (data.summary && onSiteRegex.test(data.summary)) return true;
+        if (data.client && onSiteRegex.test(data.client)) return true;
+        if (data.status && onSiteRegex.test(data.status)) return true;
+        if (data.categories && onSiteRegex.test(data.categories)) return true;
+        if (data.description) {
+            const descNoSiteLoc = data.description.replace(/\(On[-_ ]*Site Location:[^)]*\)/gi, '');
+            if (onSiteRegex.test(descNoSiteLoc)) return true;
+            if (/(?:Type|Event Type|Package|Category|Status|Consultation|Walkthrough|Meeting):\s*.*(?:ON[-_ /]*SITE|ONSITE)/i.test(descNoSiteLoc)) return true;
+        }
+        if (data.loc) {
+            const locClean = data.loc.replace(/\(On[-_ ]*Site Location:[^)]*\)/gi, '').trim();
+            if (/^(?:ON[-_ /]*SITE|ONSITE)$/i.test(locClean)) return true;
+        }
+        if (data.block) {
+            const blockNoSiteLoc = data.block.replace(/\(On[-_ ]*Site Location:[^)]*\)/gi, '');
+            if (/(?:SUMMARY|TYPE|CATEGORIES|STATUS|DESCRIPTION|LOCATION):\s*.*(?:ON[-_ /]*SITE|ONSITE)/i.test(blockNoSiteLoc)) return true;
+            if (onSiteRegex.test(blockNoSiteLoc)) return true;
+        }
+        return false;
+    }
+
     // --- ICS PARSER FOR START/END AND CLEAN NAMES ---
     async function loadIcalData() {
         try {
@@ -427,34 +464,46 @@
             blocks.shift(); 
             
             blocks.forEach(block => {
-                const startRaw = block.match(/DTSTART:(\d{8}T(\d{6}))/);
-                const endRaw = block.match(/DTEND:(\d{8}T(\d{6}))/);
-                const summary = clean(block.match(/SUMMARY:(.*)/)?.[1] || "");
-                const rawDesc = block.match(/DESCRIPTION:(.*)/)?.[1] || "";
-                const typeMatch = rawDesc.match(/Type:\s*(.*?)(?:\\n|$)/i);
-                const statusMatch = rawDesc.match(/Status:\s*(.*?)(?:\\n|$)/i);
-                const idMatch = (summary + rawDesc).match(/(?:ID:\s*|#)(\d{4,})|(\d{4,})/);
+                const startRaw = block.match(/DTSTART(?:;[^:]+)?:(\d{8}(?:T(\d{6}))?)/);
+                const endRaw = block.match(/DTEND(?:;[^:]+)?:(\d{8}(?:T(\d{6}))?)/);
                 
-                // If the ICS says ON-SITE, do not import it
-                const cleanBlockNoSiteLocation = block.replace(/\(On Site Location:[^)]*\)/gi, '');
-                const isOnSite = 
-                    /\bON[- ]?SITE\b/i.test(summary) || 
-                    /\bONSITE\b/i.test(summary) ||
-                    (typeMatch && (/\bON[- ]?SITE\b/i.test(typeMatch[1]) || /\bONSITE\b/i.test(typeMatch[1]))) ||
-                    (statusMatch && (/\bON[- ]?SITE\b/i.test(statusMatch[1]) || /\bONSITE\b/i.test(statusMatch[1]))) ||
-                    /\bON[- ]?SITE\b/i.test(rawDesc.replace(/\(On Site Location:[^)]*\)/gi, '')) ||
-                    /\bON[- ]?SITE\b/i.test(cleanBlockNoSiteLocation) ||
-                    /\bONSITE\b/i.test(cleanBlockNoSiteLocation);
+                const summaryMatch = block.match(/SUMMARY(?:;[^:]+)?:(.*)/);
+                const summary = clean(summaryMatch ? summaryMatch[1] : "");
 
-                if (isOnSite) {
+                const descMatch = block.match(/DESCRIPTION(?:;[^:]+)?:((?:[^\r\n]|\r?\n(?![A-Z-]+(?:;[^:]+)?:))*)/s) || block.match(/DESCRIPTION(?:;[^:]+)?:(.*)/);
+                const rawDesc = descMatch ? descMatch[1] : "";
+
+                const catMatch = block.match(/CATEGORIES(?:;[^:]+)?:(.*)/i);
+                const categories = clean(catMatch ? catMatch[1] : "");
+
+                const typeMatch = rawDesc.match(/(?:Type|Event Type):\s*(.*?)(?:\\n|\r|\n|$)/i);
+                const eventType = (typeMatch ? typeMatch[1].trim() : "").replace(/\(On[-_ ]*Site Location:[^)]*\)/gi, '').trim();
+
+                const statusMatch = rawDesc.match(/(?:Status|Event Status):\s*(.*?)(?:\\n|\r|\n|$)/i);
+                const eventStatus = statusMatch ? statusMatch[1].trim() : "BOOKED AND PAID";
+
+                let clientName = summary.replace(/DJ Event for /gi, "").replace(/\s*\([^)]*\)/g, "").trim();
+                if (!clientName) clientName = "Private Client";
+
+                // If the ICS says ON-SITE, do not import it
+                if (isOnSiteEvent({
+                    summary: summary,
+                    description: rawDesc,
+                    type: eventType,
+                    status: eventStatus,
+                    client: clientName,
+                    categories: categories,
+                    block: block
+                })) {
                     return; // Skip ON-SITE event
                 }
 
-                const fullLoc = clean(block.match(/LOCATION:(.*)/)?.[1] || "").replace(/\(On Site Location:[^)]*\)/gi, '').trim();
+                const idMatch = (summary + " " + rawDesc + " " + block).match(/(?:ID:\s*|#)(\d{4,})|(\d{4,})/);
+                const fullLoc = clean(block.match(/LOCATION(?:;[^:]+)?:(.*)/)?.[1] || "").replace(/\(On[-_ ]*Site Location:[^)]*\)/gi, '').trim();
                 
                 // Extract on-site location / specific site / room name if provided in ICS
-                const siteMatch = (block.match(/LOCATION:(.*)/)?.[1] || "").match(/\(On Site Location:\s*([^)]+)\)/i)
-                    || rawDesc.match(/(?:Site Name|On Site Location|Room|Specific Location|Area):\s*([^\n\\]+)/i);
+                const siteMatch = (block.match(/LOCATION(?:;[^:]+)?:(.*)/)?.[1] || "").match(/\(On[-_ ]*Site Location:\s*([^)]+)\)/i)
+                    || rawDesc.match(/(?:Site Name|On[-_ ]*Site Location|Room|Specific Location|Area):\s*([^\n\\<]+)/i);
                 const extractedSite = siteMatch ? clean(siteMatch[1]) : "";
                 
                 let pS = "---", pSt = "---", pE = "---";
@@ -483,18 +532,20 @@
                         pS = tL[3].replace(/\s+/g, ' '); 
                     }
                 }
-                
-                let clientName = summary.replace(/DJ Event for /gi, "").replace(/\s*\([^)]*\)/g, "").trim();
 
                 if (startRaw && startRaw[1]) {
+                    const dt = startRaw[1].substring(0, 8);
                     events.push({
-                        id: idMatch ? String(idMatch[1] || idMatch[2]) : "??",
-                        date: `${startRaw[1].substring(0, 4)}-${startRaw[1].substring(4, 6)}-${startRaw[1].substring(6, 8)}`,
-                        setup: pS, showStart: pSt, end: pE, 
-                        type: (typeMatch ? typeMatch[1].trim() : "EVENT").replace(/\(On Site Location:[^)]*\)/gi, '').trim(),
-                        status: statusMatch ? statusMatch[1].trim() : "UNKNOWN",
-                        client: clientName, loc: fullLoc,
-                        site_name: extractedSite
+                        id: idMatch ? String(idMatch[1] || idMatch[2]) : Math.random().toString().slice(2,6),
+                        date: `${dt.substring(0, 4)}-${dt.substring(4, 6)}-${dt.substring(6, 8)}`,
+                        setup: pS !== '---' ? pS : '2:00 PM', 
+                        showStart: pSt !== '---' ? pSt : '4:00 PM', 
+                        end: pE !== '---' ? pE : '10:00 PM', 
+                        type: stripOnSiteText(eventType) || "EVENT",
+                        status: stripOnSiteText(eventStatus) || "BOOKED AND PAID",
+                        client: stripOnSiteText(clientName) || "Private Client", 
+                        loc: stripOnSiteText(fullLoc) || 'Location TBD',
+                        site_name: stripOnSiteText(extractedSite)
                     });
                 }
             });
@@ -551,6 +602,7 @@
     }
 
     function isShowMatchingFilter(s) {
+        if (isOnSiteEvent(s)) return false;
         const assign = assignments.find(a => String(a.id) === String(s.id));
         
         // DJ Filter
@@ -599,7 +651,7 @@
             if(assign.double_prints) {
                 iconsHtml += `<span class="double-print-badge" title="Double Prints (2x Copies)">🖨️² 2X</span>`;
             } else if(assign.prints) {
-                iconsHtml += `<span class="s-icon" title="On-Site Prints">🖨️</span>`;
+                iconsHtml += `<span class="s-icon" title="Photo Prints">🖨️</span>`;
             }
 
             if(assign.guestbook) iconsHtml += `<span class="s-icon" title="Audio Guestbook">☎️</span>`;
@@ -960,7 +1012,7 @@
         if (currentSavedSiteName) {
             doc.setFont(undefined, 'bold');
             doc.setTextColor(230, 126, 34);
-            doc.text(`On-Site Area / Room: ${stripEmoji(currentSavedSiteName)}`, 10, y);
+            doc.text(`Room / Specific Area: ${stripEmoji(currentSavedSiteName)}`, 10, y);
             doc.setTextColor(44, 62, 80);
             doc.setFont(undefined, 'normal');
             y += 7;
@@ -1000,7 +1052,7 @@
             assign.ceremony ? 'Ceremony System' : null,
             assign.reception ? 'Reception System' : null,
             assign.booth ? 'Photo Booth' : null,
-            assign.double_prints ? 'Double Prints (2x Strips per session)' : (assign.prints ? 'On Site Prints' : null),
+            assign.double_prints ? 'Double Prints (2x Strips per session)' : (assign.prints ? 'Photo Prints' : null),
             assign.guestbook ? 'Audio Guestbook' : null,
             assign.karaoke ? 'Karaoke' : null,
             (assign.uplights || 0) > 0 ? `Up Lights x${assign.uplights}` : null
