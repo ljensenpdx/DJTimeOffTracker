@@ -553,10 +553,33 @@
 
     async function init() {
         document.getElementById('loading-overlay').style.display = 'flex';
+        // Load local assignments from storage first
+        try {
+            const localSaved = localStorage.getItem('fs_dj_assignments');
+            if (localSaved) {
+                assignments = JSON.parse(localSaved);
+            }
+        } catch(e) {}
+
         try {
             const res = await fetch(scriptURL + '?t=' + new Date().getTime());
             const data = await res.json();
-            offData = data.offData || []; djSettings = data.djs || []; assignments = data.assignments || [];
+            offData = data.offData || []; 
+            djSettings = data.djs || []; 
+            if (data.assignments && data.assignments.length > 0) {
+                // Merge backend with any locally saved entries
+                const merged = [...assignments];
+                data.assignments.forEach(remote => {
+                    const idx = merged.findIndex(a => String(a.id) === String(remote.id));
+                    if (idx >= 0) {
+                        merged[idx] = { ...merged[idx], ...remote };
+                    } else {
+                        merged.push(remote);
+                    }
+                });
+                assignments = merged;
+                localStorage.setItem('fs_dj_assignments', JSON.stringify(assignments));
+            }
             populateFilterDropdown();
         } catch(e) { console.error("Sync error", e); }
         showData = await loadIcalData();
@@ -1364,9 +1387,8 @@
     }
 
     function submitAssignment() { 
-        submitHiddenForm({ 
-            action: 'assignDJ', 
-            id: currentEventId, 
+        const updatedAssign = {
+            id: String(currentEventId),
             primary: document.getElementById('primarySelect').value, 
             secondary: document.getElementById('secondarySelect').value, 
             price: document.getElementById('priceInput').value, 
@@ -1374,7 +1396,7 @@
             reception: document.getElementById('checkReception').checked, 
             booth: document.getElementById('checkBooth').checked, 
             prints: document.getElementById('checkPrints').checked, 
-            double_prints: document.getElementById('checkDoublePrints').checked, // NEW: Double prints saved to backend
+            double_prints: document.getElementById('checkDoublePrints').checked,
             guestbook: document.getElementById('checkGuestbook').checked, 
             uplights: document.getElementById('uplightSelect').value, 
             karaoke: document.getElementById('checkKaraoke').checked,
@@ -1382,8 +1404,32 @@
             site_name: document.getElementById('siteNameInput').value.trim(),
             venue_phone: document.getElementById('venuePhoneText').innerText,
             client_email: document.getElementById('clientEmailInput').value.trim()
+        };
+
+        // 1. Immediately save into memory state
+        const existingIdx = assignments.findIndex(a => String(a.id) === String(currentEventId));
+        if (existingIdx >= 0) {
+            assignments[existingIdx] = { ...assignments[existingIdx], ...updatedAssign };
+        } else {
+            assignments.push(updatedAssign);
+        }
+
+        // 2. Persist to localStorage immediately
+        try {
+            localStorage.setItem('fs_dj_assignments', JSON.stringify(assignments));
+        } catch(e) {
+            console.warn('LocalStorage save error:', e);
+        }
+
+        // 3. Re-render UI and close modal immediately so changes are visible without lag
+        closeModal('assignModal');
+        render();
+
+        // 4. Send background sync to Google Apps Script
+        submitHiddenForm({ 
+            action: 'assignDJ', 
+            ...updatedAssign
         }); 
-        setTimeout(() => location.reload(), 2500); 
     }
     
     function checkOffStatus() { 
