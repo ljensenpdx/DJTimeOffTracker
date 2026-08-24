@@ -2,64 +2,116 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fun Squad DJs | Master Planner</title>
+    <!-- jsPDF for PDF generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        :root { --dark: #2c3e50; --light: #ffffff; --conflict: #e74c3c; --accent: #ff007f; --success: #27ae60; --warning: #e67e22; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f4f7f6; padding: 15px; margin: 0; color: #1a1a1a; }
-        
-        .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 10px 20px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        :root {
+            --dark: #2c3e50;
+            --light: #ffffff;
+            --conflict: #e74c3c;
+            --accent: #ff007f;
+            --success: #27ae60;
+            --warning: #e67e22;
+            --info: #3498db;
+            --bg: #f4f7f6;
+            --card-border: #dfe4ea;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: var(--bg); padding: 10px; margin: 0; color: #1a1a1a; padding-bottom: 75px; }
+
+        /* HEADER */
+        .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 10px 15px; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .header-center { text-align: center; }
-        .header-center h2 { margin: 0 0 10px 0; font-size: 1.5rem; color: var(--dark); }
-        .btn-group { display: flex; gap: 8px; justify-content: center; align-items: center; }
+        .header-center h2 { margin: 0 0 6px 0; font-size: 1.25rem; color: var(--dark); font-weight: 800; }
+        .btn-group { display: flex; gap: 6px; justify-content: center; align-items: center; flex-wrap: wrap; }
         
-        .filter-bar { display: flex; justify-content: center; gap: 12px; margin-bottom: 10px; align-items: center; flex-wrap: wrap; }
-        .filter-bar select { padding: 6px 10px; border-radius: 6px; border: 1px solid #ddd; font-weight: bold; font-size: 0.8rem; background: white; }
-        .toggle-btn { background: #95a5a6; padding: 6px 12px; font-size: 0.75rem; border-radius: 6px; color: white; cursor: pointer; border: none; font-weight: bold; }
+        /* CONTROLS & FILTER BAR */
+        .filter-bar { display: flex; justify-content: center; gap: 8px; margin-bottom: 12px; align-items: center; flex-wrap: wrap; }
+        .filter-bar select, .filter-bar input[type="text"] { padding: 8px 10px; border-radius: 8px; border: 1px solid #ccc; font-weight: bold; font-size: 0.8rem; background: white; max-width: 100%; }
+        .toggle-btn { background: #95a5a6; padding: 8px 12px; font-size: 0.75rem; border-radius: 8px; color: white; cursor: pointer; border: none; font-weight: bold; transition: 0.2s; }
         .toggle-btn.active { background: var(--accent); }
-        .total-badge { background: var(--dark); color: white; padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .total-badge { background: var(--dark); color: white; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; }
 
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; background: #dfe4ea; border: 2px solid #dfe4ea; border-radius: 12px; overflow: hidden; }
-        .weekday { background: var(--dark); color: white; text-align: center; padding: 12px; font-weight: bold; font-size: 0.85rem; text-transform: uppercase; }
-        .day { background: white; min-height: 260px; padding: 10px; display: flex; flex-direction: column; gap: 8px; position: relative; }
-        .day.today { background: #fff9db; border: 2px solid #f1c40f; }
-        .date-num { font-weight: 900; color: #a4b0be; font-size: 1.1rem; }
-        
-        .show-box { color: #ffffff; padding: 10px 0; border-radius: 8px; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.2); display: flex; flex-direction: column; position: relative; overflow: hidden; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); border: 1px solid rgba(0,0,0,0.1); }
-        .show-box:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.3); }
-        .box-pad { padding: 0 12px; }
+        /* VIEW SWITCHER (CALENDAR vs AGENDA FOR MOBILE) */
+        .view-switcher { display: flex; background: #e2e8f0; border-radius: 8px; padding: 2px; gap: 2px; }
+        .view-switcher button { padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; border: none; background: transparent; color: #475569; font-weight: bold; cursor: pointer; }
+        .view-switcher button.active { background: white; color: var(--dark); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+        /* CALENDAR GRID (DESKTOP / TABLET) */
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; background: var(--card-border); border: 2px solid var(--card-border); border-radius: 12px; overflow: hidden; margin-bottom: 15px; }
+        .weekday { background: var(--dark); color: white; text-align: center; padding: 8px 4px; font-weight: bold; font-size: 0.75rem; text-transform: uppercase; }
+        .day { background: white; min-height: 180px; padding: 6px; display: flex; flex-direction: column; gap: 6px; position: relative; }
+        .day.today { background: #fffde7; border: 2px solid #fbc02d; }
+        .day.other-month { background: #f8fafc; opacity: 0.5; }
+        .date-num { font-weight: 900; color: #94a3b8; font-size: 0.95rem; line-height: 1; }
+        .day.today .date-num { color: #d97706; }
+
+        /* AGENDA LIST (MOBILE FRIENDLY) */
+        #agenda-view { display: none; flex-direction: column; gap: 10px; max-width: 800px; margin: 0 auto; }
+        .agenda-day-group { background: white; border-radius: 12px; padding: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+        .agenda-date-hdr { font-size: 0.9rem; font-weight: 900; color: var(--dark); padding-bottom: 8px; margin-bottom: 8px; border-bottom: 2px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
+        .agenda-today-tag { background: #fef3c7; color: #b45309; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+
+        /* SHOW BOX / CARD */
+        .show-box { color: #ffffff; padding: 8px 0; border-radius: 8px; cursor: pointer; transition: 0.15s ease-in-out; box-shadow: 0 2px 6px rgba(0,0,0,0.15); display: flex; flex-direction: column; position: relative; overflow: hidden; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); border: 1px solid rgba(0,0,0,0.15); margin-bottom: 4px; }
+        .show-box:active { transform: scale(0.98); }
+        .box-pad { padding: 0 8px; }
         .top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
-        .dj-names-text { font-weight: 900; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
-
-        .price-tag { background: #ffff00; color: #000000; font-size: 13px; font-weight: 900; padding: 2px 6px; border-radius: 4px; text-shadow: none; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .dj-names-text { font-weight: 900; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .price-tag { background: #ffeb3b; color: #000; font-size: 11px; font-weight: 900; padding: 1px 5px; border-radius: 4px; text-shadow: none; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
         
-        .type-bar { background: white; color: black; font-size: 11px; font-weight: 900; text-align: center; padding: 4px 0; text-transform: uppercase; margin: 6px 0; width: 100%; text-shadow: none; border-top: 1px solid rgba(0,0,0,0.05); border-bottom: 1px solid rgba(0,0,0,0.05); }
-        .client-info { font-size: 14px; font-weight: 900; display: block; line-height: 1.2; margin-bottom: 2px; }
-        .timing-info { font-size: 14px; font-weight: 900; display: block; margin: 2px 0; white-space: nowrap; }
-        .addr-text { font-size: 10px; font-weight: 600; opacity: 0.95; margin-bottom: 4px; }
-        .icon-tray { display: flex; flex-wrap: wrap; gap: 12px; margin-top: auto; padding: 8px 12px 0 12px; border-top: 1px solid rgba(255,255,255,0.3); }
-        .s-icon { font-size: 20px; filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.4)); }
+        .type-bar { background: rgba(255,255,255,0.95); color: black; font-size: 9.5px; font-weight: 900; text-align: center; padding: 3px 0; text-transform: uppercase; margin: 4px 0; width: 100%; text-shadow: none; }
+        .client-info { font-size: 12px; font-weight: 900; display: block; line-height: 1.2; margin-bottom: 2px; }
+        .timing-info { font-size: 11px; font-weight: 800; display: block; margin: 2px 0; }
+        .addr-text { font-size: 9.5px; font-weight: 600; opacity: 0.95; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        .icon-tray { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; padding: 6px 8px 0 8px; border-top: 1px solid rgba(255,255,255,0.25); align-items: center; }
+        .s-icon { font-size: 15px; }
+        .double-print-badge { background: #fbbf24; color: #1e293b; font-size: 9px; font-weight: 900; padding: 1px 4px; border-radius: 3px; text-shadow: none; display: inline-flex; align-items: center; gap: 1px; }
 
-        button { padding: 10px 18px; cursor: pointer; border: none; border-radius: 8px; background: var(--dark); color: white; font-weight: bold; font-size: 0.75rem; }
+        /* BUTTONS */
+        button { padding: 9px 14px; cursor: pointer; border: none; border-radius: 8px; background: var(--dark); color: white; font-weight: bold; font-size: 0.75rem; transition: 0.15s; }
+        button:active { transform: scale(0.97); }
         .crew-btn { background: var(--accent); }
         .ics-btn { background: var(--success); }
-        .today-link { display: block; text-align: center; color: #95a5a6; font-size: 0.65rem; text-decoration: none; margin-bottom: 10px; cursor: pointer; font-weight: bold; text-transform: uppercase; }
+        .today-link { display: inline-block; color: #64748b; font-size: 0.75rem; text-decoration: underline; cursor: pointer; font-weight: bold; text-transform: uppercase; padding: 4px; }
         
-        .modal { display:none; position:fixed; z-index:2000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.6); }
-        .modal-content { background:white; margin:2% auto; padding:25px; width:520px; border-radius:15px; text-align: left; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; color: #333; text-shadow: none; }
+        /* MODALS (MOBILE FULL-DRAWER ON SMALL SCREENS) */
+        .modal { display:none; position:fixed; z-index:2000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.65); backdrop-filter: blur(2px); }
+        .modal-content { background:white; margin:2% auto; padding:20px; width:94%; max-width:520px; border-radius:14px; text-align: left; box-shadow: 0 10px 25px rgba(0,0,0,0.25); max-height: 92vh; overflow-y: auto; color: #333; }
         
-        .dj-edit-row { display: flex; align-items: center; justify-content: space-between; background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 10px; gap: 10px; }
-        .dj-name-box { width: 90px; font-weight: 900; font-size: 1rem; color: var(--dark); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .dj-count-box { background: #ebf2f7; color: var(--dark); font-weight: 900; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; white-space: nowrap; min-width: 80px; text-align: center; }
-        .dj-action-group { display: flex; gap: 6px; align-items: center; }
-        .color-preview { width: 28px; height: 28px; border: 2px solid white; border-radius: 6px; cursor: pointer; padding: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .dj-edit-row { display: flex; align-items: center; justify-content: space-between; background: #f8fafc; padding: 10px; border-radius: 8px; margin-bottom: 8px; gap: 8px; border: 1px solid #e2e8f0; }
+        .dj-name-box { font-weight: 900; font-size: 0.95rem; color: var(--dark); flex: 1; }
+        .dj-count-box { background: #e2e8f0; color: var(--dark); font-weight: 900; padding: 4px 8px; border-radius: 8px; font-size: 0.7rem; white-space: nowrap; }
+        .dj-action-group { display: flex; gap: 5px; align-items: center; }
+        .color-preview { width: 28px; height: 28px; border: 2px solid white; border-radius: 6px; cursor: pointer; padding: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
         
-        .venue-label { font-size: 0.75rem; text-transform: uppercase; color: #7f8c8d; font-weight: bold; margin-bottom: 2px; display: block; }
-        .venue-display-text { font-size: 1.05rem; font-weight: 800; color: var(--dark); margin-bottom: 12px; display: block; }
+        .venue-label { font-size: 0.7rem; text-transform: uppercase; color: #64748b; font-weight: bold; margin-bottom: 2px; display: block; }
+        .venue-display-text { font-size: 0.95rem; font-weight: 800; color: var(--dark); margin-bottom: 10px; display: block; }
 
-        input[type="text"], input[type="email"], select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ddd; margin-bottom: 12px; font-weight: bold; box-sizing: border-box; }
-        #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; justify-content: center; align-items: center; z-index: 3000; font-weight: bold; }
+        input[type="text"], input[type="email"], select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 10px; font-weight: bold; font-size: 0.85rem; }
+        
+        .checkbox-row { display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 0.85rem; margin-bottom: 8px; cursor: pointer; }
+        .checkbox-row input { width: 18px; height: 18px; cursor: pointer; }
+        .double-print-row { background: #fef3c7; padding: 8px 10px; border-radius: 8px; border: 1px solid #fcd34d; }
+
+        #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); display: flex; justify-content: center; align-items: center; z-index: 3000; font-weight: bold; font-size: 1.1rem; color: var(--dark); }
+        
+        /* RESPONSIVE BREAKPOINTS */
+        @media (max-width: 768px) {
+            body { padding: 6px; padding-bottom: 70px; }
+            .header { padding: 8px 10px; }
+            .header-center h2 { font-size: 1.1rem; }
+            .modal-content { width: 96%; margin: 4% auto; padding: 15px; }
+            .calendar-grid { font-size: 0.8rem; gap: 2px; }
+            .day { min-height: 120px; padding: 4px; }
+            .client-info { font-size: 11px; }
+            .timing-info { font-size: 9.5px; }
+            .s-icon { font-size: 13px; }
+        }
     </style>
 </head>
 <body>
@@ -68,16 +120,17 @@
 <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
 <form id="cors_bypass_form" method="POST" target="hidden_iframe" style="display:none;"></form>
 
+<!-- SHOW ASSIGNMENT / DETAILS MODAL -->
 <div id="assignModal" class="modal">
     <div class="modal-content">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-            <h2 id="assignTitle" style="margin-top:0">Show Details</h2>
-            <div id="popType" style="background: var(--dark); color: white; padding: 4px 8px; font-size: 10px; font-weight: 900; border-radius: 4px;">EVENT</div>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+            <h2 id="assignTitle" style="margin:0; font-size: 1.2rem;">Show Details</h2>
+            <div id="popType" style="background: var(--dark); color: white; padding: 3px 6px; font-size: 9px; font-weight: 900; border-radius: 4px;">EVENT</div>
         </div>
-        <p id="assignDetails" style="color:#666; font-size:0.8rem; margin-bottom: 2px;"></p>
-        <div id="assignAddress" style="margin-bottom: 14px;"></div>
+        <p id="assignDetails" style="color:#64748b; font-size:0.85rem; font-weight: bold; margin: 0 0 4px 0;"></p>
+        <div id="assignAddress" style="margin-bottom: 12px;"></div>
         
-        <label>Client Email:</label>
+        <label style="font-size: 0.75rem; font-weight: bold; color: #475569;">Client Email:</label>
         <input type="email" id="clientEmailInput" placeholder="client@example.com">
 
         <div id="venueNameWrap" style="display:none;">
@@ -88,53 +141,94 @@
             <span class="venue-label">Venue Phone</span>
             <span id="venuePhoneText" class="venue-display-text">--</span>
         </div>
-        <div id="offWarning" style="color:red; font-weight:bold; font-size:0.75rem; margin-bottom:10px; display:none;">⚠️ SELECTED DJ HAS THIS DAY OFF!</div>
+        <div id="offWarning" style="color:#dc2626; font-weight:bold; font-size:0.75rem; margin-bottom:10px; display:none; background: #fee2e2; padding: 6px; border-radius: 6px;">⚠️ SELECTED DJ HAS THIS DAY OFF!</div>
         
-        <label>Booking Price:</label><input type="text" id="priceInput" placeholder="$0.00">
-        <label>Primary DJ:</label><select id="primarySelect" onchange="checkOffStatus()"></select>
-        <label>Secondary DJ:</label><select id="secondarySelect" onchange="checkOffStatus()"></select>
-        
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; text-align: center; gap: 5px; margin: 10px 0 15px 0; background: #f8f9fa; padding: 10px; border-radius: 8px; border: 1px solid #eee;">
-            <div><span style="font-size:0.6rem; color:#7f8c8d; text-transform:uppercase; font-weight:bold;">🛠️ Setup</span><div id="popSetup" style="font-size:0.8rem; font-weight:900;">--</div></div>
-            <div><span style="font-size:0.6rem; color:#7f8c8d; text-transform:uppercase; font-weight:bold;">🟢 Start</span><div id="popStart" style="font-size:0.8rem; font-weight:900;">--</div></div>
-            <div><span style="font-size:0.6rem; color:#7f8c8d; text-transform:uppercase; font-weight:bold;">🛑 End</span><div id="popEnd" style="font-size:0.8rem; font-weight:900;">--</div></div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div>
+                <label style="font-size: 0.75rem; font-weight: bold; color: #475569;">Primary DJ:</label>
+                <select id="primarySelect" onchange="checkOffStatus()"></select>
+            </div>
+            <div>
+                <label style="font-size: 0.75rem; font-weight: bold; color: #475569;">Secondary DJ:</label>
+                <select id="secondarySelect" onchange="checkOffStatus()"></select>
+            </div>
         </div>
 
-        <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
-        <h3 style="margin-bottom:10px;">Equipment & Services</h3>
-        <div style="font-weight: bold; margin-bottom: 8px;"><input type="checkbox" id="checkCeremony"> Ceremony System (🔈)</div>
-        <div style="font-weight: bold; margin-bottom: 8px;"><input type="checkbox" id="checkReception"> Reception System (🔊)</div>
-        <div style="font-weight: bold; margin-bottom: 8px;"><input type="checkbox" id="checkBooth"> Photo Booth (📷)</div>
-        <div style="font-weight: bold; margin-bottom: 8px;"><input type="checkbox" id="checkPrints"> On Site Prints (🖨️)</div>
-        <div style="font-weight: bold; margin-bottom: 8px;"><input type="checkbox" id="checkGuestbook"> Audio Guestbook (☎️)</div>
-        <div style="font-weight: bold; margin-bottom: 8px;"><input type="checkbox" id="checkKaraoke"> Karaoke (🎤) <small style="color:red">*Forces Lane</small></div>
-        <div style="font-weight: bold; margin-bottom: 8px;">Up Lights (💡): <select id="uplightSelect" style="width:70px; margin-left:10px; display:inline-block;"><option value="0">0</option><option value="4">4</option><option value="8">8</option><option value="12">12</option><option value="16">16</option></select></div>
+        <label style="font-size: 0.75rem; font-weight: bold; color: #475569;">Booking Price:</label>
+        <input type="text" id="priceInput" placeholder="$0.00">
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; text-align: center; gap: 4px; margin: 8px 0 12px 0; background: #f8fafc; padding: 8px; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <div><span style="font-size:0.6rem; color:#64748b; text-transform:uppercase; font-weight:bold;">🛠️ Setup</span><div id="popSetup" style="font-size:0.8rem; font-weight:900;">--</div></div>
+            <div><span style="font-size:0.6rem; color:#64748b; text-transform:uppercase; font-weight:bold;">🟢 Start</span><div id="popStart" style="font-size:0.8rem; font-weight:900;">--</div></div>
+            <div><span style="font-size:0.6rem; color:#64748b; text-transform:uppercase; font-weight:bold;">🛑 End</span><div id="popEnd" style="font-size:0.8rem; font-weight:900;">--</div></div>
+        </div>
 
-        <button style="background:var(--success); width:100%; margin-top:10px;" onclick="submitAssignment()">SAVE DETAILS</button><br><br>
-        <button style="background:#8e44ad; width:100%; margin-bottom:10px;" onclick="generateEventPDF()">📄 GENERATE EVENT PDF</button>
-        <button style="background:#e67e22; width:100%; margin-bottom:10px;" onclick="generateClientReminderPDF()">📧 EMAIL CLIENT REMINDER</button>
-        <button onclick="closeModal('assignModal')" style="background:#95a5a6; width:100%;">Cancel</button>
+        <hr style="border:0; border-top:1px solid #e2e8f0; margin:12px 0;">
+        <h3 style="margin: 0 0 10px 0; font-size: 0.95rem;">Equipment & Services</h3>
+        <label class="checkbox-row"><input type="checkbox" id="checkCeremony"> Ceremony System (🔈)</label>
+        <label class="checkbox-row"><input type="checkbox" id="checkReception"> Reception System (🔊)</label>
+        <label class="checkbox-row"><input type="checkbox" id="checkBooth"> Photo Booth (📷)</label>
+        <label class="checkbox-row"><input type="checkbox" id="checkPrints"> On Site Prints (🖨️)</label>
+        
+        <!-- NEW: DOUBLE PRINTS OPTION -->
+        <label class="checkbox-row double-print-row">
+            <input type="checkbox" id="checkDoublePrints"> 
+            <span><strong>Double Prints (🖨️² 2X)</strong> <small style="display:block; color:#92400e; font-size:0.75rem;">Prints 2 strips per session for guestbook/guests</small></span>
+        </label>
+        
+        <label class="checkbox-row"><input type="checkbox" id="checkGuestbook"> Audio Guestbook (☎️)</label>
+        <label class="checkbox-row"><input type="checkbox" id="checkKaraoke"> Karaoke (🎤) <small style="color:red">*Forces Lane</small></label>
+        
+        <div style="font-weight: bold; margin: 8px 0; font-size: 0.85rem;">
+            Up Lights (💡): 
+            <select id="uplightSelect" style="width:80px; margin-left:8px; display:inline-block; padding: 4px;">
+                <option value="0">0</option>
+                <option value="4">4</option>
+                <option value="8">8</option>
+                <option value="12">12</option>
+                <option value="16">16</option>
+                <option value="20">20</option>
+            </select>
+        </div>
+
+        <button style="background:var(--success); width:100%; margin-top:8px; padding: 12px;" onclick="submitAssignment()">💾 SAVE DETAILS</button>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0;">
+            <button style="background:#8e44ad;" onclick="generateEventPDF()">📄 DISPATCH PDF</button>
+            <button style="background:#e67e22;" onclick="generateClientReminderPDF()">📧 EMAIL REMINDER</button>
+        </div>
+        <button onclick="closeModal('assignModal')" style="background:#94a3b8; width:100%;">Close</button>
     </div>
 </div>
 
+<!-- DJ CREW MODAL -->
 <div id="djModal" class="modal">
     <div class="modal-content">
-        <h2>Manage Crew</h2>
+        <h2 style="margin-top:0; font-size: 1.2rem;">Manage Crew</h2>
         <div id="djSettingsList"></div>
-        <button style="background:var(--accent); width:100%; margin-bottom:15px;" onclick="saveAllColors()">SAVE ALL COLORS</button>
-        <hr>
-        <h3>Add New DJ</h3>
-        <input type="text" id="newDjName" placeholder="Name">
-        <input type="color" id="newDjColor" value="#3498db" style="width:100%; height:35px; margin-bottom:12px; border:none; cursor:pointer; border-radius:6px;">
+        <button style="background:var(--accent); width:100%; margin-bottom:12px;" onclick="saveAllColors()">SAVE ALL COLORS</button>
+        <hr style="border:0; border-top:1px solid #eee; margin:12px 0;">
+        <h3 style="font-size: 0.95rem; margin-bottom: 8px;">Add New DJ</h3>
+        <input type="text" id="newDjName" placeholder="DJ Name">
+        <input type="color" id="newDjColor" value="#3498db" style="width:100%; height:36px; margin-bottom:10px; border:none; cursor:pointer; border-radius:6px;">
         <button style="background:var(--success); width:100%;" onclick="addNewDj()">ADD DJ</button><br><br>
-        <button onclick="closeModal('djModal')" style="background:#95a5a6; width:100%;">Close</button>
+        <button onclick="closeModal('djModal')" style="background:#94a3b8; width:100%;">Close</button>
     </div>
 </div>
 
-<div id="uploadModal" class="modal"><div class="modal-content"><h2>Update ICS Calendar</h2><input type="file" id="icsInput" accept=".ics" style="margin-bottom:20px;"><br><button id="uploadBtn" style="background:var(--success); width:100%;" onclick="handleIcsUpload()">UPLOAD TO GITHUB</button><br><br><button onclick="closeModal('uploadModal')" style="background:#95a5a6; width:100%;">Cancel</button></div></div>
+<!-- ICS UPLOAD MODAL -->
+<div id="uploadModal" class="modal">
+    <div class="modal-content">
+        <h2 style="margin-top:0; font-size: 1.2rem;">Update ICS Calendar</h2>
+        <p style="font-size:0.8rem; color:#64748b;">Upload a new <code>events.ics</code> calendar file directly to your GitHub repository.</p>
+        <input type="file" id="icsInput" accept=".ics" style="margin-bottom:15px; width: 100%;">
+        <button id="uploadBtn" style="background:var(--success); width:100%;" onclick="handleIcsUpload()">UPLOAD TO GITHUB</button><br><br>
+        <button onclick="closeModal('uploadModal')" style="background:#94a3b8; width:100%;">Cancel</button>
+    </div>
+</div>
 
+<!-- TOP HEADER -->
 <div class="header">
-    <button style="background:var(--dark); width:80px;" onclick="changeMonth(-1)">◀ PREV</button>
+    <button style="background:var(--dark); width:70px;" onclick="changeMonth(-1)">◀ PREV</button>
     <div class="header-center">
         <h2 id="monthLabel">Month Year</h2>
         <div class="btn-group">
@@ -142,17 +236,43 @@
             <button class="ics-btn" onclick="openModal('uploadModal')">ICS</button>
         </div>
     </div>
-    <button style="background:var(--dark); width:80px;" onclick="changeMonth(1)">NEXT ▶</button>
+    <button style="background:var(--dark); width:70px;" onclick="changeMonth(1)">NEXT ▶</button>
 </div>
 
+<!-- CONTROLS & FILTER BAR -->
 <div class="filter-bar">
+    <!-- View Switcher for Mobile -->
+    <div class="view-switcher">
+        <button id="btnViewCal" class="active" onclick="switchView('cal')">📅 Grid</button>
+        <button id="btnViewAgenda" onclick="switchView('agenda')">📋 Agenda</button>
+    </div>
+
     <button id="priceToggle" class="toggle-btn active" onclick="togglePrices()">SHOW PRICES</button>
-    <select id="djFilter" onchange="applyFilter()"><option value="all">Filter by DJ: ALL</option><option value="unassigned">UNASSIGNED ONLY</option></select>
+    
+    <select id="djFilter" onchange="applyFilter()">
+        <option value="all">Filter by DJ: ALL</option>
+        <option value="unassigned">UNASSIGNED ONLY</option>
+    </select>
+    
+    <!-- Filter by Package / Double Prints -->
+    <select id="packageFilter" onchange="applyFilter()">
+        <option value="all">All Packages</option>
+        <option value="double_prints">🖨️² Double Prints Only</option>
+        <option value="booth">📷 Photo Booth</option>
+        <option value="prints">🖨️ Prints</option>
+        <option value="guestbook">☎️ Audio Guestbook</option>
+        <option value="karaoke">🎤 Karaoke</option>
+    </select>
+
     <span id="totalEventsBadge" class="total-badge">Total Imported: 0</span>
-    <div class="today-link" onclick="goToToday()" style="margin-bottom:0">Jump to Today</div>
+    <span class="today-link" onclick="goToToday()">Jump to Today</span>
 </div>
 
+<!-- CALENDAR GRID VIEW -->
 <div id="calendar" class="calendar-grid"></div>
+
+<!-- MOBILE FRIENDLY AGENDA VIEW -->
+<div id="agenda-view"></div>
 
 <script>
     // ==========================================
@@ -164,12 +284,13 @@
     const GMAPS_API_KEY = 'AIzaSyA86LiHXWFpQj_0hIDEWHnJrIDno6F123I';
 
     // ==========================================
-    // SYSTEM TRACKING MODULES
+    // SYSTEM STATE
     // ==========================================
     let viewDate = new Date();
+    let currentViewMode = window.innerWidth <= 768 ? 'agenda' : 'cal';
     let offData = [], showData = [], djSettings = [], assignments = [];
     let currentEventId = null, currentEventDate = null;
-    let hidePrices = false, currentFilter = 'all';
+    let hidePrices = false, currentFilter = 'all', currentPackageFilter = 'all';
     let currentVenueName = "";
     let logoBase64 = null;
     let googleMapsPromise = null;
@@ -291,7 +412,7 @@
         navigator.clipboard.writeText(scheduleText).then(() => alert(`Schedule copied!`));
     };
 
-    // --- REBUILT ICS PARSER FOR START/END AND CLEAN NAMES ---
+    // --- ICS PARSER FOR START/END AND CLEAN NAMES ---
     async function loadIcalData() {
         try {
             const res = await fetch('events.ics?t=' + new Date().getTime());
@@ -314,7 +435,6 @@
                 
                 let pS = "---", pSt = "---", pE = "---";
                 
-                // Helper to convert ICS '143000' format to '2:30 PM'
                 const formatTime = (timeStr) => {
                     if (!timeStr) return "---";
                     let h = parseInt(timeStr.substring(0, 2), 10);
@@ -324,16 +444,13 @@
                     return `${h}:${m} ${ampm}`;
                 };
 
-                // 1. Set Start & End from the actual ICS tags
                 if (startRaw && startRaw[2]) pSt = formatTime(startRaw[2]);
                 if (endRaw && endRaw[2]) pE = formatTime(endRaw[2]);
 
-                // 2. Set Setup Time from the clean description text
                 const setupMatch = rawDesc.match(/Setup Time:\s*(\d{1,2}:\d{2}\s*[APM]{2})/i);
                 if (setupMatch) {
                     pS = setupMatch[1].replace(/\s+/g, ' ');
                 } else {
-                    // Fallback just in case you ever use the raw HTML RSS format again
                     const cleanDesc = rawDesc.replace(/\\/g, '').replace(/<[^>]*>/g, ' ');
                     const tL = cleanDesc.match(/From\s*(\d{1,2}:\d{2}\s*[APM]{2})\s*to\s*(\d{1,2}:\d{2}\s*[APM]{2})\s*\(Setup\s*at\s*(\d{1,2}:\d{2}\s*[APM]{2})\)/i);
                     if (tL) { 
@@ -343,7 +460,6 @@
                     }
                 }
                 
-                // 3. Strip "(Wedding)" or any other parenthesis from the client's name
                 let clientName = summary.replace(/DJ Event for /gi, "").replace(/\s*\([^)]*\)/g, "").trim();
 
                 if (startRaw && startRaw[1]) {
@@ -360,7 +476,6 @@
             return events;
         } catch (e) { return []; }
     }
-    // --------------------------------------------------------
 
     async function init() {
         document.getElementById('loading-overlay').style.display = 'flex';
@@ -372,6 +487,28 @@
         } catch(e) { console.error("Sync error", e); }
         showData = await loadIcalData();
         document.getElementById('loading-overlay').style.display = 'none';
+        switchView(currentViewMode);
+        render();
+    }
+
+    function switchView(mode) {
+        currentViewMode = mode;
+        const calEl = document.getElementById('calendar');
+        const agendaEl = document.getElementById('agenda-view');
+        const btnCal = document.getElementById('btnViewCal');
+        const btnAgenda = document.getElementById('btnViewAgenda');
+
+        if (mode === 'agenda') {
+            calEl.style.display = 'none';
+            agendaEl.style.display = 'flex';
+            btnCal.classList.remove('active');
+            btnAgenda.classList.add('active');
+        } else {
+            calEl.style.display = 'grid';
+            agendaEl.style.display = 'none';
+            btnCal.classList.add('active');
+            btnAgenda.classList.remove('active');
+        }
         render();
     }
 
@@ -381,55 +518,181 @@
     }
 
     function togglePrices() { hidePrices = !hidePrices; const btn = document.getElementById('priceToggle'); btn.innerText = hidePrices ? "HIDE PRICES" : "SHOW PRICES"; btn.classList.toggle('active'); render(); }
-    function applyFilter() { currentFilter = document.getElementById('djFilter').value; render(); }
+    
+    function applyFilter() { 
+        currentFilter = document.getElementById('djFilter').value; 
+        currentPackageFilter = document.getElementById('packageFilter').value; 
+        render(); 
+    }
+
+    function isShowMatchingFilter(s) {
+        const assign = assignments.find(a => String(a.id) === String(s.id));
+        
+        // DJ Filter
+        if (currentFilter === 'unassigned') {
+            if (assign && (assign.primary || assign.secondary)) return false;
+        } else if (currentFilter !== 'all') {
+            if (!assign || (assign.primary !== currentFilter && assign.secondary !== currentFilter)) return false;
+        }
+
+        // Package / Double Prints Filter
+        if (currentPackageFilter === 'double_prints') {
+            if (!assign || !assign.double_prints) return false;
+        } else if (currentPackageFilter === 'booth') {
+            if (!assign || !assign.booth) return false;
+        } else if (currentPackageFilter === 'prints') {
+            if (!assign || (!assign.prints && !assign.double_prints)) return false;
+        } else if (currentPackageFilter === 'guestbook') {
+            if (!assign || !assign.guestbook) return false;
+        } else if (currentPackageFilter === 'karaoke') {
+            if (!assign || !assign.karaoke) return false;
+        }
+
+        return true;
+    }
+
+    function createShowBoxHtml(s) {
+        const assign = assignments.find(a => String(a.id) === String(s.id));
+        let djColor1 = '#34495e', djColor2 = null, djText = "Unassigned", iconsHtml = "", priceText = "";
+        let sIcon = "❌"; 
+        if (s.status === "BOOKED AND PAID") sIcon = "✅"; 
+        else if (s.status === "CONTRACT SENT - WAITING ON PAYMENT") sIcon = "⚠️";
+
+        if (assign) {
+            const dj1 = djSettings.find(d => d.name === assign.primary); 
+            const dj2 = djSettings.find(d => d.name === assign.secondary);
+            if (dj1 && dj2) { djColor1 = dj1.color; djColor2 = dj2.color; djText = `${assign.primary} / ${assign.secondary}`; }
+            else if (dj1) { djColor1 = dj1.color; djText = assign.primary; }
+            
+            priceText = (!hidePrices && assign.price) ? formatCurrency(assign.price) : "";
+            
+            if(assign.ceremony) iconsHtml += `<span class="s-icon" title="Ceremony">🔈</span>`;
+            if(assign.reception) iconsHtml += `<span class="s-icon" title="Reception">🔊</span>`;
+            if(assign.booth) iconsHtml += `<span class="s-icon" title="Photo Booth">📷</span>`;
+            
+            // DOUBLE PRINTS BADGE (NEW)
+            if(assign.double_prints) {
+                iconsHtml += `<span class="double-print-badge" title="Double Prints (2x Copies)">🖨️² 2X</span>`;
+            } else if(assign.prints) {
+                iconsHtml += `<span class="s-icon" title="On-Site Prints">🖨️</span>`;
+            }
+
+            if(assign.guestbook) iconsHtml += `<span class="s-icon" title="Audio Guestbook">☎️</span>`;
+            if(assign.uplights > 0) iconsHtml += `<span class="s-icon" title="Up Lights">💡(${assign.uplights})</span>`;
+            if(assign.karaoke) iconsHtml += `<span class="s-icon" title="Karaoke">🎤</span>`;
+        }
+
+        const bgStyle = djColor2 ? `linear-gradient(135deg, ${djColor1} 50%, ${djColor2} 50%)` : djColor1;
+        const cleanClientEscaped = s.client.replace(/'/g, "\\'");
+        
+        return `<div class="show-box" style="background:${bgStyle}" onclick="openAssign('${s.id}', '${cleanClientEscaped}', '${s.date}')">
+            <div class="box-pad"><div class="top-row"><div class="dj-names-text">${djText}</div>${priceText ? `<div class="price-tag">${priceText}</div>` : ''}</div></div>
+            <div class="type-bar">${s.type}</div>
+            <div class="box-pad">
+                <b class="client-info">#${s.id} ${s.client}</b>
+                <div class="timing-info">${sIcon} 🛠️ ${s.setup} | 🟢 ${s.showStart} | 🛑 ${s.end}</div>
+                <div class="addr-text">@ ${s.loc.split(',').slice(0, 2).join(', ')}</div>
+            </div>
+            ${iconsHtml ? `<div class="icon-tray">${iconsHtml}</div>` : ''}
+        </div>`;
+    }
 
     function render() {
-        const grid = document.getElementById('calendar'); grid.innerHTML = '';
         const month = viewDate.getMonth(), year = viewDate.getFullYear();
         document.getElementById('monthLabel').innerText = viewDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+        
+        const filteredTotalCount = showData.filter(isShowMatchingFilter).length;
+        document.getElementById('totalEventsBadge').innerText = "Total Shows: " + filteredTotalCount;
+
+        if (currentViewMode === 'agenda') {
+            renderAgenda(year, month);
+        } else {
+            renderGrid(year, month);
+        }
+    }
+
+    function renderGrid(year, month) {
+        const grid = document.getElementById('calendar'); grid.innerHTML = '';
         ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => grid.innerHTML += `<div class="weekday">${d}</div>`);
         const firstDay = new Date(year, month, 1).getDay(), daysInMonth = new Date(year, month + 1, 0).getDate();
+        
         for(let i=0; i<firstDay; i++) grid.innerHTML += `<div class="day other-month"></div>`;
-        const filteredTotalCount = showData.filter(s => {
-            const assign = assignments.find(a => String(a.id) === String(s.id));
-            if (currentFilter === 'unassigned') return !assign || (!assign.primary && !assign.secondary);
-            if (currentFilter !== 'all') return assign && (assign.primary === currentFilter || assign.secondary === currentFilter);
-            return true;
-        }).length;
-        document.getElementById('totalEventsBadge').innerText = "Total Imported: " + filteredTotalCount;
+        
         for(let d=1; d<=daysInMonth; d++) {
             const dateStr = `${year}-${(month+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`;
             const isToday = (d === (new Date()).getDate() && month === (new Date()).getMonth() && year === (new Date()).getFullYear());
-            const todayOff = offData.filter(row => { if (currentFilter !== 'all' && currentFilter !== 'unassigned') return row[1] === dateStr && row[0].toLowerCase() === currentFilter.toLowerCase(); return row[1] === dateStr; });
-            const todayShows = showData.filter(s => { if (s.date !== dateStr) return false; const assign = assignments.find(a => String(a.id) === String(s.id)); if (currentFilter === 'unassigned') return !assign || (!assign.primary && !assign.secondary); if (currentFilter !== 'all') return assign && (assign.primary === currentFilter || assign.secondary === currentFilter); return true; });
-            let dayHtml = `<div class="day ${isToday ? 'today' : ''}"><span class="date-num">${d}</span>`;
-            todayOff.forEach(row => { const dj = djSettings.find(s => s.name.toLowerCase() === row[0].toLowerCase()); dayHtml += `<div style="background:${dj ? dj.color : '#95a5a6'}; color:white; padding:3px; border-radius:4px; font-size:9px; font-weight:bold; text-align:center; margin-bottom:2px;">${row[0]}</div>`; });
-            todayShows.forEach(s => {
-                const assign = assignments.find(a => String(a.id) === String(s.id));
-                let djColor1 = '#34495e', djColor2 = null, djText = "Unassigned", iconsHtml = "", priceText = "";
-                let sIcon = "❌"; if (s.status === "BOOKED AND PAID") sIcon = "✅"; else if (s.status === "CONTRACT SENT - WAITING ON PAYMENT") sIcon = "⚠️";
-                if (assign) {
-                    const dj1 = djSettings.find(d => d.name === assign.primary); const dj2 = djSettings.find(d => d.name === assign.secondary);
-                    if (dj1 && dj2) { djColor1 = dj1.color; djColor2 = dj2.color; djText = `${assign.primary} / ${assign.secondary}`; }
-                    else if (dj1) { djColor1 = dj1.color; djText = assign.primary; }
-                    priceText = (!hidePrices && assign.price) ? formatCurrency(assign.price) : "";
-                    if(assign.ceremony) iconsHtml += `<span class="s-icon">🔈</span>`;
-                    if(assign.reception) iconsHtml += `<span class="s-icon" style="filter: brightness(1.5);">🔊</span>`;
-                    if(assign.booth) iconsHtml += `<span class="s-icon">📷</span>`;
-                    if(assign.prints) iconsHtml += `<span class="s-icon">🖨️</span>`;
-                    if(assign.guestbook) iconsHtml += `<span class="s-icon">☎️</span>`;
-                    if(assign.uplights > 0) iconsHtml += `<span class="s-icon">💡<span class="up-count">(${assign.uplights})</span></span>`;
-                    if(assign.karaoke) iconsHtml += `<span class="s-icon">🎤</span>`;
-                }
-                const bgStyle = djColor2 ? `linear-gradient(135deg, ${djColor1} 50%, ${djColor2} 50%)` : djColor1;
-                dayHtml += `<div class="show-box" style="background:${bgStyle}" onclick="openAssign('${s.id}', '${s.client.replace(/'/g, "\\'")}', '${s.date}')">
-                    <div class="box-pad"><div class="top-row"><div class="dj-names-text">${djText}</div>${priceText ? `<div class="price-tag">${priceText}</div>` : ''}</div></div>
-                    <div class="type-bar">${s.type}</div>
-                    <div class="box-pad"><b class="client-info">#${s.id} ${s.client}</b><div class="timing-info">${sIcon} 🛠️ ${s.setup} | 🟢 ${s.showStart} | 🛑 ${s.end}</div><div class="addr-text">@ ${s.loc.split(',').slice(0, 2).join(', ')}</div></div>
-                    ${iconsHtml ? `<div class="icon-tray">${iconsHtml}</div>` : ''}
-                </div>`;
+            
+            const todayOff = offData.filter(row => { 
+                if (currentFilter !== 'all' && currentFilter !== 'unassigned') return row[1] === dateStr && row[0].toLowerCase() === currentFilter.toLowerCase(); 
+                return row[1] === dateStr; 
             });
+            
+            const todayShows = showData.filter(s => s.date === dateStr && isShowMatchingFilter(s));
+            
+            let dayHtml = `<div class="day ${isToday ? 'today' : ''}"><span class="date-num">${d}</span>`;
+            
+            todayOff.forEach(row => { 
+                const dj = djSettings.find(s => s.name.toLowerCase() === row[0].toLowerCase()); 
+                dayHtml += `<div style="background:${dj ? dj.color : '#95a5a6'}; color:white; padding:2px 4px; border-radius:4px; font-size:9px; font-weight:bold; text-align:center; margin-bottom:2px;">🏖️ ${row[0]} (OFF)</div>`; 
+            });
+            
+            todayShows.forEach(s => {
+                dayHtml += createShowBoxHtml(s);
+            });
+            
             grid.innerHTML += dayHtml + `</div>`;
+        }
+    }
+
+    function renderAgenda(year, month) {
+        const agenda = document.getElementById('agenda-view');
+        agenda.innerHTML = '';
+
+        // Filter events for the current month view
+        const currentMonthShows = showData.filter(s => {
+            const [sY, sM] = s.date.split('-').map(Number);
+            return sY === year && (sM - 1) === month && isShowMatchingFilter(s);
+        }).sort((a,b) => new Date(a.date) - new Date(b.date));
+
+        if (currentMonthShows.length === 0) {
+            agenda.innerHTML = `<div style="background:white; padding:30px; border-radius:12px; text-align:center; color:#64748b; font-weight:bold; border:1px solid #e2e8f0;">No shows found for this month & filter.</div>`;
+            return;
+        }
+
+        // Group by Date
+        const grouped = {};
+        currentMonthShows.forEach(s => {
+            if (!grouped[s.date]) grouped[s.date] = [];
+            grouped[s.date].push(s);
+        });
+
+        const todayStr = new Date().toISOString().split('T')[0];
+
+        for (const dateStr in grouped) {
+            const dateObj = new Date(dateStr + "T12:00:00");
+            const isToday = dateStr === todayStr;
+            const dayOffsOnDate = offData.filter(r => r[1] === dateStr);
+
+            let dayOffHtml = dayOffsOnDate.map(row => {
+                const dj = djSettings.find(s => s.name.toLowerCase() === row[0].toLowerCase());
+                return `<span style="background:${dj ? dj.color : '#95a5a6'}; color:white; font-size:10px; font-weight:bold; padding:2px 6px; border-radius:4px; margin-left:4px;">🏖️ ${row[0]} (OFF)</span>`;
+            }).join('');
+
+            let groupHtml = `<div class="agenda-day-group">
+                <div class="agenda-date-hdr">
+                    <div>
+                        <span>${dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                        ${isToday ? '<span class="agenda-today-tag">TODAY</span>' : ''}
+                    </div>
+                    <div>${dayOffHtml}</div>
+                </div>`;
+
+            grouped[dateStr].forEach(s => {
+                groupHtml += createShowBoxHtml(s);
+            });
+
+            groupHtml += `</div>`;
+            agenda.innerHTML += groupHtml;
         }
     }
 
@@ -437,10 +700,14 @@
         currentEventId = id; currentEventDate = date;
         const s = showData.find(ev => String(ev.id) === String(id)); if (!s) return;
         document.getElementById('assignTitle').innerText = "Show Details #" + id;
-        document.getElementById('assignDetails').innerText = client; document.getElementById('popType').innerText = s.type;
+        document.getElementById('assignDetails').innerText = client; 
+        document.getElementById('popType').innerText = s.type;
+        
         const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.loc)}`;
         document.getElementById('assignAddress').innerHTML = `<a href="${mapsUrl}" target="_blank" style="color:var(--accent); font-size:0.8rem; text-decoration:none; font-weight:bold;">📍 ${s.loc}</a>`;
-        document.getElementById('popSetup').innerText = s.setup; document.getElementById('popStart').innerText = s.showStart; document.getElementById('popEnd').innerText = s.end;
+        document.getElementById('popSetup').innerText = s.setup; 
+        document.getElementById('popStart').innerText = s.showStart; 
+        document.getElementById('popEnd').innerText = s.end;
         
         document.getElementById('venueNameWrap').style.display = 'block';
         document.getElementById('venueNameText').innerText = "";
@@ -467,8 +734,18 @@
         djSettings.forEach(dj => { pSel.innerHTML += `<option value="${dj.name}">${dj.name}</option>`; sSel.innerHTML += `<option value="${dj.name}">${dj.name}</option>`; });
         pSel.value = curr.primary || ""; sSel.value = curr.secondary || "";
         document.getElementById('priceInput').value = curr.price || "";
-        document.getElementById('checkCeremony').checked = !!curr.ceremony; document.getElementById('checkReception').checked = !!curr.reception; document.getElementById('checkBooth').checked = !!curr.booth; document.getElementById('checkPrints').checked = !!curr.prints; document.getElementById('checkGuestbook').checked = !!curr.guestbook; document.getElementById('checkKaraoke').checked = !!curr.karaoke; document.getElementById('uplightSelect').value = curr.uplights || "0";
-        checkOffStatus(); document.getElementById('assignModal').style.display = 'block';
+        
+        document.getElementById('checkCeremony').checked = !!curr.ceremony; 
+        document.getElementById('checkReception').checked = !!curr.reception; 
+        document.getElementById('checkBooth').checked = !!curr.booth; 
+        document.getElementById('checkPrints').checked = !!curr.prints; 
+        document.getElementById('checkDoublePrints').checked = !!curr.double_prints; // NEW DOUBLE PRINTS
+        document.getElementById('checkGuestbook').checked = !!curr.guestbook; 
+        document.getElementById('checkKaraoke').checked = !!curr.karaoke; 
+        document.getElementById('uplightSelect').value = curr.uplights || "0";
+        
+        checkOffStatus(); 
+        document.getElementById('assignModal').style.display = 'block';
     }
 
     async function fetchVenueName(address) {
@@ -506,13 +783,9 @@
                         nameText.innerText = venueMatch.name;
                         
                         if (venueMatch.place_id) {
-                            service.getDetails({ placeId: venueMatch.place_id, fields: ['formatted_phone_number', 'address_components'] }, (details, detailStatus) => {
+                            service.getDetails({ placeId: venueMatch.place_id, fields: ['formatted_phone_number'] }, (details, detailStatus) => {
                                 if (detailStatus === google.maps.places.PlacesServiceStatus.OK && details) {
-                                    if (details.formatted_phone_number) {
-                                        phoneText.innerText = details.formatted_phone_number;
-                                    } else {
-                                        phoneText.innerText = "N/A";
-                                    }
+                                    phoneText.innerText = details.formatted_phone_number || "N/A";
                                 }
                             });
                         }
@@ -535,7 +808,7 @@
     }
 
     // ==========================================
-    // DISPATCH / DJ EVENT PLANNER - PORTRAIT CORE
+    // DISPATCH / DJ EVENT PLANNER PDF GENERATION
     // ==========================================
     async function generateEventPDF() {
         const { jsPDF } = window.jspdf;
@@ -684,11 +957,12 @@
         doc.setFontSize(11);
         y += 10;
 
+        // INCLUDES DOUBLE PRINTS IN DISPATCH CHECKLIST
         const items = [
             assign.ceremony ? 'Ceremony System' : null,
             assign.reception ? 'Reception System' : null,
             assign.booth ? 'Photo Booth' : null,
-            assign.prints ? 'On Site Prints' : null,
+            assign.double_prints ? 'Double Prints (2x Strips per session)' : (assign.prints ? 'On Site Prints' : null),
             assign.guestbook ? 'Audio Guestbook' : null,
             assign.karaoke ? 'Karaoke' : null,
             (assign.uplights || 0) > 0 ? `Up Lights x${assign.uplights}` : null
@@ -717,7 +991,7 @@
     }
 
     // ==========================================
-    // CLIENT RIDER AUTOMATION ENGINE - WORD-WRAPPED CARD
+    // CLIENT RIDER AUTOMATION ENGINE
     // ==========================================
     async function generateClientReminderPDF() {
         const { jsPDF } = window.jspdf;
@@ -774,7 +1048,6 @@
         wednesdayCalculatedObj.setDate(showEventDateObj.getDate() - daysToSubtractToHitWednesday);
         const wednesdayFormattedString = (wednesdayCalculatedObj.getMonth() + 1) + "/" + wednesdayCalculatedObj.getDate();
 
-        // Calculate the Tuesday IMMEDIATELY FOLLOWING the event
         const postEventTuesdayObj = new Date(showEventDateObj.getTime());
         const daysUntilNextTuesday = (2 - rawDayIndexNum + 7) % 7 || 7;
         postEventTuesdayObj.setDate(showEventDateObj.getDate() + daysUntilNextTuesday);
@@ -789,7 +1062,6 @@
         doc.text(introParagraph, 20, y, { maxWidth: 170 });
         y += 14;
 
-        // Pre-calculate wrapped lines for the flexible center column (Max column width: 62mm)
         doc.setFont(undefined, 'bold');
         doc.setFontSize(10.5);
         const determinedSavedVenueName = assign.venue_name || currentVenueName;
@@ -801,18 +1073,15 @@
         const fullCleanedStreetAddress = stripEmoji(s.loc).trim();
         const wrappedAddressLines = doc.splitTextToSize(fullCleanedStreetAddress, 62);
 
-        // Dynamically compute the column block card layout height based on total generated text lines
         const totalLinesCount = wrappedVenueLines.length + wrappedAddressLines.length;
         const totalBlockHeight = Math.max(26, (totalLinesCount * 4) + 12);
 
-        // Render HIGH CONTRAST MODULE background card container
         doc.setFillColor(255, 240, 245);
         doc.rect(20, y, 170, totalBlockHeight, 'F');
         doc.setDrawColor(255, 0, 127);
         doc.setLineWidth(0.5);
         doc.line(20, y, 20, y + totalBlockHeight);
         
-        // Static Header Labels
         doc.setFont(undefined, 'bold');
         doc.setFontSize(9);
         doc.setTextColor(110, 120, 130);
@@ -820,7 +1089,6 @@
         doc.text("VENUE & LOCATION", 105, y + 7, { align: 'center' });
         doc.text("CEREMONY START", 168, y + 7, { align: 'center' });
 
-        // Left Column Data (Date Strings)
         doc.setFont(undefined, 'bold');
         doc.setFontSize(10.5);
         doc.setTextColor(255, 0, 127);
@@ -830,7 +1098,6 @@
         doc.setTextColor(130, 140, 150);
         doc.text(`(${targetWeekdayString})`, 42, y + 20, { align: 'center' });
 
-        // Right Column Data (Timing Schedules)
         doc.setFont(undefined, 'bold');
         doc.setFontSize(10.5);
         doc.setTextColor(255, 0, 127);
@@ -840,7 +1107,6 @@
         doc.setTextColor(130, 140, 150);
         doc.text(`Music Ends: ${s.end}`, 168, y + 20, { align: 'center' });
 
-        // Center Column Data Loop (Auto Word-Wrapped Venue & Address Stack)
         let centerColumnTextCursorY = y + 14;
         
         doc.setFont(undefined, 'bold');
@@ -851,7 +1117,7 @@
             centerColumnTextCursorY += 4.5;
         });
 
-        centerColumnTextCursorY += 0.5; // Micro spacing gap between name and street lines
+        centerColumnTextCursorY += 0.5;
 
         doc.setFont(undefined, 'normal');
         doc.setFontSize(8.5);
@@ -861,7 +1127,6 @@
             centerColumnTextCursorY += 3.8;
         });
 
-        // Offset layout tracking coordinate engine to clean boundaries below the flexible card
         y += totalBlockHeight + 8;
 
         const riders = [
@@ -906,15 +1171,15 @@
         });
         y += calculateDeadlineBoxHeight + 4;
 
-        // PHOTO BOOTH & AUDIO GUESTBOOK MEDIA DELIVERY NOTICE
         const hasBooth = !!assign.booth;
         const hasGuestbook = !!assign.guestbook;
+        const hasDoublePrints = !!assign.double_prints;
         let mediaText = "";
 
         if (hasBooth && hasGuestbook) {
-            mediaText = `DIGITAL MEDIA DELIVERY: Your online Photo Booth gallery and Audio Guestbook recording links will be delivered directly to your email by Tuesday, ${postTuesdayFormattedString}.`;
+            mediaText = `DIGITAL MEDIA DELIVERY: Your online Photo Booth gallery${hasDoublePrints ? ' (with Double Prints copies)' : ''} and Audio Guestbook recording links will be delivered directly to your email by Tuesday, ${postTuesdayFormattedString}.`;
         } else if (hasBooth) {
-            mediaText = `PHOTO BOOTH GALLERY DELIVERY: Your digital Photo Booth gallery link will be delivered directly to your email by Tuesday, ${postTuesdayFormattedString}.`;
+            mediaText = `PHOTO BOOTH GALLERY DELIVERY: Your digital Photo Booth gallery link${hasDoublePrints ? ' (with Double Prints copies)' : ''} will be delivered directly to your email by Tuesday, ${postTuesdayFormattedString}.`;
         } else if (hasGuestbook) {
             mediaText = `AUDIO GUESTBOOK DELIVERY: Your Audio Guestbook audio recordings link will be delivered directly to your email by Tuesday, ${postTuesdayFormattedString}.`;
         }
@@ -985,9 +1250,9 @@
 
         let mediaEmailParagraph = "";
         if (hasBooth && hasGuestbook) {
-            mediaEmailParagraph = `\n\n📸 🎙️ Digital Media Delivery: Since your package includes our Photo Booth and Audio Guestbook, you will receive email links to access all of your digital photo gallery images and audio recordings by Tuesday, ${postTuesdayFormattedString}!`;
+            mediaEmailParagraph = `\n\n📸 🎙️ Digital Media Delivery: Since your package includes our Photo Booth${hasDoublePrints ? ' (with Double Prints)' : ''} and Audio Guestbook, you will receive email links to access all of your digital photo gallery images and audio recordings by Tuesday, ${postTuesdayFormattedString}!`;
         } else if (hasBooth) {
-            mediaEmailParagraph = `\n\n📸 Digital Media Delivery: Since your package includes our Photo Booth, you will receive an email link to your complete digital gallery by Tuesday, ${postTuesdayFormattedString}!`;
+            mediaEmailParagraph = `\n\n📸 Digital Media Delivery: Since your package includes our Photo Booth${hasDoublePrints ? ' (with Double Prints)' : ''}, you will receive an email link to your complete digital gallery by Tuesday, ${postTuesdayFormattedString}!`;
         } else if (hasGuestbook) {
             mediaEmailParagraph = `\n\n🎙️ Digital Media Delivery: Since your package includes our Audio Guestbook, you will receive an email link to listen to all of your guest audio messages by Tuesday, ${postTuesdayFormattedString}!`;
         }
@@ -1017,6 +1282,7 @@
             reception: document.getElementById('checkReception').checked, 
             booth: document.getElementById('checkBooth').checked, 
             prints: document.getElementById('checkPrints').checked, 
+            double_prints: document.getElementById('checkDoublePrints').checked, // NEW: Double prints saved to backend
             guestbook: document.getElementById('checkGuestbook').checked, 
             uplights: document.getElementById('uplightSelect').value, 
             karaoke: document.getElementById('checkKaraoke').checked,
@@ -1027,11 +1293,77 @@
         setTimeout(() => location.reload(), 2500); 
     }
     
-    function checkOffStatus() { const p = document.getElementById('primarySelect').value, s = document.getElementById('secondarySelect').value; const w = document.getElementById('offWarning'); const pOff = offData.some(row => row[1] === currentEventDate && row[0].toLowerCase() === p.toLowerCase()); const sOff = offData.some(row => row[1] === currentEventDate && row[0].toLowerCase() === s.toLowerCase()); if (w) w.style.display = (pOff || sOff) ? 'block' : 'none'; }
-    function submitHiddenForm(data) { const f = document.getElementById('cors_bypass_form'); f.action = scriptURL; f.innerHTML = ''; for (const k in data) { const i = document.createElement('input'); i.type = 'hidden'; i.name = k; i.value = typeof data[k] === 'object' ? JSON.stringify(data[k]) : data[k]; f.appendChild(i); } f.submit(); }
-    function addNewDj() { submitHiddenForm({ action: 'addDJ', name: document.getElementById('newDjName').value, color: document.getElementById('newDjColor').value }); setTimeout(() => location.reload(), 2500); }
-    function saveAllColors() { const updates = Array.from(document.querySelectorAll('.dj-edit-row')).filter(r => r.dataset.name).map(row => ({ name: row.dataset.name, color: row.querySelector('input[type="color"]').value })); submitHiddenForm({ action: 'saveColors', updates: updates }); setTimeout(() => location.reload(), 2000); }
-    function handleIcsUpload() { const fI = document.getElementById('icsInput'); if (!fI.files[0]) return alert("Select file"); let token = localStorage.getItem('gh_token'); if (!token) { token = prompt("Enter Token:"); if (token) localStorage.setItem('gh_token', token); } if (!token) return; const btn = document.getElementById('uploadBtn'); btn.innerText = "UPLOADING..."; btn.disabled = true; fI.files[0].text().then(c => { const b64 = btoa(unescape(encodeURIComponent(c))); fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/events.ics`, { headers: { 'Authorization': `token ${token}` } }).then(res => { return res.json(); }).then(data => { return fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/events.ics`, { method: 'PUT', headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ message: `Update ICS`, content: b64, sha: data.sha }) }); }).then(res => { if (res.ok) { alert("Success!"); location.reload(); } else { throw new Error(); } }).catch(() => { alert("Failed."); localStorage.removeItem('gh_token'); btn.innerText = "UPLOAD"; btn.disabled = false; }); }); }
+    function checkOffStatus() { 
+        const p = document.getElementById('primarySelect').value, s = document.getElementById('secondarySelect').value; 
+        const w = document.getElementById('offWarning'); 
+        const pOff = offData.some(row => row[1] === currentEventDate && row[0].toLowerCase() === p.toLowerCase()); 
+        const sOff = offData.some(row => row[1] === currentEventDate && row[0].toLowerCase() === s.toLowerCase()); 
+        if (w) w.style.display = (pOff || sOff) ? 'block' : 'none'; 
+    }
+
+    function submitHiddenForm(data) { 
+        const f = document.getElementById('cors_bypass_form'); 
+        f.action = scriptURL; 
+        f.innerHTML = ''; 
+        for (const k in data) { 
+            const i = document.createElement('input'); 
+            i.type = 'hidden'; 
+            i.name = k; 
+            i.value = typeof data[k] === 'object' ? JSON.stringify(data[k]) : data[k]; 
+            f.appendChild(i); 
+        } 
+        f.submit(); 
+    }
+
+    function addNewDj() { 
+        submitHiddenForm({ action: 'addDJ', name: document.getElementById('newDjName').value, color: document.getElementById('newDjColor').value }); 
+        setTimeout(() => location.reload(), 2500); 
+    }
+
+    function saveAllColors() { 
+        const updates = Array.from(document.querySelectorAll('.dj-edit-row')).filter(r => r.dataset.name).map(row => ({ name: row.dataset.name, color: row.querySelector('input[type="color"]').value })); 
+        submitHiddenForm({ action: 'saveColors', updates: updates }); 
+        setTimeout(() => location.reload(), 2000); 
+    }
+
+    function handleIcsUpload() { 
+        const fI = document.getElementById('icsInput'); 
+        if (!fI.files[0]) return alert("Select file"); 
+        let token = localStorage.getItem('gh_token'); 
+        if (!token) { 
+            token = prompt("Enter Token:"); 
+            if (token) localStorage.setItem('gh_token', token); 
+        } 
+        if (!token) return; 
+        const btn = document.getElementById('uploadBtn'); 
+        btn.innerText = "UPLOADING..."; 
+        btn.disabled = true; 
+        fI.files[0].text().then(c => { 
+            const b64 = btoa(unescape(encodeURIComponent(c))); 
+            fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/events.ics`, { 
+                headers: { 'Authorization': `token ${token}` } 
+            }).then(res => res.json()).then(data => { 
+                return fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/events.ics`, { 
+                    method: 'PUT', 
+                    headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ message: `Update ICS`, content: b64, sha: data.sha }) 
+                }); 
+            }).then(res => { 
+                if (res.ok) { 
+                    alert("Success!"); 
+                    location.reload(); 
+                } else { 
+                    throw new Error(); 
+                } 
+            }).catch(() => { 
+                alert("Failed."); 
+                localStorage.removeItem('gh_token'); 
+                btn.innerText = "UPLOAD"; 
+                btn.disabled = false; 
+            }); 
+        }); 
+    }
+
     function changeMonth(dir) { viewDate.setDate(1); viewDate.setMonth(viewDate.getMonth() + dir); render(); }
     function goToToday() { viewDate = new Date(); render(); }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
@@ -1059,6 +1391,13 @@
         }).join('');
         document.getElementById('djSettingsList').innerHTML = html;
     }
+
+    // Auto-detect mobile on resize
+    window.addEventListener('resize', () => {
+        if (window.innerWidth <= 768 && currentViewMode === 'cal') {
+            switchView('agenda');
+        }
+    });
 
     init();
 </script>
