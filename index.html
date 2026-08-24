@@ -1449,6 +1449,10 @@
         let emailSubject = `Quick Setup Reminder for Your Event! - Show #${s.id}`;
         let emailBodyText = "";
 
+        const hasBooth = !!(assign.booth || document.getElementById('checkBooth').checked);
+        const hasGuestbook = !!(assign.guestbook || document.getElementById('checkGuestbook').checked);
+        const hasDoublePrints = !!(assign.double_prints || document.getElementById('checkDoublePrints').checked);
+
         let mediaEmailParagraph = "";
         if (hasBooth && hasGuestbook) {
             mediaEmailParagraph = `\n\n📸 🎙️ Digital Media Delivery: Since your package includes our Photo Booth${hasDoublePrints ? ' (with Double Prints)' : ''} and Audio Guestbook, you will receive email links to access all of your digital photo gallery images and audio recordings by Tuesday, ${postTuesdayFormattedString}!`;
