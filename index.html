@@ -531,6 +531,11 @@
                     }
                 }
 
+                // Extract email if provided in ICS description or contact
+                const emailMatch = rawDesc.match(/(?:Client Email|Email|E-mail|Contact Email):\s*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i)
+                    || block.match(/mailto:([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i);
+                const extractedEmail = emailMatch ? emailMatch[1].trim() : '';
+
                 if (startRaw && startRaw[1]) {
                     const dt = startRaw[1].substring(0, 8);
                     events.push({
@@ -543,7 +548,8 @@
                         status: stripOnSiteText(eventStatus) || "BOOKED AND PAID",
                         client: stripOnSiteText(clientName) || "Private Client", 
                         loc: stripOnSiteText(fullLoc) || 'Location TBD',
-                        site_name: stripOnSiteText(extractedSite)
+                        site_name: stripOnSiteText(extractedSite),
+                        client_email: extractedEmail
                     });
                 }
             });
@@ -567,14 +573,23 @@
             offData = data.offData || []; 
             djSettings = data.djs || []; 
             if (data.assignments && data.assignments.length > 0) {
-                // Merge backend with any locally saved entries
+                // Merge backend with any locally saved entries without clearing typed local values
                 const merged = [...assignments];
                 data.assignments.forEach(remote => {
                     const idx = merged.findIndex(a => String(a.id) === String(remote.id));
+                    const remoteEmail = remote.client_email || remote.clientEmail || remote.email;
                     if (idx >= 0) {
-                        merged[idx] = { ...merged[idx], ...remote };
+                        const local = merged[idx];
+                        merged[idx] = { 
+                            ...local, 
+                            ...remote,
+                            client_email: (remoteEmail !== undefined && remoteEmail !== '') ? remoteEmail : (local.client_email || local.clientEmail || local.email || '')
+                        };
                     } else {
-                        merged.push(remote);
+                        merged.push({
+                            ...remote,
+                            client_email: remoteEmail || ''
+                        });
                     }
                 });
                 assignments = merged;
@@ -812,13 +827,8 @@
         document.getElementById('venueNameText').innerText = "";
         document.getElementById('venuePhoneWrap').style.display = 'block';
         document.getElementById('venuePhoneText').innerText = "";
-        document.getElementById('clientEmailInput').value = "";
-        
         const curr = assignments.find(a => String(a.id) === String(id)) || {};
-        
-        if (curr.client_email) {
-            document.getElementById('clientEmailInput').value = curr.client_email;
-        }
+        document.getElementById('clientEmailInput').value = curr.client_email || curr.clientEmail || curr.email || s.client_email || "";
         
         if (curr.venue_name) {
             currentVenueName = curr.venue_name;
@@ -1101,6 +1111,46 @@
         doc.save(`Event-${s.id}-${primary}.pdf`);
     }
 
+    function createOutlookDraftFile(to, cc, subject, bodyText, pdfDoc, pdfFileName) {
+        const boundary = '----=_Part_FunSquad_' + Math.random().toString(36).substring(2) + '_' + Date.now();
+        const dataUri = pdfDoc.output('datauristring');
+        const base64Pdf = dataUri.split(',')[1] || '';
+        const base64Chunked = base64Pdf.match(/.{1,76}/g)?.join('\r\n') || base64Pdf;
+
+        const emlContent = [
+            to ? `To: ${to}` : '',
+            cc ? `Cc: ${cc}` : '',
+            `Subject: ${subject}`,
+            `X-Unsent: 1`,
+            `MIME-Version: 1.0`,
+            `Content-Type: multipart/mixed; boundary="${boundary}"`,
+            ``,
+            `--${boundary}`,
+            `Content-Type: text/plain; charset=UTF-8; format=flowed`,
+            `Content-Transfer-Encoding: 8bit`,
+            ``,
+            bodyText.replace(/\r?\n/g, '\r\n'),
+            ``,
+            `--${boundary}`,
+            `Content-Type: application/pdf; name="${pdfFileName}"`,
+            `Content-Transfer-Encoding: base64`,
+            `Content-Disposition: attachment; filename="${pdfFileName}"`,
+            ``,
+            base64Chunked,
+            ``,
+            `--${boundary}--`
+        ].filter(line => line !== '').join('\r\n');
+
+        const blob = new Blob([emlContent], { type: 'message/rfc822' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `FunSquad-Outlook-Draft-${pdfFileName.replace(/\.pdf$/i, '')}.eml`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(link.href), 10000);
+    }
+
     // ==========================================
     // CLIENT RIDER AUTOMATION ENGINE
     // ==========================================
@@ -1360,6 +1410,39 @@
 
         const destinationClientEmail = document.getElementById('clientEmailInput').value.trim();
 
+        // Auto-persist details (including newly entered email)
+        const updatedAssign = {
+            id: String(s.id),
+            primary: document.getElementById('primarySelect').value, 
+            secondary: document.getElementById('secondarySelect').value, 
+            price: document.getElementById('priceInput').value, 
+            ceremony: document.getElementById('checkCeremony').checked, 
+            reception: document.getElementById('checkReception').checked, 
+            booth: document.getElementById('checkBooth').checked, 
+            prints: document.getElementById('checkPrints').checked, 
+            double_prints: document.getElementById('checkDoublePrints').checked,
+            guestbook: document.getElementById('checkGuestbook').checked, 
+            uplights: document.getElementById('uplightSelect').value, 
+            karaoke: document.getElementById('checkKaraoke').checked,
+            venue_name: currentVenueName,
+            site_name: document.getElementById('siteNameInput').value.trim(),
+            venue_phone: document.getElementById('venuePhoneText').innerText,
+            client_email: destinationClientEmail
+        };
+        const existingIdx = assignments.findIndex(a => String(a.id) === String(s.id));
+        if (existingIdx >= 0) {
+            assignments[existingIdx] = { ...assignments[existingIdx], ...updatedAssign };
+        } else {
+            assignments.push(updatedAssign);
+        }
+        try {
+            localStorage.setItem('fs_dj_assignments', JSON.stringify(assignments));
+        } catch(e) {}
+        submitHiddenForm({ 
+            action: 'assignDJ', 
+            ...updatedAssign
+        });
+
         let emailSubject = `Quick Setup Reminder for Your Event! - Show #${s.id}`;
         let emailBodyText = "";
 
@@ -1379,10 +1462,14 @@
             emailBodyText = `Hi ${s.client},\n\nWe are looking forward to celebrating with you this ${targetWeekdayString} for your upcoming event!\n\nOne of our highly talented ${formattedTitleCaseEventLabel.toLowerCase()} DJs will be arriving at your venue at ${plannedArrivalTime} to handle setup and soundchecks long before your event begins.\n\nPlease take a brief moment to look over the attached one-page setup checklist and forward it to your venue manager or coordinator to make sure they have our workspace ready (including a shaded spot out of the sun, a 6-foot table, power outlets within 30 feet, and keeping guest smoking or marijuana areas clear of the audio gear).\n\nAlso, a quick reminder that any final music or timeline changes need to be submitted by Wednesday evening (${wednesdayFormattedString}) to guarantee those adjustments are locked in for your event.${mediaEmailParagraph}\n\nIf you have any questions or want to review your timeline, feel free to give me a call or schedule a quick meeting with me here: https://cal.com/djlane/15min`;
         }
         
+        // 1. Generate Outlook Draft (.eml) with pre-filled recipient, subject, full body text, and PDF attached!
+        createOutlookDraftFile(destinationClientEmail, 'ariel@funsquaddjs.com', emailSubject, emailBodyText, doc, fileName);
+
+        // 2. Copy full text to clipboard
         navigator.clipboard.writeText(emailBodyText).then(() => {
-            const mailtoUrl = `mailto:${destinationClientEmail}?cc=ariel@funsquaddjs.com&subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent("=== EMAIL BODY COPIED TO CLIPBOARD - PRESS CTRL+V TO PASTE ===\n\n[Please hit paste to populate body copy message text and manually attach: " + fileName + "]")}`;
+            // 3. Trigger clean mailto directly with recipient and full body text
+            const mailtoUrl = `mailto:${encodeURIComponent(destinationClientEmail)}?cc=ariel@funsquaddjs.com&subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBodyText)}`;
             window.location.href = mailtoUrl;
-            alert(`🎉 PDF Generated!\n\n1. Check your downloads for the requirement PDF.\n2. Outlook has been triggered.\n3. The email text is on your clipboard—simply press Ctrl+V to paste the body copy and drag the PDF inside!`);
         });
     }
 
