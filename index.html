@@ -174,7 +174,7 @@
         <label class="checkbox-row"><input type="checkbox" id="checkBooth"> Photo Booth (📷)</label>
         <label class="checkbox-row"><input type="checkbox" id="checkPrints"> Photo Prints (🖨️)</label>
         
-        <!-- NEW: DOUBLE PRINTS OPTION -->
+        <!-- DOUBLE PRINTS OPTION -->
         <label class="checkbox-row double-print-row">
             <input type="checkbox" id="checkDoublePrints"> 
             <span><strong>Double Prints (🖨️² 2X)</strong> <small style="display:block; color:#92400e; font-size:0.75rem;">Prints 2 strips per session for guestbook/guests</small></span>
@@ -683,7 +683,7 @@
             if(assign.reception) iconsHtml += `<span class="s-icon" title="Reception">🔊</span>`;
             if(assign.booth) iconsHtml += `<span class="s-icon" title="Photo Booth">📷</span>`;
             
-            // DOUBLE PRINTS BADGE (NEW)
+            // DOUBLE PRINTS BADGE
             if(assign.double_prints) {
                 iconsHtml += `<span class="double-print-badge" title="Double Prints (2x Copies)">🖨️² 2X</span>`;
             } else if(assign.prints) {
@@ -785,617 +785,491 @@
         for (const dateStr in grouped) {
             const dateObj = new Date(dateStr + "T12:00:00");
             const isToday = dateStr === todayStr;
-            const dayOffsOnDate = offData.filter(r => r[1] === dateStr);
-
-            let dayOffHtml = dayOffsOnDate.map(row => {
-                const dj = djSettings.find(s => s.name.toLowerCase() === row[0].toLowerCase());
-                return `<span style="background:${dj ? dj.color : '#95a5a6'}; color:white; font-size:10px; font-weight:bold; padding:2px 6px; border-radius:4px; margin-left:4px;">🏖️ ${row[0]} (OFF)</span>`;
-            }).join('');
-
-            let groupHtml = `<div class="agenda-day-group">
-                <div class="agenda-date-hdr">
-                    <div>
-                        <span>${dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
-                        ${isToday ? '<span class="agenda-today-tag">TODAY</span>' : ''}
-                    </div>
-                    <div>${dayOffHtml}</div>
-                </div>`;
-
-            grouped[dateStr].forEach(s => {
-                groupHtml += createShowBoxHtml(s);
-            });
-
-            groupHtml += `</div>`;
-            agenda.innerHTML += groupHtml;
-        }
-    }
-
-    function openAssign(id, client, date) {
-        currentEventId = id; currentEventDate = date;
-        const s = showData.find(ev => String(ev.id) === String(id)); if (!s) return;
-        document.getElementById('assignTitle').innerText = "Show Details #" + id;
-        document.getElementById('assignDetails').innerText = client; 
-        document.getElementById('popType').innerText = s.type;
-        
-        const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.loc)}`;
-        document.getElementById('assignAddress').innerHTML = `<a href="${mapsUrl}" target="_blank" style="color:var(--accent); font-size:0.8rem; text-decoration:none; font-weight:bold;">📍 ${s.loc}</a>`;
-        document.getElementById('popSetup').innerText = s.setup; 
-        document.getElementById('popStart').innerText = s.showStart; 
-        document.getElementById('popEnd').innerText = s.end;
-        
-        document.getElementById('venueNameWrap').style.display = 'block';
-        document.getElementById('venueNameText').innerText = "";
-        document.getElementById('venuePhoneWrap').style.display = 'block';
-        document.getElementById('venuePhoneText').innerText = "";
-        const curr = assignments.find(a => String(a.id) === String(id)) || {};
-        document.getElementById('clientEmailInput').value = curr.client_email || curr.clientEmail || curr.email || s.client_email || "";
-        
-        if (curr.venue_name) {
-            currentVenueName = curr.venue_name;
-            document.getElementById('venueNameText').innerText = curr.venue_name;
-            document.getElementById('venuePhoneText').innerText = curr.venue_phone || "N/A";
-        } else {
-            fetchVenueName(s.loc);
-        }
-
-        document.getElementById('siteNameInput').value = curr.site_name || s.site_name || "";
-
-        const pSel = document.getElementById('primarySelect'), sSel = document.getElementById('secondarySelect');
-        pSel.innerHTML = sSel.innerHTML = '<option value="">None</option>';
-        djSettings.forEach(dj => { pSel.innerHTML += `<option value="${dj.name}">${dj.name}</option>`; sSel.innerHTML += `<option value="${dj.name}">${dj.name}</option>`; });
-        pSel.value = curr.primary || ""; sSel.value = curr.secondary || "";
-        document.getElementById('priceInput').value = curr.price || "";
-        
-        document.getElementById('checkCeremony').checked = !!curr.ceremony; 
-        document.getElementById('checkReception').checked = !!curr.reception; 
-        document.getElementById('checkBooth').checked = !!curr.booth; 
-        document.getElementById('checkPrints').checked = !!curr.prints; 
-        document.getElementById('checkDoublePrints').checked = !!curr.double_prints; // NEW DOUBLE PRINTS
-        document.getElementById('checkGuestbook').checked = !!curr.guestbook; 
-        document.getElementById('checkKaraoke').checked = !!curr.karaoke; 
-        document.getElementById('uplightSelect').value = curr.uplights || "0";
-        
-        checkOffStatus(); 
-        document.getElementById('assignModal').style.display = 'block';
-    }
-
-    async function fetchVenueName(address) {
-        currentVenueName = "";
-        const nameText = document.getElementById('venueNameText');
-        const phoneText = document.getElementById('venuePhoneText');
-        
-        nameText.innerText = "Looking up venue name...";
-        phoneText.innerText = "";
-        
-        const cleanAddr = cleanAddressForLookup(address);
-        
-        try {
-            await loadGoogleMapsAsync();
-            const service = new google.maps.places.PlacesService(document.createElement('div'));
-            const businessSearchQuery = "place at " + cleanAddr;
-            
-            service.textSearch({ query: businessSearchQuery }, (results, status) => {
-                if (status === google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
-                    let venueMatch = results.find(r => r.types && r.types.includes("establishment") && !/^\d+\s+[A-Za-z]/.test(r.name));
-                    if (!venueMatch) venueMatch = results.find(r => !/^\d+\s+[A-Za-z]/.test(r.name));
-                    
-                    if (venueMatch && venueMatch.name) {
-                        const initialStreetNumStr = (cleanAddr.match(/^\d+/) || [""])[0];
-                        const checkedFormattedAddress = venueMatch.formatted_address || "";
-                        
-                        if (initialStreetNumStr && !checkedFormattedAddress.includes(initialStreetNumStr)) {
-                            currentVenueName = "Private Residence";
-                            nameText.innerText = "Private Residence";
-                            phoneText.innerText = "N/A";
-                            return;
-                        }
-
-                        currentVenueName = venueMatch.name;
-                        nameText.innerText = venueMatch.name;
-                        
-                        if (venueMatch.place_id) {
-                            service.getDetails({ placeId: venueMatch.place_id, fields: ['formatted_phone_number'] }, (details, detailStatus) => {
-                                if (detailStatus === google.maps.places.PlacesServiceStatus.OK && details) {
-                                    phoneText.innerText = details.formatted_phone_number || "N/A";
-                                }
-                            });
-                        }
-                    } else {
-                        currentVenueName = "Private Residence";
-                        nameText.innerText = "Private Residence";
-                        phoneText.innerText = "N/A";
-                    }
-                } else {
-                    currentVenueName = "Private Residence";
-                    nameText.innerText = "Private Residence";
-                    phoneText.innerText = "N/A";
+            const dayOffsOnDate = offData.filter(row => {
+                if (currentFilter !== 'all' && currentFilter !== 'unassigned') {
+                    return row[1] === dateStr && row[0].toLowerCase() === currentFilter.toLowerCase();
                 }
+                return row[1] === dateStr;
             });
-        } catch(e) {
-            currentVenueName = "Private Residence";
-            nameText.innerText = "Private Residence";
-            phoneText.innerText = "N/A";
+
+            let offBadgesHtml = '';
+            dayOffsOnDate.forEach(row => {
+                const dj = djSettings.find(s => s.name.toLowerCase() === row[0].toLowerCase());
+                offBadgesHtml += `<span style="background:${dj ? dj.color : '#95a5a6'}; color:white; padding:3px 6px; border-radius:6px; font-size:10px; font-weight:bold;">🏖️ ${row[0]} (OFF)</span> `;
+            });
+
+            let showsHtml = grouped[dateStr].map(createShowBoxHtml).join('');
+
+            agenda.innerHTML += `
+                <div class="agenda-day-group">
+                    <div class="agenda-date-hdr">
+                        <div>
+                            <span>${dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                            ${isToday ? `<span class="agenda-today-tag">TODAY</span>` : ''}
+                        </div>
+                        <div>${offBadgesHtml}</div>
+                    </div>
+                    ${showsHtml}
+                </div>
+            `;
         }
     }
 
-    // ==========================================
-    // DISPATCH / DJ EVENT PLANNER PDF GENERATION
-    // ==========================================
+    async function openAssign(id, client, date) {
+        currentEventId = id; currentEventDate = date;
+        const s = showData.find(e => String(e.id) === String(id));
+        const assign = assignments.find(a => String(a.id) === String(id));
+        
+        document.getElementById('assignTitle').innerText = `#${id} ${client}`;
+        document.getElementById('popType').innerText = s ? s.type : 'EVENT';
+        
+        let formattedDate = date;
+        try {
+            const [y, m, d] = date.split('-').map(Number);
+            const dt = new Date(y, m - 1, d);
+            formattedDate = dt.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+        } catch(e){}
+        
+        document.getElementById('assignDetails').innerText = formattedDate;
+        
+        const loc = s ? s.loc : 'Location TBD';
+        const cleanLoc = cleanAddressForLookup(loc);
+        const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cleanLoc)}`;
+        document.getElementById('assignAddress').innerHTML = `<a href="${mapUrl}" target="_blank" style="color:var(--info); font-weight:bold; font-size:0.75rem; text-decoration:none; display:inline-flex; align-items:center; gap:3px;">📍 ${loc} ↗</a>`;
+        
+        // Client Email (from saved assignments or extracted ICS)
+        const emailInput = document.getElementById('clientEmailInput');
+        if (assign && assign.client_email) {
+            emailInput.value = assign.client_email;
+        } else if (s && s.client_email) {
+            emailInput.value = s.client_email;
+        } else {
+            emailInput.value = '';
+        }
+
+        // Room / Site Area name
+        const siteInput = document.getElementById('siteNameInput');
+        siteInput.value = (assign && assign.site_name) || (s && s.site_name) || '';
+
+        // Display Times
+        document.getElementById('popSetup').innerText = s ? s.setup : '--';
+        document.getElementById('popStart').innerText = s ? s.showStart : '--';
+        document.getElementById('popEnd').innerText = s ? s.end : '--';
+
+        const pSel = document.getElementById('primarySelect');
+        const sSel = document.getElementById('secondarySelect');
+        pSel.innerHTML = '<option value="">-- Select Primary DJ --</option>';
+        sSel.innerHTML = '<option value="">-- None --</option>';
+        
+        djSettings.forEach(dj => {
+            const pOff = offData.some(row => row[1] === date && row[0].toLowerCase() === dj.name.toLowerCase());
+            pSel.innerHTML += `<option value="${dj.name}">${dj.name}${pOff ? ' (OFF)' : ''}</option>`;
+            sSel.innerHTML += `<option value="${dj.name}">${dj.name}${pOff ? ' (OFF)' : ''}</option>`;
+        });
+
+        pSel.value = assign ? assign.primary : "";
+        sSel.value = assign ? assign.secondary : "";
+        document.getElementById('priceInput').value = assign ? (assign.price || "") : "";
+        
+        document.getElementById('checkCeremony').checked = assign ? !!assign.ceremony : false;
+        document.getElementById('checkReception').checked = assign ? !!assign.reception : false;
+        document.getElementById('checkBooth').checked = assign ? !!assign.booth : false;
+        document.getElementById('checkPrints').checked = assign ? !!assign.prints : false;
+        document.getElementById('checkDoublePrints').checked = assign ? !!assign.double_prints : false;
+        document.getElementById('checkGuestbook').checked = assign ? !!assign.guestbook : false;
+        document.getElementById('uplightSelect').value = assign ? (assign.uplights || "0") : "0";
+        document.getElementById('checkKaraoke').checked = assign ? !!assign.karaoke : false;
+
+        currentVenueName = (assign && assign.venue_name) ? assign.venue_name : "";
+        const venueNameWrap = document.getElementById('venueNameWrap');
+        const venueNameText = document.getElementById('venueNameText');
+        const venuePhoneWrap = document.getElementById('venuePhoneWrap');
+        const venuePhoneText = document.getElementById('venuePhoneText');
+
+        if (currentVenueName) {
+            venueNameText.innerText = currentVenueName;
+            venueNameWrap.style.display = 'block';
+        } else {
+            venueNameWrap.style.display = 'none';
+        }
+
+        if (assign && assign.venue_phone) {
+            venuePhoneText.innerText = assign.venue_phone;
+            venuePhoneWrap.style.display = 'block';
+        } else {
+            venuePhoneWrap.style.display = 'none';
+        }
+
+        checkOffStatus();
+        openModal('assignModal');
+
+        // Async Lookup for Venue Name & Phone via Google Maps
+        if (loc && loc !== 'Location TBD' && (!currentVenueName || !assign?.venue_phone)) {
+            try {
+                await loadGoogleMapsAsync();
+                const { places } = await google.maps.importLibrary("places");
+                const request = {
+                    textQuery: cleanLoc,
+                    fields: ['displayName', 'formattedAddress', 'nationalPhoneNumber', 'internationalPhoneNumber'],
+                };
+                const { places: results } = await places.Place.findPlacesFromQuery(request);
+                if (results && results.length > 0) {
+                    const place = results[0];
+                    if (place.displayName && !currentVenueName) {
+                        currentVenueName = place.displayName;
+                        venueNameText.innerText = place.displayName;
+                        venueNameWrap.style.display = 'block';
+                    }
+                    const phone = place.nationalPhoneNumber || place.internationalPhoneNumber;
+                    if (phone && (!assign || !assign.venue_phone)) {
+                        venuePhoneText.innerText = phone;
+                        venuePhoneWrap.style.display = 'block';
+                    }
+                }
+            } catch(e) {
+                console.log("Venue details lookup non-blocking error", e);
+            }
+        }
+    }
+
+    // --- DISPATCH PDF GENERATION (JSPDF) ---
     async function generateEventPDF() {
+        if (!currentEventId) return;
+        const s = showData.find(e => String(e.id) === String(currentEventId));
+        if (!s) return alert("Show not found");
+        const assign = assignments.find(a => String(a.id) === String(s.id));
+
         const { jsPDF } = window.jspdf;
-        if (!jsPDF) return alert("PDF Engine loading. Try again.");
-        const s = showData.find(ev => String(ev.id) === String(currentEventId));
-        const assign = assignments.find(a => String(a.id) === String(currentEventId)) || {};
-        if (!s) return;
+        const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+        
+        await ensureLogo(1500);
 
-        const primary = assign.primary || "UNASSIGNED";
-        const secondary = assign.secondary || "";
-        const doc = new jsPDF();
-
-        await ensureLogo();
-
-        let headerBottomY = 0;
+        // Header Background Bar
+        doc.setFillColor(44, 62, 80);
+        doc.rect(0, 0, 210, 28, 'F');
+        
         if (logoBase64) {
-            doc.addImage(logoBase64, 'PNG', 0, 0, 210, 50);
-            headerBottomY = 56;
+            try { doc.addImage(logoBase64, 'PNG', 12, 4, 42, 20); } catch(e){}
         } else {
-            doc.setFillColor(44, 62, 80);
-            doc.rect(0, 0, 210, 40, 'F');
             doc.setTextColor(255, 255, 255);
-            doc.setFontSize(22);
-            doc.setFont(undefined, 'bold');
-            doc.text("FUN SQUAD DJs", 105, 20, { align: 'center' });
-            doc.setFontSize(11);
-            doc.setTextColor(241, 196, 15);
-            doc.text("DISPATCH PLAN", 105, 30, { align: 'center' });
-            headerBottomY = 46;
+            doc.setFontSize(16);
+            doc.setFont("helvetica", "bold");
+            doc.text("FUN SQUAD DJS", 14, 18);
         }
 
-        doc.setFontSize(9);
-        doc.setTextColor(150);
-        doc.setFont(undefined, 'normal');
-        const eventTypeClean = stripEmoji(s.type);
-        doc.text(`Event #${s.id}  |  ${eventTypeClean}`, 200, headerBottomY - 2, { align: 'right' });
-
-        const boxY = headerBottomY + 2;
-        const boxW = 58;
-        const boxH = 28;
-        const gap = 8;
-
-        doc.setFillColor(241, 196, 15);
-        doc.rect(10, boxY, boxW, boxH, 'F');
-        doc.setFontSize(9);
-        doc.setTextColor(44, 62, 80);
-        doc.setFont(undefined, 'bold');
-        doc.text("SETUP", 10 + boxW/2, boxY + 7, { align: 'center' });
-        doc.setFontSize(22);
-        doc.setTextColor(0, 0, 0);
-        doc.text(s.setup, 10 + boxW/2, boxY + 21, { align: 'center' });
-
-        doc.setFillColor(39, 174, 96);
-        doc.rect(10 + boxW + gap, boxY, boxW, boxH, 'F');
-        doc.setFontSize(9);
         doc.setTextColor(255, 255, 255);
-        doc.setFont(undefined, 'bold');
-        doc.text("START", 10 + boxW + gap + boxW/2, boxY + 7, { align: 'center' });
-        doc.setFontSize(16);
-        doc.text(s.showStart, 10 + boxW + gap + boxW/2, boxY + 21, { align: 'center' });
-
-        doc.setFillColor(192, 57, 43);
-        doc.rect(10 + (boxW + gap)*2, boxY, boxW, boxH, 'F');
-        doc.setFontSize(9);
-        doc.setTextColor(255, 255, 255);
-        doc.setFont(undefined, 'bold');
-        doc.text("END", 10 + (boxW + gap)*2 + boxW/2, boxY + 7, { align: 'center' });
-        doc.setFontSize(16);
-        doc.text(s.end, 10 + (boxW + gap)*2 + boxW/2, boxY + 21, { align: 'center' });
-
-        const d = new Date(s.date + "T12:00:00");
-        const dateStr = `${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}-${d.getFullYear()}`;
-        const dayName = d.toLocaleString('en-US', { weekday: 'long' });
-        const dateBannerY = boxY + boxH + 6;
-
-        doc.setFillColor(173, 216, 230);
-        doc.rect(10, dateBannerY, 190, 16, 'F');
-        doc.setFontSize(16);
-        doc.setTextColor(0, 51, 102);
-        doc.setFont(undefined, 'bold');
-        doc.text(`${dateStr}  -  ${dayName}`, 105, dateBannerY + 11, { align: 'center' });
-
-        let y = dateBannerY + 26;
-        doc.setDrawColor(200);
-        doc.line(10, y, 200, y);
-        y += 10;
-
         doc.setFontSize(14);
-        doc.setTextColor(44, 62, 80);
-        doc.setFont(undefined, 'bold');
-        doc.text("DJ ASSIGNMENT", 10, y);
-        doc.setDrawColor(44, 62, 80);
-        doc.line(10, y + 2, 200, y + 2);
-        doc.setFont(undefined, 'normal');
-        doc.setFontSize(11);
-        y += 10;
-        doc.text(`Primary: ${primary}`, 10, y); y += 7;
-        if (secondary) { doc.text(`Secondary: ${secondary}`, 10, y); y += 7; }
+        doc.setFont("helvetica", "bold");
+        doc.text("SHOW DISPATCH SHEET", 200, 18, { align: 'right' });
 
+        let y = 38;
+        
+        // EVENT TITLE BOX
+        doc.setFillColor(241, 245, 249);
+        doc.roundedRect(12, y, 186, 20, 3, 3, 'F');
+        doc.setTextColor(30, 41, 59);
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.text(`#${s.id} - ${s.client}`, 18, y + 8);
+        
+        doc.setFontSize(10);
+        doc.setTextColor(100, 116, 139);
+        let formattedDate = s.date;
+        try {
+            const [yN, mN, dN] = s.date.split('-').map(Number);
+            formattedDate = (new Date(yN, mN - 1, dN)).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+        } catch(e){}
+        doc.text(`Type: ${s.type}   |   Date: ${formattedDate}`, 18, y + 15);
+
+        y += 26;
+
+        // DJ & CREW DETAILS
+        doc.setFontSize(11);
+        doc.setTextColor(44, 62, 80);
+        doc.setFont("helvetica", "bold");
+        doc.text("STAFFING & CREW", 14, y);
         y += 5;
-        doc.setFontSize(14);
-        doc.setFont(undefined, 'bold');
-        doc.text("EVENT DETAILS", 10, y);
-        doc.setDrawColor(44, 62, 80);
-        doc.line(10, y + 2, 200, y + 2);
-        doc.setFont(undefined, 'normal');
-        doc.setFontSize(11);
+        doc.setDrawColor(226, 232, 240);
+        doc.line(14, y, 196, y);
+        y += 6;
+
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        doc.text(`Primary DJ: ${assign?.primary || "UNASSIGNED"}`, 14, y);
+        doc.text(`Secondary DJ / Assistant: ${assign?.secondary || "None"}`, 110, y);
         y += 10;
 
-        const currentSavedVenueName = assign.venue_name || currentVenueName;
-        if (currentSavedVenueName) {
-            doc.setFont(undefined, 'bold');
-            doc.setTextColor(39, 174, 96);
-            doc.text(stripEmoji(currentSavedVenueName), 10, y);
-            doc.setTextColor(44, 62, 80);
-            doc.setFont(undefined, 'normal');
-            y += 7;
-        }
+        // TIMING & SCHEDULE
+        doc.setFont("helvetica", "bold");
+        doc.text("SCHEDULE & TIMING", 14, y);
+        y += 5;
+        doc.line(14, y, 196, y);
+        y += 6;
 
-        const currentSavedSiteName = assign.site_name || document.getElementById('siteNameInput').value.trim() || s.site_name || "";
-        if (currentSavedSiteName) {
-            doc.setFont(undefined, 'bold');
+        doc.setFont("helvetica", "normal");
+        doc.text(`Planned Setup: ${s.setup}`, 14, y);
+        doc.text(`Event Start: ${s.showStart}`, 80, y);
+        doc.text(`Event End: ${s.end}`, 146, y);
+        y += 10;
+
+        // LOCATION & VENUE
+        doc.setFont("helvetica", "bold");
+        doc.text("VENUE & LOCATION", 14, y);
+        y += 5;
+        doc.line(14, y, 196, y);
+        y += 6;
+
+        const siteLoc = (assign && assign.site_name) || s.site_name || "";
+        if (currentVenueName) {
+            doc.setFont("helvetica", "bold");
+            doc.text(`Venue: ${currentVenueName}`, 14, y);
+            y += 5;
+        }
+        if (siteLoc) {
+            doc.setFont("helvetica", "bold");
             doc.setTextColor(230, 126, 34);
-            doc.text(`Room / Specific Area: ${stripEmoji(currentSavedSiteName)}`, 10, y);
+            doc.text(`Room / Specific Area: ${siteLoc}`, 14, y);
             doc.setTextColor(44, 62, 80);
-            doc.setFont(undefined, 'normal');
-            y += 7;
+            y += 5;
         }
-
-        const currentSavedVenuePhone = assign.venue_phone || document.getElementById('venuePhoneText').innerText;
-        if (currentSavedVenuePhone && currentSavedVenuePhone !== "N/A" && currentSavedVenuePhone !== "--") {
-            doc.text(`Phone: ${currentSavedVenuePhone}`, 10, y);
-            y += 7;
-        }
-
-        const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.loc)}`;
-        const addrLine = stripEmoji(s.loc);
-        doc.setTextColor(0, 102, 204);
-        doc.text(addrLine, 10, y);
-        const addrW = doc.getTextWidth(addrLine);
-        doc.setDrawColor(0, 102, 204);
-        doc.line(10, y + 1, 10 + addrW, y + 1);
-        doc.link(10, y - 4, addrW, 6, { url: mapsUrl });
-        doc.setTextColor(44, 62, 80);
-        doc.setDrawColor(200);
-        y += 7;
-
-        doc.text(`Date: ${dateStr} (${dayName})`, 10, y); y += 12;
-
-        doc.setFontSize(14);
-        doc.setFont(undefined, 'bold');
-        doc.text("EQUIPMENT & SERVICES", 10, y);
-        doc.setDrawColor(44, 62, 80);
-        doc.line(10, y + 2, 200, y + 2);
-        doc.setFont(undefined, 'normal');
-        doc.setFontSize(11);
+        doc.setFont("helvetica", "normal");
+        doc.text(`Address: ${s.loc}`, 14, y, { maxWidth: 180 });
         y += 10;
 
-        // INCLUDES DOUBLE PRINTS IN DISPATCH CHECKLIST
-        const items = [
-            assign.ceremony ? 'Ceremony System' : null,
-            assign.reception ? 'Reception System' : null,
-            assign.booth ? 'Photo Booth' : null,
-            assign.double_prints ? 'Double Prints (2x Strips per session)' : (assign.prints ? 'Photo Prints' : null),
-            assign.guestbook ? 'Audio Guestbook' : null,
-            assign.karaoke ? 'Karaoke' : null,
-            (assign.uplights || 0) > 0 ? `Up Lights x${assign.uplights}` : null
-        ].filter(Boolean);
+        // EQUIPMENT & SERVICES CHECKLIST
+        doc.setFont("helvetica", "bold");
+        doc.text("EQUIPMENT & SERVICES CHECKLIST", 14, y);
+        y += 5;
+        doc.line(14, y, 196, y);
+        y += 8;
 
-        if (items.length === 0) {
-            doc.setTextColor(150);
-            doc.setFontSize(10);
-            doc.setFont(undefined, 'italic');
-            doc.text("No equipment assigned for this event.", 14, y);
-            doc.setFont(undefined, 'normal');
-            doc.setTextColor(44, 62, 80);
-            y += 7;
+        const services = [];
+        if (assign?.ceremony) services.push("🔈 Ceremony Sound System & Wireless Mics");
+        if (assign?.reception) services.push("🔊 Reception Sound System & Dance Lights");
+        if (assign?.booth) services.push("📷 Photo Booth");
+        if (assign?.double_prints) services.push("🖨️² Double Photo Prints (2x Copies per session)");
+        else if (assign?.prints) services.push("🖨️ Photo Prints");
+        if (assign?.guestbook) services.push("☎️ Audio Guestbook Telephone");
+        if (assign?.uplights > 0) services.push(`💡 Wireless Up Lights: ${assign.uplights} Units`);
+        if (assign?.karaoke) services.push("🎤 Karaoke System with Screens");
+
+        if (services.length === 0) {
+            doc.setFont("helvetica", "italic");
+            doc.text("Standard DJ Sound System", 18, y);
+            y += 6;
         } else {
-            items.forEach(label => {
-                doc.text(`- ${label}`, 14, y);
-                y += 7;
+            services.forEach(srv => {
+                doc.setFont("helvetica", "normal");
+                doc.text(`[ X ]  ${srv}`, 18, y);
+                y += 6;
             });
         }
 
+        // FOOTER
         doc.setFontSize(8);
-        doc.setTextColor(180);
-        doc.text("Generated by Fun Squad DJs Master Planner", 105, 285, { align: 'center' });
+        doc.setTextColor(160, 174, 192);
+        doc.text("Fun Squad DJs Dispatch System  •  funsquaddjs.com", 105, 285, { align: 'center' });
 
-        doc.save(`Event-${s.id}-${primary}.pdf`);
+        doc.save(`Fun-Squad-Dispatch-${s.id}-${s.client.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`);
     }
 
-    function createOutlookDraftFile(to, cc, subject, bodyText, pdfDoc, pdfFileName) {
-        const boundary = '----=_Part_FunSquad_' + Math.random().toString(36).substring(2) + '_' + Date.now();
-        const dataUri = pdfDoc.output('datauristring');
-        const base64Pdf = dataUri.split(',')[1] || '';
-        const base64Chunked = base64Pdf.match(/.{1,76}/g)?.join('\r\n') || base64Pdf;
-
-        const emlContent = [
-            to ? `To: ${to}` : '',
-            cc ? `Cc: ${cc}` : '',
-            `Subject: ${subject}`,
-            `X-Unsent: 1`,
-            `MIME-Version: 1.0`,
-            `Content-Type: multipart/mixed; boundary="${boundary}"`,
-            ``,
-            `--${boundary}`,
-            `Content-Type: text/plain; charset=UTF-8; format=flowed`,
-            `Content-Transfer-Encoding: 8bit`,
-            ``,
-            bodyText.replace(/\r?\n/g, '\r\n'),
-            ``,
-            `--${boundary}`,
-            `Content-Type: application/pdf; name="${pdfFileName}"`,
-            `Content-Transfer-Encoding: base64`,
-            `Content-Disposition: attachment; filename="${pdfFileName}"`,
-            ``,
-            base64Chunked,
-            ``,
-            `--${boundary}--`
-        ].filter(line => line !== '').join('\r\n');
-
-        const blob = new Blob([emlContent], { type: 'message/rfc822' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `FunSquad-Outlook-Draft-${pdfFileName.replace(/\.pdf$/i, '')}.eml`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setTimeout(() => URL.revokeObjectURL(link.href), 10000);
-    }
-
-    // ==========================================
-    // CLIENT RIDER AUTOMATION ENGINE
-    // ==========================================
+    // --- CLIENT REMINDER EMAIL & PDF GENERATOR ---
     async function generateClientReminderPDF() {
+        if (!currentEventId) return;
+        const s = showData.find(e => e.id == currentEventId);
+        if (!s) return alert("Show not found");
+        const assign = assignments.find(a => String(a.id) === String(s.id));
+
+        const isWedding = (s.type || "").toUpperCase().includes("WEDDING");
+        const eventLabel = s.type || "Event";
+        const formattedTitleCaseEventLabel = eventLabel.charAt(0).toUpperCase() + eventLabel.slice(1).toLowerCase();
+
+        let eventDateObj = new Date();
+        try {
+            const [y, m, d] = s.date.split('-').map(Number);
+            eventDateObj = new Date(y, m - 1, d);
+        } catch(e) {}
+
+        const weekdayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const targetWeekdayString = weekdayNames[eventDateObj.getDay()];
+        const fullDateFormattedString = eventDateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+
+        // Wednesday before the event for changes
+        const wednesdayDateObj = new Date(eventDateObj);
+        const dayOffset = (eventDateObj.getDay() + 7 - 3) % 7 || 7; 
+        wednesdayDateObj.setDate(eventDateObj.getDate() - dayOffset);
+        const wednesdayFormattedString = wednesdayDateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+        // Tuesday after the event for media delivery
+        const postTuesdayDateObj = new Date(eventDateObj);
+        const daysUntilTuesday = (2 + 7 - eventDateObj.getDay()) % 7 || 7;
+        postTuesdayDateObj.setDate(eventDateObj.getDate() + daysUntilTuesday);
+        const postTuesdayFormattedString = postTuesdayDateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+        const plannedArrivalTime = s.setup || "2:00 PM";
+        const cleanVenueLocation = s.loc.replace(/\(On[-_ ]*Site Location:[^)]*\)/gi, '').trim();
+        const specificSiteOrRoomName = (assign && assign.site_name) || s.site_name || "";
+
+        const hasCeremony = assign?.ceremony;
+        const hasReception = assign?.reception;
+        const hasBooth = assign?.booth;
+        const hasPrints = assign?.prints;
+        const hasDoublePrints = assign?.double_prints;
+        const hasGuestbook = assign?.guestbook;
+        const countUplights = parseInt(assign?.uplights || '0', 10);
+        const hasKaraoke = assign?.karaoke;
+
         const { jsPDF } = window.jspdf;
-        if (!jsPDF) return alert("PDF Engine loading. Try again.");
-        const s = showData.find(ev => String(ev.id) === String(currentEventId));
-        const assign = assignments.find(a => String(a.id) === String(currentEventId)) || {};
-        if (!s) return;
-
-        const isWedding = s.type && s.type.toLowerCase().includes("wedding");
-        const cleanedEventLabelName = stripEmoji(s.type).trim();
-        const formattedTitleCaseEventLabel = cleanedEventLabelName.charAt(0).toUpperCase() + cleanedEventLabelName.slice(1).toLowerCase();
+        const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
         
-        const doc = new jsPDF();
+        await ensureLogo(1500);
 
-        await ensureLogo();
-
-        let y = 0;
+        // Header Background Bar
+        doc.setFillColor(44, 62, 80);
+        doc.rect(0, 0, 210, 32, 'F');
+        
         if (logoBase64) {
-            doc.addImage(logoBase64, 'PNG', 0, 0, 210, 50);
-            y = 56;
+            try { doc.addImage(logoBase64, 'PNG', 14, 4, 50, 24); } catch(e){}
         } else {
-            doc.setFillColor(255, 0, 127);
-            doc.rect(0, 0, 210, 40, 'F');
             doc.setTextColor(255, 255, 255);
-            doc.setFontSize(22);
-            doc.setFont(undefined, 'bold');
-            doc.text("FUN SQUAD DJs", 105, 20, { align: 'center' });
-            y = 48;
+            doc.setFontSize(18);
+            doc.setFont("helvetica", "bold");
+            doc.text("FUN SQUAD DJS", 14, 20);
         }
 
-        doc.setFontSize(15);
-        doc.setTextColor(255, 0, 127);
-        doc.setFont(undefined, 'bold');
-        
-        const headerText = isWedding ? "YOUR WEDDING DAY BACKSTAGE CHECKLIST" : "YOUR EVENT TIMELINE & SETUP CHECKLIST";
-        doc.text(headerText, 105, y, { align: 'center' });
-        doc.setDrawColor(255, 0, 127);
-        doc.setLineWidth(0.75);
-        doc.line(20, y + 3, 190, y + 3);
-        y += 12;
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.text("FINAL DETAILS & SETUP CHECKLIST", 196, 20, { align: 'right' });
 
+        let y = 42;
+
+        // Title box
+        doc.setFillColor(248, 250, 252);
+        doc.setDrawColor(226, 232, 240);
+        doc.roundedRect(14, y, 182, 22, 3, 3, 'FD');
+
+        doc.setTextColor(30, 41, 59);
+        doc.setFontSize(13);
+        doc.setFont("helvetica", "bold");
+        doc.text(`${s.client} - #${s.id}`, 20, y + 8);
+
+        doc.setFontSize(9.5);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(100, 116, 139);
+        doc.text(`Event: ${formattedTitleCaseEventLabel}  |  Date: ${fullDateFormattedString}`, 20, y + 16);
+
+        y += 28;
+
+        // Venue & Arrival
         doc.setFontSize(11);
-        doc.setTextColor(60);
-        doc.setFont(undefined, 'normal');
-        doc.text(`Hello ${stripEmoji(s.client)},`, 20, y); y += 6;
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(44, 62, 80);
+        doc.text("DJ ARRIVAL & VENUE INFORMATION", 14, y);
+        y += 4;
+        doc.setDrawColor(226, 232, 240);
+        doc.line(14, y, 196, y);
+        y += 6;
 
-        const showEventDateObj = new Date(s.date + "T12:00:00");
-        const targetWeekdayString = showEventDateObj.toLocaleString('en-US', { weekday: 'long' });
-        const cleanFullFormattedDate = showEventDateObj.toLocaleString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-        
-        const wednesdayCalculatedObj = new Date(showEventDateObj.getTime());
-        const rawDayIndexNum = showEventDateObj.getDay(); 
-        const daysToSubtractToHitWednesday = (rawDayIndexNum >= 3) ? (rawDayIndexNum - 3) : (rawDayIndexNum + 4);
-        wednesdayCalculatedObj.setDate(showEventDateObj.getDate() - daysToSubtractToHitWednesday);
-        const wednesdayFormattedString = (wednesdayCalculatedObj.getMonth() + 1) + "/" + wednesdayCalculatedObj.getDate();
+        doc.setFontSize(9.5);
+        doc.setFont("helvetica", "normal");
+        doc.text(`• Planned DJ Arrival & Setup: ${plannedArrivalTime}`, 16, y);
+        y += 5.5;
 
-        const postEventTuesdayObj = new Date(showEventDateObj.getTime());
-        const daysUntilNextTuesday = (2 - rawDayIndexNum + 7) % 7 || 7;
-        postEventTuesdayObj.setDate(showEventDateObj.getDate() + daysUntilNextTuesday);
-        const postTuesdayFormattedString = postEventTuesdayObj.toLocaleString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-
-        const plannedArrivalTime = s.setup || "Scheduled Setup Time";
-
-        const introParagraph = isWedding 
-            ? `We are so excited to celebrate with you this ${targetWeekdayString}! To make sure your big day is absolutely perfect and everything runs smoothly, please double-check that your venue has these basic setup items ready for us:`
-            : `We are looking forward to your upcoming celebration this ${targetWeekdayString}! To help us set up on time and give you the best performance possible, please look over this quick checklist and make sure the venue is ready for us:`;
-        
-        doc.text(introParagraph, 20, y, { maxWidth: 170 });
-        y += 14;
-
-        doc.setFont(undefined, 'bold');
-        doc.setFontSize(10.5);
-        const currentSavedSiteName = assign.site_name || document.getElementById('siteNameInput').value.trim() || s.site_name || "";
-        const determinedSavedVenueName = assign.venue_name || currentVenueName;
-        let processedDisplayVenueString = (determinedSavedVenueName && determinedSavedVenueName !== "Private Residence") ? determinedSavedVenueName : "Private Residence";
-        if (currentSavedSiteName) {
-            processedDisplayVenueString += ` (${currentSavedSiteName})`;
+        if (currentVenueName) {
+            doc.text(`• Venue: ${currentVenueName}`, 16, y);
+            y += 5.5;
         }
-        const wrappedVenueLines = doc.splitTextToSize(processedDisplayVenueString, 62);
+        if (specificSiteOrRoomName) {
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(230, 126, 34);
+            doc.text(`• Room / Specific Area: ${specificSiteOrRoomName}`, 16, y);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(44, 62, 80);
+            y += 5.5;
+        }
 
-        doc.setFont(undefined, 'normal');
-        doc.setFontSize(8.5);
-        const fullCleanedStreetAddress = stripEmoji(s.loc).trim();
-        const wrappedAddressLines = doc.splitTextToSize(fullCleanedStreetAddress, 62);
+        doc.text(`• Address: ${cleanVenueLocation}`, 16, y, { maxWidth: 175 });
+        y += 9;
 
-        const totalLinesCount = wrappedVenueLines.length + wrappedAddressLines.length;
-        const totalBlockHeight = Math.max(26, (totalLinesCount * 4) + 12);
+        // Equipment Checklist
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(44, 62, 80);
+        doc.text("SERVICES & PRODUCTION INCLUDED", 14, y);
+        y += 4;
+        doc.line(14, y, 196, y);
+        y += 6;
 
-        doc.setFillColor(255, 240, 245);
-        doc.rect(20, y, 170, totalBlockHeight, 'F');
-        doc.setDrawColor(255, 0, 127);
-        doc.setLineWidth(0.5);
-        doc.line(20, y, 20, y + totalBlockHeight);
-        
-        doc.setFont(undefined, 'bold');
-        doc.setFontSize(9);
-        doc.setTextColor(110, 120, 130);
-        doc.text("CELEBRATION DATE", 42, y + 7, { align: 'center' });
-        doc.text("VENUE & LOCATION", 105, y + 7, { align: 'center' });
-        doc.text("CEREMONY START", 168, y + 7, { align: 'center' });
+        const packageItems = [];
+        if (hasCeremony) packageItems.push("Ceremony Sound System & Dedicated Lapel/Handheld Wireless Mics");
+        if (hasReception) packageItems.push("Reception Premium Audio System & Intelligent Dance Floor Lighting");
+        if (hasBooth) packageItems.push("Photo Booth with Digital Sharing & Online Gallery");
+        if (hasDoublePrints) packageItems.push("Double Photo Prints (2x Physical Strips Printed Per Session)");
+        else if (hasPrints) packageItems.push("Instant Physical Photo Prints");
+        if (hasGuestbook) packageItems.push("Vintage Telephone Audio Guestbook");
+        if (countUplights > 0) packageItems.push(`${countUplights} Wireless Ambient Up Lights`);
+        if (hasKaraoke) packageItems.push("Full Karaoke Experience with Wireless Microphones and Display Screen");
 
-        doc.setFont(undefined, 'bold');
-        doc.setFontSize(10.5);
-        doc.setTextColor(255, 0, 127);
-        doc.text(`${cleanFullFormattedDate}`, 42, y + 14, { align: 'center' });
-        doc.setFont(undefined, 'normal');
-        doc.setFontSize(8.5);
-        doc.setTextColor(130, 140, 150);
-        doc.text(`(${targetWeekdayString})`, 42, y + 20, { align: 'center' });
+        if (packageItems.length === 0) {
+            packageItems.push("Full Professional DJ/MC Sound System & Wireless Microphones");
+        }
 
-        doc.setFont(undefined, 'bold');
-        doc.setFontSize(10.5);
-        doc.setTextColor(255, 0, 127);
-        doc.text(s.showStart, 168, y + 14, { align: 'center' });
-        doc.setFont(undefined, 'normal');
-        doc.setFontSize(8.5);
-        doc.setTextColor(130, 140, 150);
-        doc.text(`Music Ends: ${s.end}`, 168, y + 20, { align: 'center' });
-
-        let centerColumnTextCursorY = y + 14;
-        
-        doc.setFont(undefined, 'bold');
-        doc.setFontSize(10.5);
-        doc.setTextColor(255, 0, 127);
-        wrappedVenueLines.forEach(line => {
-            doc.text(line, 105, centerColumnTextCursorY, { align: 'center' });
-            centerColumnTextCursorY += 4.5;
+        packageItems.forEach(item => {
+            doc.setFontSize(9);
+            doc.setFont("helvetica", "normal");
+            doc.text(`✔  ${item}`, 18, y);
+            y += 5.2;
         });
 
-        centerColumnTextCursorY += 0.5;
+        y += 4;
 
-        doc.setFont(undefined, 'normal');
-        doc.setFontSize(8.5);
-        doc.setTextColor(130, 140, 150);
-        wrappedAddressLines.forEach(line => {
-            doc.text(line, 105, centerColumnTextCursorY, { align: 'center' });
-            centerColumnTextCursorY += 3.8;
-        });
+        // VENUE & COORDINATOR REQUIREMENTS
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(44, 62, 80);
+        doc.text("VENUE & COORDINATOR SETUP REQUIREMENTS", 14, y);
+        y += 4;
+        doc.line(14, y, 196, y);
+        y += 6;
 
-        y += totalBlockHeight + 8;
-
-        const riders = [
-            { title: "- Cover from the Sun & Weather", desc: "If we are outdoors, we need a tent, canopy, or solid roof over the DJ booth. Direct sunlight and heat can damage sensitive music gear, and it keeps your DJ cool so they can perform at their best!" },
-            { title: "- One 6-Foot Rectangle Table & Chair", desc: "Please have the venue provide one sturdy 6-foot rectangular table for our mixing boards, laptops, and controllers, along with a standard chair for downtime or dinner breaks." },
-            { title: "- Plug-In Power for the Ceremony", desc: "We need a standard, working wall outlet within 30 feet of where the ceremony music and microphones will be set up." },
-            { title: "- Plug-In Power for the Reception", desc: "We need a standard, working wall outlet within 30 feet of our main reception speaker systems." },
-            { title: "- Smoke & Marijuana Free Zone", desc: "To protect our expensive electronic gear and keep the air clear for your DJ, please make sure any designated guest smoking or marijuana spaces are set up far away from our speakers and equipment booths." }
+        const checklistReqs = [
+            "Shade & Weather Protection: Full overhead cover required for all outdoor DJ and photo booth equipment.",
+            "Table & Linen: One sturdy 6-foot table (or DJ booth space) positioned within view of the dance floor.",
+            "Power Supply: Standard 15A/20A electrical outlet located within 30 feet of the DJ setup area.",
+            "Smoke-Free Zone: All guest smoking, vaping, and marijuana areas must remain strictly clear of sound gear."
         ];
 
-        riders.forEach(item => {
-            doc.setFont(undefined, 'bold');
-            doc.setFontSize(11);
-            doc.setTextColor(44, 62, 80);
-            doc.text(item.title, 20, y);
-            y += 5;
-
-            doc.setFont(undefined, 'normal');
-            doc.setFontSize(9.5);
-            doc.setTextColor(80);
-            doc.text(item.desc, 24, y, { maxWidth: 164 });
-            y += 11;
-        });
-
-        y += 2;
-        const rawDeadlineString = `MUSIC DEADLINE: Final playlist selections or adjustments must be submitted by Wednesday evening (${wednesdayFormattedString}) to lock in for the event.`;
-        const wrapDeadlineLines = doc.splitTextToSize(rawDeadlineString, 164);
-        const calculateDeadlineBoxHeight = (wrapDeadlineLines.length * 4) + 6;
-
-        doc.setFillColor(255, 240, 245);
-        doc.rect(20, y, 170, calculateDeadlineBoxHeight, 'F');
-        doc.setDrawColor(255, 0, 127);
-        doc.rect(20, y, 170, calculateDeadlineBoxHeight, 'D');
-        doc.setFont(undefined, 'bold');
-        doc.setFontSize(8.5);
-        doc.setTextColor(255, 0, 127);
-        
-        let writeDeadlineTextY = y + 4.5;
-        wrapDeadlineLines.forEach(line => {
-            doc.text(line, 23, writeDeadlineTextY);
-            writeDeadlineTextY += 4;
-        });
-        y += calculateDeadlineBoxHeight + 4;
-
-        const hasBooth = !!assign.booth;
-        const hasGuestbook = !!assign.guestbook;
-        const hasDoublePrints = !!assign.double_prints;
-        let mediaText = "";
-
-        if (hasBooth && hasGuestbook) {
-            mediaText = `DIGITAL MEDIA DELIVERY: Your online Photo Booth gallery${hasDoublePrints ? ' (with Double Prints copies)' : ''} and Audio Guestbook recording links will be delivered directly to your email by Tuesday, ${postTuesdayFormattedString}.`;
-        } else if (hasBooth) {
-            mediaText = `PHOTO BOOTH GALLERY DELIVERY: Your digital Photo Booth gallery link${hasDoublePrints ? ' (with Double Prints copies)' : ''} will be delivered directly to your email by Tuesday, ${postTuesdayFormattedString}.`;
-        } else if (hasGuestbook) {
-            mediaText = `AUDIO GUESTBOOK DELIVERY: Your Audio Guestbook audio recordings link will be delivered directly to your email by Tuesday, ${postTuesdayFormattedString}.`;
-        }
-
-        if (mediaText) {
-            const wrapMediaLines = doc.splitTextToSize(mediaText, 164);
-            const calculateMediaBoxHeight = (wrapMediaLines.length * 4) + 6;
-
-            doc.setFillColor(240, 248, 255);
-            doc.rect(20, y, 170, calculateMediaBoxHeight, 'F');
-            doc.setDrawColor(52, 152, 219);
-            doc.rect(20, y, 170, calculateMediaBoxHeight, 'D');
-            doc.setFont(undefined, 'bold');
+        checklistReqs.forEach(req => {
             doc.setFontSize(8.5);
-            doc.setTextColor(41, 128, 185);
+            doc.setFont("helvetica", "normal");
+            doc.text(`[  ]  ${req}`, 18, y, { maxWidth: 175 });
+            y += 5.5;
+        });
 
-            let writeMediaTextY = y + 4.5;
-            wrapMediaLines.forEach(line => {
-                doc.text(line, 23, writeMediaTextY);
-                writeMediaTextY += 4;
-            });
-            y += calculateMediaBoxHeight + 4;
+        y += 6;
+
+        // Digital Media Delivery
+        if (hasBooth || hasGuestbook) {
+            doc.setFillColor(254, 243, 199);
+            doc.setDrawColor(252, 211, 77);
+            doc.roundedRect(14, y, 182, 16, 2, 2, 'FD');
+
+            doc.setTextColor(146, 64, 14);
+            doc.setFontSize(9);
+            doc.setFont("helvetica", "bold");
+            doc.text("DIGITAL MEDIA DELIVERY", 20, y + 6);
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(8.5);
+            doc.text(`Your gallery links & audio recordings will be emailed by Tuesday, ${postTuesdayFormattedString}!`, 20, y + 11);
+
+            y += 22;
         }
 
-        const rawReachoutString = "QUESTIONS OR CHANGES? If you have last-minute questions or want to review your timeline, feel free to give me a call directly or book a quick 15-minute meeting directly onto my calendar dashboard link here: https://cal.com/djlane/15min";
-        const wrapReachoutLines = doc.splitTextToSize(rawReachoutString, 164);
-        const calculateReachoutBoxHeight = (wrapReachoutLines.length * 4) + 6;
-
-        doc.setFillColor(245, 247, 250);
-        doc.rect(20, y, 170, calculateReachoutBoxHeight, 'F');
-        doc.setDrawColor(180, 190, 200);
-        doc.rect(20, y, 170, calculateReachoutBoxHeight, 'D');
-        doc.setFont(undefined, 'bold');
-        doc.setFontSize(8.5);
-        doc.setTextColor(44, 62, 80);
-        
-        let writeReachoutTextY = y + 4.5;
-        wrapReachoutLines.forEach(line => {
-            doc.text(line, 23, writeReachoutTextY);
-            if (line.includes("https://cal.com/djlane/15min")) {
-                const targetTextStringWidth = doc.getTextWidth(line);
-                doc.link(23, writeReachoutTextY - 3, targetTextStringWidth, 4, { url: "https://cal.com/djlane/15min" });
-            }
-            writeReachoutTextY += 4;
-        });
-        y += calculateReachoutBoxHeight + 5;
-
-        doc.setFont(undefined, 'bold');
-        doc.setFontSize(11);
-        doc.setTextColor(27, 163, 69);
-        
+        // Closing Note
+        doc.setFontSize(9);
+        doc.setTextColor(100, 116, 139);
+        doc.setFont("helvetica", "italic");
         const closingTag = isWedding 
             ? "We can't wait to get everyone out on the dance floor! Thank you for helping us make your wedding perfect!" 
             : "Thank you for working with us to get everything ready for an amazing night!";
@@ -1455,19 +1329,18 @@
             mediaEmailParagraph = `\n\n🎙️ Digital Media Delivery: Since your package includes our Audio Guestbook, you will receive an email link to listen to all of your guest audio messages by Tuesday, ${postTuesdayFormattedString}!`;
         }
 
+        const signature = "Lane Jensen\nOwner & DJ | Fun Squad DJs\n📞 (503) 893-8472\n🌐 funsquaddjs.com\n✉️ lane@funsquaddjs.com";
+
         if (isWedding) {
             emailSubject = `🎵 Your Wedding Day is This ${targetWeekdayString}! Final Details & Checklist - Show #${s.id}`;
-            emailBodyText = `Hi ${s.client},\n\nWe are getting so close! We are absolutely thrilled and looking forward to celebrating with you this ${targetWeekdayString} on your big day!\n\nOne of our highly talented wedding DJs will be arriving at your venue at ${plannedArrivalTime} to get completely set up and run soundchecks long before your first guests walk through the door so that everything goes flawlessly and your wedding is absolutely perfect.\n\nPlease take just a brief moment to look over the attached one-page setup checklist. Could you please forward it to your wedding coordinator or venue manager? It just ensures they have our workspace ready (including a shaded spot out of the sun, a 6-foot table, working outlets within 30 feet, and keeping guest smoking spaces safely clear of the sound equipment).\n\nTo make sure your celebration is completely perfect, we also want to remind you that any final music choices or timeline adjustments need to be submitted by Wednesday evening (${wednesdayFormattedString}) to guarantee those changes can be made for your event.${mediaEmailParagraph}\n\nIf you have any last-minute questions or want to go over any of the finer details together, please feel free to give me a call directly or schedule a quick 15-minute chat with me right here: https://cal.com/djlane/15min\n\nWe are here for you every step of the way to ensure your day is absolutely perfect!`;
+            emailBodyText = `Hi ${s.client},\n\nWe are getting so close! We are absolutely thrilled and looking forward to celebrating with you this ${targetWeekdayString} on your big day!\n\nOne of our highly talented wedding DJs will be arriving at your venue at ${plannedArrivalTime} to get completely set up and run soundchecks long before your first guests walk through the door so that everything goes flawlessly and your wedding is absolutely perfect.\n\nPlease take just a brief moment to look over the attached one-page setup checklist. Could you please forward it to your wedding coordinator or venue manager? It just ensures they have our workspace ready (including a shaded spot out of the sun, a 6-foot table, working outlets within 30 feet, and keeping guest smoking spaces safely clear of the sound equipment).\n\nTo make sure your celebration is completely perfect, we also want to remind you that any final music choices or timeline adjustments need to be submitted by Wednesday evening (${wednesdayFormattedString}) to guarantee those changes can be made for your event.${mediaEmailParagraph}\n\nIf you have any last-minute questions or want to go over any of the finer details together, please feel free to give me a call directly or schedule a quick 15-minute chat with me right here: https://cal.com/djlane/15min\n\nWe are here for you every step of the way to ensure your day is absolutely perfect!\n\n--\n${signature}`;
         } else {
-            emailBodyText = `Hi ${s.client},\n\nWe are looking forward to celebrating with you this ${targetWeekdayString} for your upcoming event!\n\nOne of our highly talented ${formattedTitleCaseEventLabel.toLowerCase()} DJs will be arriving at your venue at ${plannedArrivalTime} to handle setup and soundchecks long before your event begins.\n\nPlease take a brief moment to look over the attached one-page setup checklist and forward it to your venue manager or coordinator to make sure they have our workspace ready (including a shaded spot out of the sun, a 6-foot table, power outlets within 30 feet, and keeping guest smoking or marijuana areas clear of the audio gear).\n\nAlso, a quick reminder that any final music or timeline changes need to be submitted by Wednesday evening (${wednesdayFormattedString}) to guarantee those adjustments are locked in for your event.${mediaEmailParagraph}\n\nIf you have any questions or want to review your timeline, feel free to give me a call or schedule a quick meeting with me here: https://cal.com/djlane/15min`;
+            emailBodyText = `Hi ${s.client},\n\nWe are looking forward to celebrating with you this ${targetWeekdayString} for your upcoming event!\n\nOne of our highly talented ${formattedTitleCaseEventLabel.toLowerCase()} DJs will be arriving at your venue at ${plannedArrivalTime} to handle setup and soundchecks long before your event begins.\n\nPlease take a brief moment to look over the attached one-page setup checklist and forward it to your venue manager or coordinator to make sure they have our workspace ready (including a shaded spot out of the sun, a 6-foot table, power outlets within 30 feet, and keeping guest smoking or marijuana areas clear of the audio gear).\n\nAlso, a quick reminder that any final music or timeline changes need to be submitted by Wednesday evening (${wednesdayFormattedString}) to guarantee those adjustments are locked in for your event.${mediaEmailParagraph}\n\nIf you have any questions or want to review your timeline, feel free to give me a call or schedule a quick meeting with me here: https://cal.com/djlane/15min\n\n--\n${signature}`;
         }
         
-        // 1. Generate Outlook Draft (.eml) with pre-filled recipient, subject, full body text, and PDF attached!
-        createOutlookDraftFile(destinationClientEmail, 'ariel@funsquaddjs.com', emailSubject, emailBodyText, doc, fileName);
-
-        // 2. Copy full text to clipboard
+        // Copy full text to clipboard
         navigator.clipboard.writeText(emailBodyText).then(() => {
-            // 3. Trigger clean mailto directly with recipient and full body text
+            // Trigger mailto directly with recipient, cc, subject, and full body text
             const mailtoUrl = `mailto:${encodeURIComponent(destinationClientEmail)}?cc=ariel@funsquaddjs.com&subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBodyText)}`;
             window.location.href = mailtoUrl;
         });
