@@ -102,7 +102,7 @@
         .folder-box { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 10px; padding: 12px; margin-bottom: 12px; }
         .subfolder-tag { display: flex; align-items: center; gap: 8px; background: white; padding: 8px 10px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.82rem; font-weight: bold; }
         .subfolder-tag input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
-        .code-preview { background: #0f172a; color: #38bdf8; font-family: 'Courier New', Courier, monospace; font-size: 0.72rem; padding: 10px; border-radius: 8px; max-height: 125px; overflow-y: auto; white-space: pre-wrap; margin-bottom: 12px; border: 1px solid #334155; }
+        .code-preview { background: #0f172a; color: #38bdf8; font-family: 'Courier New', Courier, monospace; font-size: 0.72rem; padding: 10px; border-radius: 8px; max-height: 140px; overflow-y: auto; white-space: pre-wrap; margin-bottom: 12px; border: 1px solid #334155; }
 
         #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); display: flex; justify-content: center; align-items: center; z-index: 3000; font-weight: bold; font-size: 1.1rem; color: var(--dark); }
         
@@ -290,7 +290,7 @@
         </button>
         
         <p style="font-size: 0.72rem; color: #475569; margin: 4px 0 10px 0; background: #e0f2fe; padding: 8px 10px; border-radius: 8px; border: 1px solid #bae6fd;">
-            💡 <strong>Fastest Way to Run:</strong> Click <strong>"🚀 COPY WIN+R COMMAND"</strong>, press <kbd style="background:#fff; padding:1px 5px; border-radius:4px; border:1px solid #ccc; font-weight:bold;">Win + R</kbd> on your keyboard, paste, and press <strong>Enter</strong>. It creates the folders on your H: Drive and immediately closes!
+            💡 <strong>Fastest Way to Run:</strong> Click <strong>"🚀 COPY WIN+R COMMAND"</strong>, press <kbd style="background:#fff; padding:1px 5px; border-radius:4px; border:1px solid #ccc; font-weight:bold;">Win + R</kbd> on your keyboard, paste, and hit <strong>Enter</strong>. It creates all selected folders and immediately exits!
         </p>
 
         <button onclick="closeModal('folderModal')" style="background:#94a3b8; width:100%;">Back to Show Details</button>
@@ -1046,7 +1046,7 @@
 
     function getSelectedSubfolders() {
         const subs = [];
-        // The 5 folders strictly defined
+        // The 5 folders strictly defined in order
         if (document.getElementById('foldGuestbook').checked) subs.push("AUDIO GUESTBOOK FILES");
         if (document.getElementById('foldCeremony').checked) subs.push("CEREMONY MUSIC");
         if (document.getElementById('foldPhotos').checked) subs.push("ON SITE PHOTOS");
@@ -1065,36 +1065,24 @@
         script += `:: ==========================================\r\n`;
         script += `:: Fun Squad DJs - Wedding Folder Generator\r\n`;
         script += `:: Event: ${folderName}\r\n`;
-        script += `:: ==========================================\r\n`;
-        script += `chcp 65001 > nul\r\n`;
-        script += `color 0b\r\n\r\n`;
+        script += `:: ==========================================\r\n\r\n`;
         script += `set "TARGET_DIR=${fullDirPath}"\r\n\r\n`;
         script += `echo [FUN SQUAD DJs] Creating Wedding Directory Structure...\r\n`;
         script += `echo Target: "%TARGET_DIR%"\r\n`;
         script += `echo.\r\n\r\n`;
-        script += `if not exist "%TARGET_DIR%" (\r\n`;
-        script += `    mkdir "%TARGET_DIR%"\r\n`;
-        script += `    echo  [+] Created main folder\r\n`;
-        script += `) else (\r\n`;
-        script += `    echo  [*] Main folder already exists\r\n`;
-        script += `)\r\n\r\n`;
+        script += `if not exist "%TARGET_DIR%" mkdir "%TARGET_DIR%"\r\n`;
 
         selectedSubs.forEach(sub => {
-            script += `if not exist "%TARGET_DIR%\\${sub}" (\r\n`;
-            script += `    mkdir "%TARGET_DIR%\\${sub}"\r\n`;
-            script += `    echo  [+] Created: ${sub}\r\n`;
-            script += `)\r\n`;
+            script += `if not exist "%TARGET_DIR%\\${sub}" mkdir "%TARGET_DIR%\\${sub}"\r\n`;
         });
 
         script += `\r\n`;
         script += `echo.\r\n`;
         script += `echo ==========================================\r\n`;
-        script += `echo  All folders created successfully!\r\n`;
+        script += `echo  All folders verified and created!\r\n`;
         script += `echo ==========================================\r\n`;
         script += `echo Opening folder in Windows Explorer...\r\n`;
         script += `explorer.exe "%TARGET_DIR%"\r\n`;
-        script += `timeout /t 2 > nul\r\n`;
-        script += `exit\r\n`;
 
         return script;
     }
@@ -1106,7 +1094,7 @@
         const fullDirPath = `${rootPath}\\${folderName}`;
 
         const pathsToCreate = selectedSubs.map(s => `"${fullDirPath}\\${s}"`).join(' ');
-        return `cmd /c "md "${fullDirPath}" ${pathsToCreate} & start "" "${fullDirPath}""`;
+        return `cmd /c (md "${fullDirPath}" ${pathsToCreate}) 2>nul & explorer "${fullDirPath}"`;
     }
 
     function updateBatPreview() {
