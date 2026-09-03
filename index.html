@@ -77,11 +77,12 @@
         button:active { transform: scale(0.97); }
         .crew-btn { background: var(--accent); }
         .ics-btn { background: var(--success); }
+        .folder-btn { background: #0284c7; }
         .today-link { display: inline-block; color: #64748b; font-size: 0.75rem; text-decoration: underline; cursor: pointer; font-weight: bold; text-transform: uppercase; padding: 4px; }
         
-        /* MODALS (MOBILE FULL-DRAWER ON SMALL SCREENS) */
+        /* MODALS */
         .modal { display:none; position:fixed; z-index:2000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.65); backdrop-filter: blur(2px); }
-        .modal-content { background:white; margin:2% auto; padding:20px; width:94%; max-width:520px; border-radius:14px; text-align: left; box-shadow: 0 10px 25px rgba(0,0,0,0.25); max-height: 92vh; overflow-y: auto; color: #333; }
+        .modal-content { background:white; margin:2% auto; padding:20px; width:94%; max-width:540px; border-radius:14px; text-align: left; box-shadow: 0 10px 25px rgba(0,0,0,0.25); max-height: 92vh; overflow-y: auto; color: #333; }
         
         .dj-edit-row { display: flex; align-items: center; justify-content: space-between; background: #f8fafc; padding: 10px; border-radius: 8px; margin-bottom: 8px; gap: 8px; border: 1px solid #e2e8f0; }
         .dj-name-box { font-weight: 900; font-size: 0.95rem; color: var(--dark); flex: 1; }
@@ -97,6 +98,12 @@
         .checkbox-row { display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 0.85rem; margin-bottom: 8px; cursor: pointer; }
         .checkbox-row input { width: 18px; height: 18px; cursor: pointer; }
         .double-print-row { background: #fef3c7; padding: 8px 10px; border-radius: 8px; border: 1px solid #fcd34d; }
+
+        /* FOLDER BATCH MODAL SPECIFICS */
+        .folder-box { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+        .subfolder-tag { display: flex; align-items: center; gap: 8px; background: white; padding: 8px 10px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.82rem; font-weight: bold; }
+        .subfolder-tag input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
+        .code-preview { background: #0f172a; color: #38bdf8; font-family: 'Courier New', Courier, monospace; font-size: 0.72rem; padding: 10px; border-radius: 8px; max-height: 140px; overflow-y: auto; white-space: pre-wrap; margin-bottom: 12px; border: 1px solid #334155; }
 
         #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); display: flex; justify-content: center; align-items: center; z-index: 3000; font-weight: bold; font-size: 1.1rem; color: var(--dark); }
         
@@ -174,7 +181,7 @@
         <label class="checkbox-row"><input type="checkbox" id="checkBooth"> Photo Booth (📷)</label>
         <label class="checkbox-row"><input type="checkbox" id="checkPrints"> Photo Prints (🖨️)</label>
         
-        <!-- NEW: DOUBLE PRINTS OPTION -->
+        <!-- DOUBLE PRINTS OPTION -->
         <label class="checkbox-row double-print-row">
             <input type="checkbox" id="checkDoublePrints"> 
             <span><strong>Double Prints (🖨️² 2X)</strong> <small style="display:block; color:#92400e; font-size:0.75rem;">Prints 2 strips per session for guestbook/guests</small></span>
@@ -196,11 +203,108 @@
         </div>
 
         <button style="background:var(--success); width:100%; margin-top:8px; padding: 12px;" onclick="submitAssignment()">💾 SAVE DETAILS</button>
+        
+        <!-- WEDDING FOLDER BATCH GENERATOR BUTTON -->
+        <button style="background:#0284c7; width:100%; margin-top:8px; padding: 11px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size:0.8rem;" onclick="openFolderModal()">
+            <span>📁</span> <span>CREATE H: DRIVE FOLDERS (.BAT)</span>
+        </button>
+
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0;">
             <button style="background:#8e44ad;" onclick="generateEventPDF()">📄 DISPATCH PDF</button>
             <button style="background:#e67e22;" onclick="generateClientReminderPDF()">📧 EMAIL REMINDER</button>
         </div>
         <button onclick="closeModal('assignModal')" style="background:#94a3b8; width:100%;">Close</button>
+    </div>
+</div>
+
+<!-- WEDDING FOLDER BATCH GENERATOR MODAL -->
+<div id="folderModal" class="modal">
+    <div class="modal-content" style="max-width: 580px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px;">
+            <div>
+                <h2 style="margin: 0; font-size: 1.2rem; color: #0284c7; display: flex; align-items: center; gap: 6px;">
+                    📁 Event Folder Generator
+                </h2>
+                <span id="folderModalSub" style="font-size: 0.75rem; color: #64748b; font-weight: bold;">Create folder structure on your H: Drive</span>
+            </div>
+            <button onclick="closeModal('folderModal')" style="background:#e2e8f0; color:#475569; padding: 4px 8px; font-size:0.8rem;">✕</button>
+        </div>
+
+        <div class="folder-box">
+            <label style="font-size: 0.72rem; font-weight: 900; color: #475569; text-transform: uppercase;">Drive Root Path:</label>
+            <input type="text" id="batRootPath" value="H:\My Drive\Upcoming Weddings - Lane" oninput="updateBatPreview()" style="font-family: monospace; font-size: 0.8rem;">
+
+            <label style="font-size: 0.72rem; font-weight: 900; color: #475569; text-transform: uppercase;">Event Folder Name:</label>
+            <input type="text" id="batFolderName" oninput="updateBatPreview()" style="font-family: monospace; font-size: 0.8rem;">
+        </div>
+
+        <label style="font-size: 0.75rem; font-weight: 900; color: #1e293b; text-transform: uppercase; margin-bottom: 6px; display: block;">
+            Select Subfolders to Create:
+        </label>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 12px;">
+            <label class="subfolder-tag">
+                <input type="checkbox" id="foldGuestbook" onchange="updateBatPreview()"> 
+                <span>☎️ AUDIO GUESTBOOK FILES</span>
+            </label>
+            <label class="subfolder-tag">
+                <input type="checkbox" id="foldPhotos" onchange="updateBatPreview()"> 
+                <span>📸 ON SITE PHOTOS</span>
+            </label>
+            <label class="subfolder-tag">
+                <input type="checkbox" id="foldCeremony" onchange="updateBatPreview()"> 
+                <span>🔈 CEREMONY MUSIC</span>
+            </label>
+            <label class="subfolder-tag">
+                <input type="checkbox" id="foldReception" onchange="updateBatPreview()"> 
+                <span>🔊 RECEPTION MUSIC</span>
+            </label>
+            <label class="subfolder-tag">
+                <input type="checkbox" id="foldTimeline" checked onchange="updateBatPreview()"> 
+                <span>📋 TIMELINE & NOTES</span>
+            </label>
+            <label class="subfolder-tag">
+                <input type="checkbox" id="foldSpecialSongs" checked onchange="updateBatPreview()"> 
+                <span>🎵 SPECIAL SONGS & REQUESTS</span>
+            </label>
+            <label class="subfolder-tag">
+                <input type="checkbox" id="foldRawFootage" onchange="updateBatPreview()"> 
+                <span>🎞️ RAW MEDIA & BACKUPS</span>
+            </label>
+            <label class="subfolder-tag">
+                <input type="checkbox" id="foldKaraoke" onchange="updateBatPreview()"> 
+                <span>🎤 KARAOKE TRACKS</span>
+            </label>
+        </div>
+
+        <!-- Custom extra subfolder input -->
+        <div style="display: flex; gap: 6px; margin-bottom: 12px;">
+            <input type="text" id="customSubfolderInput" placeholder="Add custom subfolder (e.g. MONOGRAM DESIGN)..." style="margin-bottom: 0; font-size: 0.8rem;">
+            <button onclick="addCustomSubfolder()" style="background:#0284c7; white-space: nowrap; padding: 0 14px;">+ ADD</button>
+        </div>
+        <div id="customSubfolderList" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px;"></div>
+
+        <!-- Script Preview -->
+        <label style="font-size: 0.72rem; font-weight: 900; color: #475569; text-transform: uppercase; margin-bottom: 4px; display: flex; justify-content: space-between;">
+            <span>Windows .BAT Script Preview:</span>
+            <span style="color:#0284c7; cursor:pointer;" onclick="copyBatScript()">📋 Copy code</span>
+        </label>
+        <div id="batPreviewBox" class="code-preview"></div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+            <button style="background:var(--success); padding: 12px; font-size: 0.85rem;" onclick="downloadBatFile()">
+                ⚡ DOWNLOAD .BAT FILE
+            </button>
+            <button style="background:#334155; padding: 12px; font-size: 0.85rem;" onclick="copyBatScript()">
+                📋 COPY BATCH SCRIPT
+            </button>
+        </div>
+        
+        <p style="font-size: 0.72rem; color: #64748b; margin: 4px 0 10px 0; text-align: center;">
+            💡 <em>Tip: Download and double-click the <code>.bat</code> file on your PC. It creates all folders on your H: Drive and immediately opens them in Windows Explorer.</em>
+        </p>
+
+        <button onclick="closeModal('folderModal')" style="background:#94a3b8; width:100%;">Back to Show Details</button>
     </div>
 </div>
 
@@ -298,10 +402,20 @@
     let currentVenueName = "";
     let logoBase64 = null;
     let googleMapsPromise = null;
+    let customSubfolders = [];
 
     const clean = (str) => str ? str.replace(/\\,/g, ',').replace(/\\n/g, ' ').trim() : "";
     const stripEmoji = (str) => str.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F900}-\u{1F9FF}]|[\u{1FA70}-\u{1FAFF}]|[\u{1F000}-\u{1F02F}]|[\u{FE00}-\u{FE0F}]|[\u{1F004}]|[\u{1F0CF}]|[\u{1F18E}]|[\u{1F191}-\u{1F251}]|[\u{23E9}-\u{23F3}]|[\u{23F8}-\u{23FA}]|[\u{25AA}-\u{25AB}]|[\u{25FB}-\u{25FE}]|[\u{2B50}]|[\u{2B55}]|[\u{2934}-\u{2935}]|[\u{2194}-\u{2199}]|[\u{303D}]|[\u{00A9}]|[\u{00AE}]|[\u{2122}]/gu, '').trim();
     const cleanAddressForLookup = (str) => str.replace(/\(On[-_ ]*Site Location:[^)]*\)/gi, '').replace(/\bON[-_ /]*SITE\b/gi, '').replace(/\bONSITE\b/gi, '').trim();
+
+    // Sanitize string for valid Windows directory names
+    function sanitizeForWindowsFolder(str) {
+        if (!str) return "";
+        return str
+            .replace(/[\\/:*?"<>|]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
 
     function formatCurrency(val) {
         if (!val) return "";
@@ -499,7 +613,6 @@
                 const idMatch = (summary + " " + rawDesc + " " + block).match(/(?:ID:\s*|#)(\d{4,})|(\d{4,})/);
                 const fullLoc = clean(block.match(/LOCATION(?:;[^:]+)?:(.*)/)?.[1] || "").replace(/\(On[-_ ]*Site Location:[^)]*\)/gi, '').trim();
                 
-                // Extract on-site location / specific site / room name if provided in ICS
                 const siteMatch = (block.match(/LOCATION(?:;[^:]+)?:(.*)/)?.[1] || "").match(/\(On[-_ ]*Site Location:\s*([^)]+)\)/i)
                     || rawDesc.match(/(?:Site Name|On[-_ ]*Site Location|Room|Specific Location|Area):\s*([^\n\\<]+)/i);
                 const extractedSite = siteMatch ? clean(siteMatch[1]) : "";
@@ -531,7 +644,6 @@
                     }
                 }
 
-                // Extract email if provided in ICS description or contact
                 const emailMatch = rawDesc.match(/(?:Client Email|Email|E-mail|Contact Email):\s*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i)
                     || block.match(/mailto:([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i);
                 const extractedEmail = emailMatch ? emailMatch[1].trim() : '';
@@ -559,7 +671,6 @@
 
     async function init() {
         document.getElementById('loading-overlay').style.display = 'flex';
-        // Load local assignments from storage first
         try {
             const localSaved = localStorage.getItem('fs_dj_assignments');
             if (localSaved) {
@@ -573,7 +684,6 @@
             offData = data.offData || []; 
             djSettings = data.djs || []; 
             if (data.assignments && data.assignments.length > 0) {
-                // Merge backend with any locally saved entries without clearing typed local values
                 const merged = [...assignments];
                 data.assignments.forEach(remote => {
                     const idx = merged.findIndex(a => String(a.id) === String(remote.id));
@@ -582,7 +692,7 @@
                         const local = merged[idx];
                         merged[idx] = { 
                             ...local, 
-                            ...remote,
+                            ...remote, 
                             client_email: (remoteEmail !== undefined && remoteEmail !== '') ? remoteEmail : (local.client_email || local.clientEmail || local.email || '')
                         };
                     } else {
@@ -641,14 +751,12 @@
         if (isOnSiteEvent(s)) return false;
         const assign = assignments.find(a => String(a.id) === String(s.id));
         
-        // DJ Filter
         if (currentFilter === 'unassigned') {
             if (assign && (assign.primary || assign.secondary)) return false;
         } else if (currentFilter !== 'all') {
             if (!assign || (assign.primary !== currentFilter && assign.secondary !== currentFilter)) return false;
         }
 
-        // Package / Double Prints Filter
         if (currentPackageFilter === 'double_prints') {
             if (!assign || !assign.double_prints) return false;
         } else if (currentPackageFilter === 'booth') {
@@ -683,7 +791,6 @@
             if(assign.reception) iconsHtml += `<span class="s-icon" title="Reception">🔊</span>`;
             if(assign.booth) iconsHtml += `<span class="s-icon" title="Photo Booth">📷</span>`;
             
-            // DOUBLE PRINTS BADGE (NEW)
             if(assign.double_prints) {
                 iconsHtml += `<span class="double-print-badge" title="Double Prints (2x Copies)">🖨️² 2X</span>`;
             } else if(assign.prints) {
@@ -762,7 +869,6 @@
         const agenda = document.getElementById('agenda-view');
         agenda.innerHTML = '';
 
-        // Filter events for the current month view
         const currentMonthShows = showData.filter(s => {
             const [sY, sM] = s.date.split('-').map(Number);
             return sY === year && (sM - 1) === month && isShowMatchingFilter(s);
@@ -773,7 +879,6 @@
             return;
         }
 
-        // Group by Date
         const grouped = {};
         currentMonthShows.forEach(s => {
             if (!grouped[s.date]) grouped[s.date] = [];
@@ -850,7 +955,7 @@
         document.getElementById('checkReception').checked = !!curr.reception; 
         document.getElementById('checkBooth').checked = !!curr.booth; 
         document.getElementById('checkPrints').checked = !!curr.prints; 
-        document.getElementById('checkDoublePrints').checked = !!curr.double_prints; // NEW DOUBLE PRINTS
+        document.getElementById('checkDoublePrints').checked = !!curr.double_prints;
         document.getElementById('checkGuestbook').checked = !!curr.guestbook; 
         document.getElementById('checkKaraoke').checked = !!curr.karaoke; 
         document.getElementById('uplightSelect').value = curr.uplights || "0";
@@ -916,6 +1021,170 @@
             nameText.innerText = "Private Residence";
             phoneText.innerText = "N/A";
         }
+    }
+
+    // ==========================================
+    // WEDDING FOLDER BATCH GENERATOR LOGIC
+    // ==========================================
+    function openFolderModal() {
+        const s = showData.find(ev => String(ev.id) === String(currentEventId));
+        if (!s) return;
+        const assign = assignments.find(a => String(a.id) === String(currentEventId)) || {};
+
+        // Intelligent Subfolder defaults based on current checkboxes/assignments
+        const isGuestbook = !!(assign.guestbook || document.getElementById('checkGuestbook').checked);
+        const isPhotoBooth = !!(assign.booth || document.getElementById('checkBooth').checked || assign.prints || document.getElementById('checkPrints').checked);
+        const isCeremony = !!(assign.ceremony || document.getElementById('checkCeremony').checked);
+        const isReception = !!(assign.reception || document.getElementById('checkReception').checked);
+        const isKaraoke = !!(assign.karaoke || document.getElementById('checkKaraoke').checked);
+
+        document.getElementById('foldGuestbook').checked = isGuestbook;
+        document.getElementById('foldPhotos').checked = isPhotoBooth;
+        document.getElementById('foldCeremony').checked = isCeremony;
+        document.getElementById('foldReception').checked = isReception;
+        document.getElementById('foldKaraoke').checked = isKaraoke;
+        document.getElementById('foldTimeline').checked = true;
+        document.getElementById('foldSpecialSongs').checked = true;
+        document.getElementById('foldRawFootage').checked = isPhotoBooth || isGuestbook;
+
+        // Clean folder name default: YYYY-MM-DD - Client Name - #ID
+        const safeClient = sanitizeForWindowsFolder(stripEmoji(s.client));
+        const defaultFolderName = `${s.date} - ${safeClient} - #${s.id}`;
+        document.getElementById('batFolderName').value = defaultFolderName;
+        document.getElementById('folderModalSub').innerText = `Configuring folder for Event #${s.id} (${safeClient})`;
+
+        customSubfolders = [];
+        renderCustomSubfolderList();
+        updateBatPreview();
+
+        document.getElementById('folderModal').style.display = 'block';
+    }
+
+    function addCustomSubfolder() {
+        const input = document.getElementById('customSubfolderInput');
+        const val = sanitizeForWindowsFolder(input.value.trim().toUpperCase());
+        if (!val) return;
+        if (!customSubfolders.includes(val)) {
+            customSubfolders.push(val);
+            renderCustomSubfolderList();
+            updateBatPreview();
+        }
+        input.value = '';
+    }
+
+    function removeCustomSubfolder(name) {
+        customSubfolders = customSubfolders.filter(f => f !== name);
+        renderCustomSubfolderList();
+        updateBatPreview();
+    }
+
+    function renderCustomSubfolderList() {
+        const wrap = document.getElementById('customSubfolderList');
+        wrap.innerHTML = customSubfolders.map(name => `
+            <span style="background: #e0f2fe; color: #0369a1; padding: 4px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: bold; display: inline-flex; align-items: center; gap: 5px;">
+                📁 ${name}
+                <b style="cursor:pointer; color:#ef4444;" onclick="removeCustomSubfolder('${name}')">✕</b>
+            </span>
+        `).join('');
+    }
+
+    function getSelectedSubfolders() {
+        const subs = [];
+        if (document.getElementById('foldGuestbook').checked) subs.push("AUDIO GUESTBOOK FILES");
+        if (document.getElementById('foldPhotos').checked) subs.push("ON SITE PHOTOS");
+        if (document.getElementById('foldCeremony').checked) subs.push("CEREMONY MUSIC");
+        if (document.getElementById('foldReception').checked) subs.push("RECEPTION MUSIC");
+        if (document.getElementById('foldTimeline').checked) subs.push("TIMELINE & NOTES");
+        if (document.getElementById('foldSpecialSongs').checked) subs.push("SPECIAL SONGS & REQUESTS");
+        if (document.getElementById('foldRawFootage').checked) subs.push("RAW MEDIA & BACKUPS");
+        if (document.getElementById('foldKaraoke').checked) subs.push("KARAOKE TRACKS");
+        customSubfolders.forEach(c => {
+            if (!subs.includes(c)) subs.push(c);
+        });
+        return subs;
+    }
+
+    function generateBatScriptString() {
+        const rootPath = document.getElementById('batRootPath').value.trim().replace(/[\\/]+$/, '');
+        const folderName = document.getElementById('batFolderName').value.trim();
+        const selectedSubs = getSelectedSubfolders();
+        const fullDirPath = `${rootPath}\\${folderName}`;
+
+        let script = `@echo off\r\n`;
+        script += `:: ==========================================\r\n`;
+        script += `:: Fun Squad DJs - Wedding Folder Generator\r\n`;
+        script += `:: Event: ${folderName}\r\n`;
+        script += `:: ==========================================\r\n`;
+        script += `chcp 65001 > nul\r\n`;
+        script += `color 0b\r\n\r\n`;
+        script += `set "TARGET_DIR=${fullDirPath}"\r\n\r\n`;
+        script += `echo [FUN SQUAD DJs] Creating Wedding Directory Structure...\r\n`;
+        script += `echo Target: "%TARGET_DIR%"\r\n`;
+        script += `echo.\r\n\r\n`;
+        script += `if not exist "%TARGET_DIR%" (\r\n`;
+        script += `    mkdir "%TARGET_DIR%"\r\n`;
+        script += `    echo  [+] Created main folder\r\n`;
+        script += `) else (\r\n`;
+        script += `    echo  [*] Main folder already exists\r\n`;
+        script += `)\r\n\r\n`;
+
+        selectedSubs.forEach(sub => {
+            script += `if not exist "%TARGET_DIR%\\${sub}" (\r\n`;
+            script += `    mkdir "%TARGET_DIR%\\${sub}"\r\n`;
+            script += `    echo  [+] Created: ${sub}\r\n`;
+            script += `)\r\n`;
+        });
+
+        script += `\r\n`;
+        script += `echo.\r\n`;
+        script += `echo ==========================================\r\n`;
+        script += `echo  All Wedding folders created successfully!\r\n`;
+        script += `echo ==========================================\r\n`;
+        script += `echo Opening folder in Windows Explorer...\r\n`;
+        script += `explorer.exe "%TARGET_DIR%"\r\n`;
+        script += `timeout /t 3 > nul\r\n`;
+        script += `exit\r\n`;
+
+        return script;
+    }
+
+    function updateBatPreview() {
+        const script = generateBatScriptString();
+        document.getElementById('batPreviewBox').innerText = script;
+    }
+
+    function downloadBatFile() {
+        const scriptContent = generateBatScriptString();
+        const folderName = document.getElementById('batFolderName').value.trim();
+        const safeFileName = sanitizeForWindowsFolder(folderName) || "Create-Wedding-Folders";
+        
+        const blob = new Blob([scriptContent], { type: 'application/x-bat;charset=utf-8' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `Create-Folders-${safeFileName}.bat`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(link.href), 10000);
+    }
+
+    function copyBatScript() {
+        const scriptContent = generateBatScriptString();
+        const textArea = document.createElement('textarea');
+        textArea.value = scriptContent;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            const prev = document.getElementById('batPreviewBox').style.borderColor;
+            document.getElementById('batPreviewBox').style.borderColor = '#22c55e';
+            setTimeout(() => { document.getElementById('batPreviewBox').style.borderColor = '#334155'; }, 1000);
+        } catch (e) {
+            alert("Please copy text manually from preview box.");
+        }
+        document.body.removeChild(textArea);
     }
 
     // ==========================================
@@ -1078,7 +1347,6 @@
         doc.setFontSize(11);
         y += 10;
 
-        // INCLUDES DOUBLE PRINTS IN DISPATCH CHECKLIST
         const items = [
             assign.ceremony ? 'Ceremony System' : null,
             assign.reception ? 'Reception System' : null,
@@ -1111,46 +1379,6 @@
         doc.save(`Event-${s.id}-${primary}.pdf`);
     }
 
-    function createOutlookDraftFile(to, cc, subject, bodyText, pdfDoc, pdfFileName) {
-        const boundary = '----=_Part_FunSquad_' + Math.random().toString(36).substring(2) + '_' + Date.now();
-        const dataUri = pdfDoc.output('datauristring');
-        const base64Pdf = dataUri.split(',')[1] || '';
-        const base64Chunked = base64Pdf.match(/.{1,76}/g)?.join('\r\n') || base64Pdf;
-
-        const emlContent = [
-            to ? `To: ${to}` : '',
-            cc ? `Cc: ${cc}` : '',
-            `Subject: ${subject}`,
-            `X-Unsent: 1`,
-            `MIME-Version: 1.0`,
-            `Content-Type: multipart/mixed; boundary="${boundary}"`,
-            ``,
-            `--${boundary}`,
-            `Content-Type: text/plain; charset=UTF-8; format=flowed`,
-            `Content-Transfer-Encoding: 8bit`,
-            ``,
-            bodyText.replace(/\r?\n/g, '\r\n'),
-            ``,
-            `--${boundary}`,
-            `Content-Type: application/pdf; name="${pdfFileName}"`,
-            `Content-Transfer-Encoding: base64`,
-            `Content-Disposition: attachment; filename="${pdfFileName}"`,
-            ``,
-            base64Chunked,
-            ``,
-            `--${boundary}--`
-        ].filter(line => line !== '').join('\r\n');
-
-        const blob = new Blob([emlContent], { type: 'message/rfc822' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `FunSquad-Outlook-Draft-${pdfFileName.replace(/\.pdf$/i, '')}.eml`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setTimeout(() => URL.revokeObjectURL(link.href), 10000);
-    }
-
     // ==========================================
     // CLIENT RIDER AUTOMATION ENGINE
     // ==========================================
@@ -1177,7 +1405,6 @@
             try {
                 doc.addImage(logoBase64, 'PNG', 12, 3, 62, 24);
             } catch(e) {
-                // Vector fallback
                 doc.setTextColor(255, 255, 255);
                 doc.setFont(undefined, 'bold');
                 doc.setFontSize(28);
@@ -1190,13 +1417,11 @@
             doc.text("FUN SQUAD DJS", 105, 22, { align: 'center' });
         }
 
-        // Pink banner sub-text: "ELEVATE THE PARTY WITH FUN!"
         doc.setFont(undefined, 'bold');
         doc.setFontSize(13);
         doc.setTextColor(255, 255, 255);
         doc.text("E L E V A T E   T H E   P A R T Y   W I T H   F U N !", 105, 31, { align: 'center' });
 
-        // Sub-banner strip: "PORTLAND WEDDING DJ - MT HOOD DJ"
         doc.setFillColor(200, 0, 105);
         doc.rect(0, 36, 210, 8, 'F');
         doc.setFont(undefined, 'bold');
@@ -1206,7 +1431,6 @@
 
         let y = 50;
 
-        // Header Title: YOUR WEDDING DAY BACKSTAGE CHECKLIST
         const headerText = isWedding ? "YOUR WEDDING DAY BACKSTAGE CHECKLIST" : "YOUR EVENT DAY BACKSTAGE CHECKLIST";
         doc.setFontSize(13);
         doc.setTextColor(200, 0, 105);
@@ -1218,7 +1442,6 @@
         doc.line(20, y, 190, y);
         y += 7;
 
-        // Greeting & Intro
         doc.setFontSize(10);
         doc.setTextColor(30, 41, 59);
         doc.setFont(undefined, 'normal');
@@ -1241,7 +1464,6 @@
         const postTuesdayFormattedString = postEventTuesdayObj.toLocaleString('en-US', { month: 'short', day: 'numeric' });
 
         const plannedArrivalTime = s.setup || "1:00PM";
-        const assignedDjName = (assign && assign.primary) || "Jacob";
 
         const introParagraph = isWedding 
             ? `We are so excited to celebrate with you this ${targetWeekdayString}! To make sure your big day is absolutely perfect and everything runs smoothly, please double-check that your venue has these basic setup items ready for us:`
@@ -1252,7 +1474,6 @@
         doc.text(introParagraph, 20, y, { maxWidth: 170 });
         y += 12;
 
-        // 2. 3-COLUMN HIGHLIGHT BOX (Celebration Date | Assigned DJ | Ceremony Start)
         const boxHeight = 22;
         doc.setFillColor(254, 242, 248);
         doc.rect(20, y, 170, boxHeight, 'F');
@@ -1310,7 +1531,6 @@
 
         y += boxHeight + 7;
 
-        // 3. BACKSTAGE CHECKLIST ITEMS
         const checklistItems = [
             { title: "- Cover from the Sun & Weather", desc: "If we are outdoors, we need a tent, canopy, or solid roof over the DJ booth. Direct sunlight and heat can damage sensitive music gear, and it keeps your DJ cool so they can perform at their best!" },
             { title: "- One 6-Foot Rectangle Table & Chair", desc: "Please have the venue provide one sturdy 6-foot rectangular table for our mixing boards, laptops, and controllers, along with a standard chair for downtime or dinner breaks." },
@@ -1335,7 +1555,7 @@
 
         y += 1;
 
-        // 4. MUSIC DEADLINE BOX (Pink Border)
+        // MUSIC DEADLINE BOX
         doc.setFont(undefined, 'bold');
         doc.setFontSize(8.5);
         doc.setTextColor(200, 0, 105);
@@ -1358,7 +1578,7 @@
 
         y += deadlineHeight + 4;
 
-        // 5. QUESTIONS OR CHANGES BOX (Slate Border)
+        // QUESTIONS OR CHANGES BOX
         const reachoutText = "QUESTIONS OR CHANGES? If you have last-minute questions or want to review your timeline, feel free to give me a call directly or book a quick 15-minute meeting directly onto my calendar dashboard link here:\nhttps://cal.com/djlane/15min";
         const wrapReachoutLines = doc.splitTextToSize(reachoutText, 164);
         const reachoutHeight = (wrapReachoutLines.length * 4.2) + 5;
@@ -1393,7 +1613,7 @@
 
         y += reachoutHeight + 6;
 
-        // 6. CLOSING NOTE (Bold Green)
+        // CLOSING NOTE
         doc.setFont(undefined, 'bold');
         doc.setFontSize(9.5);
         doc.setTextColor(22, 163, 74);
@@ -1402,7 +1622,7 @@
             : "We can't wait to get everyone out on the dance floor! Thank you for helping us make your event perfect!";
         doc.text(closingTag, 20, y, { maxWidth: 170 });
 
-        // 7. FOOTER
+        // FOOTER
         doc.setFont(undefined, 'normal');
         doc.setFontSize(8);
         doc.setTextColor(148, 163, 184);
@@ -1413,7 +1633,7 @@
 
         const destinationClientEmail = document.getElementById('clientEmailInput').value.trim();
 
-        // Auto-persist details (including newly entered email)
+        // Auto-persist details
         const updatedAssign = {
             id: String(s.id),
             primary: document.getElementById('primarySelect').value, 
@@ -1462,8 +1682,6 @@
             mediaEmailParagraph = `\n\n🎙️ Digital Media Delivery: Since your package includes our Audio Guestbook, you will receive an email link to listen to all of your guest audio messages by Tuesday, ${postTuesdayFormattedString}!`;
         }
 
-        const signature = "Lane Jensen\nOwner & DJ | Fun Squad DJs\n📞 (503) 893-8472\n🌐 funsquaddjs.com\n✉️ lane@funsquaddjs.com";
-
         if (isWedding) {
             emailSubject = `🎵 Your Wedding Day is This ${targetWeekdayString}! Final Details & Checklist - Show #${s.id}`;
             emailBodyText = `Hi ${s.client},\n\nWe are getting so close! We are absolutely thrilled and looking forward to celebrating with you this ${targetWeekdayString} on your big day!\n\nOne of our highly talented wedding DJs will be arriving at your venue at ${plannedArrivalTime} to get completely set up and run soundchecks long before your first guests walk through the door so that everything goes flawlessly and your wedding is absolutely perfect.\n\nPlease take just a brief moment to look over the attached one-page setup checklist. Could you please forward it to your wedding coordinator or venue manager? It just ensures they have our workspace ready (including a shaded spot out of the sun, a 6-foot table, working outlets within 30 feet, and keeping guest smoking spaces safely clear of the sound equipment).\n\nTo make sure your celebration is completely perfect, we also want to remind you that any final music choices or timeline adjustments need to be submitted by Wednesday evening (${wednesdayFormattedString}) to guarantee those changes can be made for your event.${mediaEmailParagraph}\n\nIf you have any last-minute questions or want to go over any of the finer details together, please feel free to give me a call directly or schedule a quick 15-minute chat with me right here: https://cal.com/djlane/15min\n\nWe are here for you every step of the way to ensure your day is absolutely perfect!`;
@@ -1472,12 +1690,10 @@
             emailBodyText = `Hi ${s.client},\n\nWe are looking forward to celebrating with you this ${targetWeekdayString} for your upcoming event!\n\nOne of our highly talented ${formattedTitleCaseEventLabel.toLowerCase()} DJs will be arriving at your venue at ${plannedArrivalTime} to handle setup and soundchecks long before your event begins.\n\nPlease take a brief moment to look over the attached one-page setup checklist and forward it to your venue manager or coordinator to make sure they have our workspace ready (including a shaded spot out of the sun, a 6-foot table, power outlets within 30 feet, and keeping guest smoking or marijuana areas clear of the audio gear).\n\nAlso, a quick reminder that any final music or timeline changes need to be submitted by Wednesday evening (${wednesdayFormattedString}) to guarantee those adjustments are locked in for your event.${mediaEmailParagraph}\n\nIf you have any questions or want to review your timeline, feel free to give me a call or schedule a quick meeting with me here: https://cal.com/djlane/15min`;
         }
         
-        // Copy full text to clipboard
         try {
             await navigator.clipboard.writeText(emailBodyText);
         } catch(e) {}
 
-        // Trigger mailto directly with recipient, cc, subject, and full body text
         const mailtoUrl = `mailto:${encodeURIComponent(destinationClientEmail)}?cc=ariel@funsquaddjs.com&subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBodyText)}`;
         
         try {
@@ -1514,7 +1730,6 @@
             client_email: document.getElementById('clientEmailInput').value.trim()
         };
 
-        // 1. Immediately save into memory state
         const existingIdx = assignments.findIndex(a => String(a.id) === String(currentEventId));
         if (existingIdx >= 0) {
             assignments[existingIdx] = { ...assignments[existingIdx], ...updatedAssign };
@@ -1522,18 +1737,15 @@
             assignments.push(updatedAssign);
         }
 
-        // 2. Persist to localStorage immediately
         try {
             localStorage.setItem('fs_dj_assignments', JSON.stringify(assignments));
         } catch(e) {
             console.warn('LocalStorage save error:', e);
         }
 
-        // 3. Re-render UI and close modal immediately so changes are visible without lag
         closeModal('assignModal');
         render();
 
-        // 4. Send background sync to Google Apps Script
         submitHiddenForm({ 
             action: 'assignDJ', 
             ...updatedAssign
@@ -1639,7 +1851,6 @@
         document.getElementById('djSettingsList').innerHTML = html;
     }
 
-    // Auto-detect mobile on resize
     window.addEventListener('resize', () => {
         if (window.innerWidth <= 768 && currentViewMode === 'cal') {
             switchView('agenda');
