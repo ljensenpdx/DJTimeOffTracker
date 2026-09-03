@@ -77,7 +77,6 @@
         button:active { transform: scale(0.97); }
         .crew-btn { background: var(--accent); }
         .ics-btn { background: var(--success); }
-        .folder-btn { background: #0284c7; }
         .today-link { display: inline-block; color: #64748b; font-size: 0.75rem; text-decoration: underline; cursor: pointer; font-weight: bold; text-transform: uppercase; padding: 4px; }
         
         /* MODALS */
@@ -103,7 +102,7 @@
         .folder-box { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 10px; padding: 12px; margin-bottom: 12px; }
         .subfolder-tag { display: flex; align-items: center; gap: 8px; background: white; padding: 8px 10px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.82rem; font-weight: bold; }
         .subfolder-tag input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
-        .code-preview { background: #0f172a; color: #38bdf8; font-family: 'Courier New', Courier, monospace; font-size: 0.72rem; padding: 10px; border-radius: 8px; max-height: 140px; overflow-y: auto; white-space: pre-wrap; margin-bottom: 12px; border: 1px solid #334155; }
+        .code-preview { background: #0f172a; color: #38bdf8; font-family: 'Courier New', Courier, monospace; font-size: 0.72rem; padding: 10px; border-radius: 8px; max-height: 125px; overflow-y: auto; white-space: pre-wrap; margin-bottom: 12px; border: 1px solid #334155; }
 
         #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); display: flex; justify-content: center; align-items: center; z-index: 3000; font-weight: bold; font-size: 1.1rem; color: var(--dark); }
         
@@ -223,9 +222,9 @@
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px;">
             <div>
                 <h2 style="margin: 0; font-size: 1.2rem; color: #0284c7; display: flex; align-items: center; gap: 6px;">
-                    📁 Event Folder Generator
+                    📁 Wedding Folder Creator
                 </h2>
-                <span id="folderModalSub" style="font-size: 0.75rem; color: #64748b; font-weight: bold;">Create folder structure on your H: Drive</span>
+                <span id="folderModalSub" style="font-size: 0.75rem; color: #64748b; font-weight: bold;">H:\My Drive\Upcoming Weddings - Lane</span>
             </div>
             <button onclick="closeModal('folderModal')" style="background:#e2e8f0; color:#475569; padding: 4px 8px; font-size:0.8rem;">✕</button>
         </div>
@@ -234,55 +233,40 @@
             <label style="font-size: 0.72rem; font-weight: 900; color: #475569; text-transform: uppercase;">Drive Root Path:</label>
             <input type="text" id="batRootPath" value="H:\My Drive\Upcoming Weddings - Lane" oninput="updateBatPreview()" style="font-family: monospace; font-size: 0.8rem;">
 
-            <label style="font-size: 0.72rem; font-weight: 900; color: #475569; text-transform: uppercase;">Event Folder Name:</label>
-            <input type="text" id="batFolderName" oninput="updateBatPreview()" style="font-family: monospace; font-size: 0.8rem;">
+            <label style="font-size: 0.72rem; font-weight: 900; color: #475569; text-transform: uppercase;">Folder Name (MM.DD - NAME IN ALL CAPS):</label>
+            <input type="text" id="batFolderName" oninput="updateBatPreview()" style="font-family: monospace; font-size: 0.85rem; font-weight: bold; text-transform: uppercase;">
         </div>
 
         <label style="font-size: 0.75rem; font-weight: 900; color: #1e293b; text-transform: uppercase; margin-bottom: 6px; display: block;">
-            Select Subfolders to Create:
+            Select Folders to Create:
         </label>
         
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 12px;">
-            <label class="subfolder-tag">
-                <input type="checkbox" id="foldGuestbook" onchange="updateBatPreview()"> 
-                <span>☎️ AUDIO GUESTBOOK FILES</span>
+        <!-- EXACT 5 SUBFOLDERS -->
+        <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px;">
+            <!-- Always Included Defaults -->
+            <label class="subfolder-tag" style="border-left: 4px solid var(--info);">
+                <input type="checkbox" id="foldCeremony" checked onchange="updateBatPreview()"> 
+                <span>🔈 CEREMONY MUSIC <small style="color:#64748b; font-weight:normal;">(Standard)</small></span>
             </label>
-            <label class="subfolder-tag">
-                <input type="checkbox" id="foldPhotos" onchange="updateBatPreview()"> 
-                <span>📸 ON SITE PHOTOS</span>
+            <label class="subfolder-tag" style="border-left: 4px solid var(--info);">
+                <input type="checkbox" id="foldPhotos" checked onchange="updateBatPreview()"> 
+                <span>📸 ON SITE PHOTOS <small style="color:#64748b; font-weight:normal;">(Standard)</small></span>
             </label>
-            <label class="subfolder-tag">
-                <input type="checkbox" id="foldCeremony" onchange="updateBatPreview()"> 
-                <span>🔈 CEREMONY MUSIC</span>
+            <label class="subfolder-tag" style="border-left: 4px solid var(--info);">
+                <input type="checkbox" id="foldReception" checked onchange="updateBatPreview()"> 
+                <span>🔊 RECEPTION MUSIC <small style="color:#64748b; font-weight:normal;">(Standard)</small></span>
             </label>
-            <label class="subfolder-tag">
-                <input type="checkbox" id="foldReception" onchange="updateBatPreview()"> 
-                <span>🔊 RECEPTION MUSIC</span>
-            </label>
-            <label class="subfolder-tag">
-                <input type="checkbox" id="foldTimeline" checked onchange="updateBatPreview()"> 
-                <span>📋 TIMELINE & NOTES</span>
-            </label>
-            <label class="subfolder-tag">
-                <input type="checkbox" id="foldSpecialSongs" checked onchange="updateBatPreview()"> 
-                <span>🎵 SPECIAL SONGS & REQUESTS</span>
-            </label>
-            <label class="subfolder-tag">
-                <input type="checkbox" id="foldRawFootage" onchange="updateBatPreview()"> 
-                <span>🎞️ RAW MEDIA & BACKUPS</span>
-            </label>
-            <label class="subfolder-tag">
-                <input type="checkbox" id="foldKaraoke" onchange="updateBatPreview()"> 
-                <span>🎤 KARAOKE TRACKS</span>
-            </label>
-        </div>
 
-        <!-- Custom extra subfolder input -->
-        <div style="display: flex; gap: 6px; margin-bottom: 12px;">
-            <input type="text" id="customSubfolderInput" placeholder="Add custom subfolder (e.g. MONOGRAM DESIGN)..." style="margin-bottom: 0; font-size: 0.8rem;">
-            <button onclick="addCustomSubfolder()" style="background:#0284c7; white-space: nowrap; padding: 0 14px;">+ ADD</button>
+            <!-- Option-based Folders -->
+            <label class="subfolder-tag" style="border-left: 4px solid var(--accent); background:#fff5f9;">
+                <input type="checkbox" id="foldGuestbook" onchange="updateBatPreview()"> 
+                <span>☎️ AUDIO GUESTBOOK FILES <small style="color:#be185d; font-weight:bold;">(Optional - Checked if Booked)</small></span>
+            </label>
+            <label class="subfolder-tag" style="border-left: 4px solid var(--warning); background:#fffbeb;">
+                <input type="checkbox" id="foldPhotoBoothPics" onchange="updateBatPreview()"> 
+                <span>🖼️ PHOTO BOOTH PICS <small style="color:#b45309; font-weight:bold;">(Optional - Checked if Booked)</small></span>
+            </label>
         </div>
-        <div id="customSubfolderList" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px;"></div>
 
         <!-- Script Preview -->
         <label style="font-size: 0.72rem; font-weight: 900; color: #475569; text-transform: uppercase; margin-bottom: 4px; display: flex; justify-content: space-between;">
@@ -291,17 +275,22 @@
         </label>
         <div id="batPreviewBox" class="code-preview"></div>
 
+        <!-- Action Buttons -->
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
-            <button style="background:var(--success); padding: 12px; font-size: 0.85rem;" onclick="downloadBatFile()">
+            <button style="background:var(--success); padding: 11px; font-size: 0.82rem;" onclick="downloadBatFile()">
                 ⚡ DOWNLOAD .BAT FILE
             </button>
-            <button style="background:#334155; padding: 12px; font-size: 0.85rem;" onclick="copyBatScript()">
-                📋 COPY BATCH SCRIPT
+            <button style="background:#0284c7; padding: 11px; font-size: 0.82rem;" onclick="copyRunCommand()">
+                🚀 COPY WIN+R COMMAND
             </button>
         </div>
+
+        <button style="background:#334155; width:100%; padding: 10px; font-size: 0.8rem; margin-bottom: 10px;" onclick="copyBatScript()">
+            📋 COPY RAW BATCH SCRIPT
+        </button>
         
-        <p style="font-size: 0.72rem; color: #64748b; margin: 4px 0 10px 0; text-align: center;">
-            💡 <em>Tip: Download and double-click the <code>.bat</code> file on your PC. It creates all folders on your H: Drive and immediately opens them in Windows Explorer.</em>
+        <p style="font-size: 0.72rem; color: #475569; margin: 4px 0 10px 0; background: #e0f2fe; padding: 8px 10px; border-radius: 8px; border: 1px solid #bae6fd;">
+            💡 <strong>Fastest Way to Run:</strong> Click <strong>"🚀 COPY WIN+R COMMAND"</strong>, press <kbd style="background:#fff; padding:1px 5px; border-radius:4px; border:1px solid #ccc; font-weight:bold;">Win + R</kbd> on your keyboard, paste, and press <strong>Enter</strong>. It creates the folders on your H: Drive and immediately closes!
         </p>
 
         <button onclick="closeModal('folderModal')" style="background:#94a3b8; width:100%;">Back to Show Details</button>
@@ -402,13 +391,12 @@
     let currentVenueName = "";
     let logoBase64 = null;
     let googleMapsPromise = null;
-    let customSubfolders = [];
 
     const clean = (str) => str ? str.replace(/\\,/g, ',').replace(/\\n/g, ' ').trim() : "";
     const stripEmoji = (str) => str.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F900}-\u{1F9FF}]|[\u{1FA70}-\u{1FAFF}]|[\u{1F000}-\u{1F02F}]|[\u{FE00}-\u{FE0F}]|[\u{1F004}]|[\u{1F0CF}]|[\u{1F18E}]|[\u{1F191}-\u{1F251}]|[\u{23E9}-\u{23F3}]|[\u{23F8}-\u{23FA}]|[\u{25AA}-\u{25AB}]|[\u{25FB}-\u{25FE}]|[\u{2B50}]|[\u{2B55}]|[\u{2934}-\u{2935}]|[\u{2194}-\u{2199}]|[\u{303D}]|[\u{00A9}]|[\u{00AE}]|[\u{2122}]/gu, '').trim();
     const cleanAddressForLookup = (str) => str.replace(/\(On[-_ ]*Site Location:[^)]*\)/gi, '').replace(/\bON[-_ /]*SITE\b/gi, '').replace(/\bONSITE\b/gi, '').trim();
 
-    // Sanitize string for valid Windows directory names
+    // Sanitize string for Windows folder creation
     function sanitizeForWindowsFolder(str) {
         if (!str) return "";
         return str
@@ -597,7 +585,6 @@
                 let clientName = summary.replace(/DJ Event for /gi, "").replace(/\s*\([^)]*\)/g, "").trim();
                 if (!clientName) clientName = "Private Client";
 
-                // If the ICS says ON-SITE, do not import it
                 if (isOnSiteEvent({
                     summary: summary,
                     description: rawDesc,
@@ -607,7 +594,7 @@
                     categories: categories,
                     block: block
                 })) {
-                    return; // Skip ON-SITE event
+                    return;
                 }
 
                 const idMatch = (summary + " " + rawDesc + " " + block).match(/(?:ID:\s*|#)(\d{4,})|(\d{4,})/);
@@ -1025,82 +1012,46 @@
 
     // ==========================================
     // WEDDING FOLDER BATCH GENERATOR LOGIC
+    // (Configured with MM.DD - NAME (ALL CAPS) & 5 EXACT FOLDERS)
     // ==========================================
     function openFolderModal() {
         const s = showData.find(ev => String(ev.id) === String(currentEventId));
         if (!s) return;
         const assign = assignments.find(a => String(a.id) === String(currentEventId)) || {};
 
-        // Intelligent Subfolder defaults based on current checkboxes/assignments
+        // Always check the 3 core folders
+        document.getElementById('foldCeremony').checked = true;
+        document.getElementById('foldPhotos').checked = true;
+        document.getElementById('foldReception').checked = true;
+
+        // The ONLY optional ones: Audio Guestbook & Photo Booth
         const isGuestbook = !!(assign.guestbook || document.getElementById('checkGuestbook').checked);
-        const isPhotoBooth = !!(assign.booth || document.getElementById('checkBooth').checked || assign.prints || document.getElementById('checkPrints').checked);
-        const isCeremony = !!(assign.ceremony || document.getElementById('checkCeremony').checked);
-        const isReception = !!(assign.reception || document.getElementById('checkReception').checked);
-        const isKaraoke = !!(assign.karaoke || document.getElementById('checkKaraoke').checked);
+        const isPhotoBooth = !!(assign.booth || document.getElementById('checkBooth').checked || assign.prints || document.getElementById('checkPrints').checked || assign.double_prints || document.getElementById('checkDoublePrints').checked);
 
         document.getElementById('foldGuestbook').checked = isGuestbook;
-        document.getElementById('foldPhotos').checked = isPhotoBooth;
-        document.getElementById('foldCeremony').checked = isCeremony;
-        document.getElementById('foldReception').checked = isReception;
-        document.getElementById('foldKaraoke').checked = isKaraoke;
-        document.getElementById('foldTimeline').checked = true;
-        document.getElementById('foldSpecialSongs').checked = true;
-        document.getElementById('foldRawFootage').checked = isPhotoBooth || isGuestbook;
+        document.getElementById('foldPhotoBoothPics').checked = isPhotoBooth;
 
-        // Clean folder name default: YYYY-MM-DD - Client Name - #ID
-        const safeClient = sanitizeForWindowsFolder(stripEmoji(s.client));
-        const defaultFolderName = `${s.date} - ${safeClient} - #${s.id}`;
-        document.getElementById('batFolderName').value = defaultFolderName;
-        document.getElementById('folderModalSub').innerText = `Configuring folder for Event #${s.id} (${safeClient})`;
+        // Clean folder name strictly as: MM.DD - NAME (IN ALL CAPS)
+        const dateParts = s.date.split('-'); // [YYYY, MM, DD]
+        const mmDd = (dateParts.length === 3) ? `${dateParts[1]}.${dateParts[2]}` : "00.00";
+        const cleanNameAllCaps = sanitizeForWindowsFolder(stripEmoji(s.client)).toUpperCase();
+        const formattedFolderName = `${mmDd} - ${cleanNameAllCaps}`;
 
-        customSubfolders = [];
-        renderCustomSubfolderList();
+        document.getElementById('batFolderName').value = formattedFolderName;
+        document.getElementById('folderModalSub').innerText = `Folder: ${formattedFolderName}`;
+
         updateBatPreview();
-
         document.getElementById('folderModal').style.display = 'block';
-    }
-
-    function addCustomSubfolder() {
-        const input = document.getElementById('customSubfolderInput');
-        const val = sanitizeForWindowsFolder(input.value.trim().toUpperCase());
-        if (!val) return;
-        if (!customSubfolders.includes(val)) {
-            customSubfolders.push(val);
-            renderCustomSubfolderList();
-            updateBatPreview();
-        }
-        input.value = '';
-    }
-
-    function removeCustomSubfolder(name) {
-        customSubfolders = customSubfolders.filter(f => f !== name);
-        renderCustomSubfolderList();
-        updateBatPreview();
-    }
-
-    function renderCustomSubfolderList() {
-        const wrap = document.getElementById('customSubfolderList');
-        wrap.innerHTML = customSubfolders.map(name => `
-            <span style="background: #e0f2fe; color: #0369a1; padding: 4px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: bold; display: inline-flex; align-items: center; gap: 5px;">
-                📁 ${name}
-                <b style="cursor:pointer; color:#ef4444;" onclick="removeCustomSubfolder('${name}')">✕</b>
-            </span>
-        `).join('');
     }
 
     function getSelectedSubfolders() {
         const subs = [];
+        // The 5 folders strictly defined
         if (document.getElementById('foldGuestbook').checked) subs.push("AUDIO GUESTBOOK FILES");
-        if (document.getElementById('foldPhotos').checked) subs.push("ON SITE PHOTOS");
         if (document.getElementById('foldCeremony').checked) subs.push("CEREMONY MUSIC");
+        if (document.getElementById('foldPhotos').checked) subs.push("ON SITE PHOTOS");
+        if (document.getElementById('foldPhotoBoothPics').checked) subs.push("PHOTO BOOTH PICS");
         if (document.getElementById('foldReception').checked) subs.push("RECEPTION MUSIC");
-        if (document.getElementById('foldTimeline').checked) subs.push("TIMELINE & NOTES");
-        if (document.getElementById('foldSpecialSongs').checked) subs.push("SPECIAL SONGS & REQUESTS");
-        if (document.getElementById('foldRawFootage').checked) subs.push("RAW MEDIA & BACKUPS");
-        if (document.getElementById('foldKaraoke').checked) subs.push("KARAOKE TRACKS");
-        customSubfolders.forEach(c => {
-            if (!subs.includes(c)) subs.push(c);
-        });
         return subs;
     }
 
@@ -1138,14 +1089,24 @@
         script += `\r\n`;
         script += `echo.\r\n`;
         script += `echo ==========================================\r\n`;
-        script += `echo  All Wedding folders created successfully!\r\n`;
+        script += `echo  All folders created successfully!\r\n`;
         script += `echo ==========================================\r\n`;
         script += `echo Opening folder in Windows Explorer...\r\n`;
         script += `explorer.exe "%TARGET_DIR%"\r\n`;
-        script += `timeout /t 3 > nul\r\n`;
+        script += `timeout /t 2 > nul\r\n`;
         script += `exit\r\n`;
 
         return script;
+    }
+
+    function getOneLineRunCommand() {
+        const rootPath = document.getElementById('batRootPath').value.trim().replace(/[\\/]+$/, '');
+        const folderName = document.getElementById('batFolderName').value.trim();
+        const selectedSubs = getSelectedSubfolders();
+        const fullDirPath = `${rootPath}\\${folderName}`;
+
+        const pathsToCreate = selectedSubs.map(s => `"${fullDirPath}\\${s}"`).join(' ');
+        return `cmd /c "md "${fullDirPath}" ${pathsToCreate} & start "" "${fullDirPath}""`;
     }
 
     function updateBatPreview() {
@@ -1170,8 +1131,17 @@
 
     function copyBatScript() {
         const scriptContent = generateBatScriptString();
+        copyTextHelper(scriptContent, "Batch script copied to clipboard!");
+    }
+
+    function copyRunCommand() {
+        const oneLiner = getOneLineRunCommand();
+        copyTextHelper(oneLiner, "Win+R command copied! Press Win+R, paste, and hit Enter.");
+    }
+
+    function copyTextHelper(text, successMsg) {
         const textArea = document.createElement('textarea');
-        textArea.value = scriptContent;
+        textArea.value = text;
         textArea.style.position = 'fixed';
         textArea.style.opacity = '0';
         document.body.appendChild(textArea);
@@ -1181,6 +1151,7 @@
             const prev = document.getElementById('batPreviewBox').style.borderColor;
             document.getElementById('batPreviewBox').style.borderColor = '#22c55e';
             setTimeout(() => { document.getElementById('batPreviewBox').style.borderColor = '#334155'; }, 1000);
+            alert(successMsg);
         } catch (e) {
             alert("Please copy text manually from preview box.");
         }
