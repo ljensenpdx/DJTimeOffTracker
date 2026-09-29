@@ -254,7 +254,7 @@ function createShowBoxHtml(s) {
         <div class="type-bar">${s.type}</div>
         <div class="box-pad">
             <b class="client-info">#${s.id} ${s.client}</b>
-            <div class="timing-info">${sIcon} Setup: ${s.setup} | Start: ${s.showStart} | End: ${s.end}</div>
+            <div class="timing-info">${sIcon} 🛠️ ${s.setup} | 🟢 ${s.showStart} | 🛑 ${s.end}</div>
             <div class="addr-text">@ ${s.loc.split(',').slice(0, 2).join(', ')}${siteNameText ? ` • Venue Area: <b>${siteNameText}</b>` : ''}</div>
         </div>
         ${iconsHtml ? `<div class="icon-tray">${iconsHtml}</div>` : ''}
