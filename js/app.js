@@ -84,9 +84,13 @@ async function init() {
 
     try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 6000);
+        // Increased timeout to 15 seconds to allow Google Apps Script to "wake up"
+        const timeoutId = setTimeout(() => controller.abort(), 15000); 
 
-        const res = await fetch(scriptURL + '?t=' + new Date().getTime(), { signal: controller.signal });
+        const res = await fetch(scriptURL + '?t=' + new Date().getTime(), { 
+            signal: controller.signal,
+            redirect: 'follow' // Follow Google's internal routing
+        });
         clearTimeout(timeoutId);
 
         if (res.ok) {
@@ -116,16 +120,15 @@ async function init() {
                 localStorage.setItem('fs_dj_assignments', JSON.stringify(assignments));
             }
             populateFilterDropdown();
+        } else {
+            console.error("Google returned an error status:", res.status);
         }
     } catch(e) { 
-        console.warn("Sync warning: Loading local & ICS data.", e); 
+        console.warn("Google Apps Script fetch failed or timed out. Loading local fallback data.", e); 
     } finally {
         try {
             if (typeof loadIcalData === 'function') {
                 showData = await loadIcalData();
-            } else {
-                console.error("ics-parser.js was not loaded properly.");
-                showData = [];
             }
         } catch(e) {
             console.error("Failed to parse calendar events", e);
@@ -138,7 +141,6 @@ async function init() {
         if (typeof renderTodoPanel === 'function') renderTodoPanel();
     }
 }
-
 // ==========================================
 // VIEW SWITCHER & RENDERERS
 // ==========================================
