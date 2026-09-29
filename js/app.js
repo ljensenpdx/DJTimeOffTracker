@@ -1,7 +1,9 @@
 // ==========================================
 // CONFIGURATION & GLOBAL STATE
 // ==========================================
+// 🛑 IMPORTANT: VERIFY THIS URL MATCHES YOUR GOOGLE APPS SCRIPT WEB APP 🛑
 const scriptURL = 'https://script.google.com/macros/s/AKfycbxcpYGZc2Wp1R2PpzEJH6H8Gojz6h6Oqe-q2MqyqxXVfNv23ZTH97CJUaqs4pdQ0aR9/exec'; 
+
 const GITHUB_REPO = 'ljensenpdx/DJTimeOffTracker'; 
 const GMAPS_API_KEY = 'AIzaSyA86LiHXWFpQj_0hIDEWHnJrIDno6F123I';
 
@@ -118,11 +120,22 @@ async function init() {
     } catch(e) { 
         console.warn("Sync warning: Loading local & ICS data.", e); 
     } finally {
-        showData = await loadIcalData();
+        try {
+            if (typeof loadIcalData === 'function') {
+                showData = await loadIcalData();
+            } else {
+                console.error("ics-parser.js was not loaded properly.");
+                showData = [];
+            }
+        } catch(e) {
+            console.error("Failed to parse calendar events", e);
+            showData = [];
+        }
+
         if (loader) loader.style.display = 'none';
         switchView(currentViewMode);
         render();
-        renderTodoPanel();
+        if (typeof renderTodoPanel === 'function') renderTodoPanel();
     }
 }
 
@@ -176,7 +189,7 @@ function applyFilter() {
 }
 
 function isShowMatchingFilter(s) {
-    if (isOnSiteEvent(s)) return false;
+    if (typeof isOnSiteEvent === 'function' && isOnSiteEvent(s)) return false;
     const assign = assignments.find(a => String(a.id) === String(s.id));
     
     if (currentFilter === 'unassigned') {
@@ -397,7 +410,7 @@ function openAssign(id, client, date) {
     document.getElementById('checkKaraoke').checked = !!curr.karaoke; 
     document.getElementById('uplightSelect').value = curr.uplights || "0";
     
-    renderEventModalTodoList(id);
+    if (typeof renderEventModalTodoList === 'function') renderEventModalTodoList(id);
     checkOffStatus(); 
     document.getElementById('assignModal').style.display = 'block';
 }
@@ -518,48 +531,44 @@ function checkOffStatus() {
 // GOOGLE APPS SCRIPT SYNC ENGINE
 // ==========================================
 function submitHiddenForm(data) { 
-    const formBody = [];
-    for (const property in data) {
-        const encodedKey = encodeURIComponent(property);
-        const encodedValue = encodeURIComponent(
-            typeof data[property] === 'object' ? JSON.stringify(data[property]) : data[property]
-        );
-        formBody.push(encodedKey + "=" + encodedValue);
+    // Bulletproof method: We dynamically inject the hidden form and iframe every time
+    // so it doesn't rely on the HTML structure loading perfectly.
+    
+    let iframe = document.getElementById('hidden_iframe_sync');
+    if (!iframe) {
+        iframe = document.createElement('iframe');
+        iframe.name = 'hidden_iframe_sync';
+        iframe.id = 'hidden_iframe_sync';
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
     }
-    const requestBody = formBody.join("&");
 
-    fetch(scriptURL, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
-        },
-        mode: 'no-cors',
-        body: requestBody
-    })
-    .then(() => {
-        console.log("Sync request submitted successfully to Google Apps Script.");
-    })
-    .catch(err => {
-        console.warn("Direct POST failed, trying iframe fallback...", err);
-        let f = document.getElementById('cors_bypass_form'); 
-        if (!f) {
-            f = document.createElement('form');
-            f.id = 'cors_bypass_form';
-            f.method = 'POST';
-            f.style.display = 'none';
-            document.body.appendChild(f);
-        }
-        f.action = scriptURL; 
-        f.innerHTML = ''; 
-        for (const k in data) { 
-            const i = document.createElement('input'); 
-            i.type = 'hidden'; 
-            i.name = k; 
-            i.value = typeof data[k] === 'object' ? JSON.stringify(data[k]) : data[k]; 
-            f.appendChild(i); 
-        } 
-        f.submit();
-    });
+    let form = document.getElementById('cors_bypass_form_sync');
+    if (!form) {
+        form = document.createElement('form');
+        form.id = 'cors_bypass_form_sync';
+        form.method = 'POST';
+        form.target = 'hidden_iframe_sync';
+        form.style.display = 'none';
+        document.body.appendChild(form);
+    }
+
+    form.action = scriptURL; 
+    form.innerHTML = ''; 
+    for (const k in data) { 
+        const input = document.createElement('input'); 
+        input.type = 'hidden'; 
+        input.name = k; 
+        input.value = typeof data[k] === 'object' ? JSON.stringify(data[k]) : data[k]; 
+        form.appendChild(input); 
+    } 
+    
+    try {
+        form.submit();
+        console.log("Successfully fired payload to Apps Script.");
+    } catch (err) {
+        console.error("Form submit failed:", err);
+    }
 }
 
 // ==========================================
