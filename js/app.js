@@ -215,19 +215,19 @@ function createShowBoxHtml(s) {
         
         priceText = (!hidePrices && assign.price) ? formatCurrency(assign.price) : "";
         
-        if(assign.ceremony) iconsHtml += `<span class="s-icon" title="Ceremony">...</span>`;
-        if(assign.reception) iconsHtml += `<span class="s-icon" title="Reception">...</span>`;
-        if(assign.booth) iconsHtml += `<span class="s-icon" title="Photo Booth">...</span>`;
+        if(assign.ceremony) iconsHtml += `<span class="s-icon" title="Ceremony">🔈</span>`;
+        if(assign.reception) iconsHtml += `<span class="s-icon" title="Reception">🔊</span>`;
+        if(assign.booth) iconsHtml += `<span class="s-icon" title="Photo Booth">📷</span>`;
         
         if(assign.double_prints) {
-            iconsHtml += `<span class="double-print-badge" title="Double Prints (2x Copies)">...2X</span>`;
+            iconsHtml += `<span class="double-print-badge" title="Double Prints (2x Copies)">🖨️² 2X</span>`;
         } else if(assign.prints) {
-            iconsHtml += `<span class="s-icon" title="Photo Prints">...</span>`;
+            iconsHtml += `<span class="s-icon" title="Photo Prints">🖨️</span>`;
         }
 
-        if(assign.guestbook) iconsHtml += `<span class="s-icon" title="Audio Guestbook">...</span>`;
-        if(assign.uplights > 0) iconsHtml += `<span class="s-icon" title="Up Lights">...(${assign.uplights})</span>`;
-        if(assign.karaoke) iconsHtml += `<span class="s-icon" title="Karaoke">...</span>`;
+        if(assign.guestbook) iconsHtml += `<span class="s-icon" title="Audio Guestbook">☎️</span>`;
+        if(assign.uplights > 0) iconsHtml += `<span class="s-icon" title="Up Lights">💡(${assign.uplights})</span>`;
+        if(assign.karaoke) iconsHtml += `<span class="s-icon" title="Karaoke">🎤</span>`;
     }
 
     const bgStyle = djColor2 ? `linear-gradient(135deg, ${djColor1} 50%, ${djColor2} 50%)` : djColor1;
@@ -514,19 +514,52 @@ function checkOffStatus() {
     if (w) w.style.display = (pOff || sOff) ? 'block' : 'none'; 
 }
 
+// ==========================================
+// GOOGLE APPS SCRIPT SYNC ENGINE
+// ==========================================
 function submitHiddenForm(data) { 
-    const f = document.getElementById('cors_bypass_form'); 
-    if (!f) return;
-    f.action = scriptURL; 
-    f.innerHTML = ''; 
-    for (const k in data) { 
-        const i = document.createElement('input'); 
-        i.type = 'hidden'; 
-        i.name = k; 
-        i.value = typeof data[k] === 'object' ? JSON.stringify(data[k]) : data[k]; 
-        f.appendChild(i); 
-    } 
-    f.submit(); 
+    const formBody = [];
+    for (const property in data) {
+        const encodedKey = encodeURIComponent(property);
+        const encodedValue = encodeURIComponent(
+            typeof data[property] === 'object' ? JSON.stringify(data[property]) : data[property]
+        );
+        formBody.push(encodedKey + "=" + encodedValue);
+    }
+    const requestBody = formBody.join("&");
+
+    fetch(scriptURL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+        },
+        mode: 'no-cors',
+        body: requestBody
+    })
+    .then(() => {
+        console.log("Sync request submitted successfully to Google Apps Script.");
+    })
+    .catch(err => {
+        console.warn("Direct POST failed, trying iframe fallback...", err);
+        let f = document.getElementById('cors_bypass_form'); 
+        if (!f) {
+            f = document.createElement('form');
+            f.id = 'cors_bypass_form';
+            f.method = 'POST';
+            f.style.display = 'none';
+            document.body.appendChild(f);
+        }
+        f.action = scriptURL; 
+        f.innerHTML = ''; 
+        for (const k in data) { 
+            const i = document.createElement('input'); 
+            i.type = 'hidden'; 
+            i.name = k; 
+            i.value = typeof data[k] === 'object' ? JSON.stringify(data[k]) : data[k]; 
+            f.appendChild(i); 
+        } 
+        f.submit();
+    });
 }
 
 // ==========================================
